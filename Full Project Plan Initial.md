@@ -10,6 +10,8 @@
 **সম্ভাব্য ভবিষ্যৎ প্ল্যাটফর্ম:** অন্যান্য Chromium-ভিত্তিক ব্রাউজার এবং প্রয়োজন অনুযায়ী অন্যান্য প্ল্যাটফর্ম  
 **প্রধান নীতি:** Privacy First, Offline AI, User-Controlled Protection, Digital Wellbeing
 
+**Github Repository:** https://github.com/saidur1004/SafeScreen.git
+
 ---
 
 # **১. প্রজেক্টের পরিচিতি**
