@@ -270,6 +270,12 @@ Architectural Requirements:
 2. Architecture & DataStore: Store `ReelsConfig` (enabledApps, dailyMinutesLimit, selectedIntervention, focusSchedules) in DataStore Preferences and Room DB.
 3. System Integration Hook: Provide hooks for `AccessibilityService` and `UsageStatsManager` to query if current time falls within active focus schedule or exceeds daily allowance.
 4. Compose UI Components: Build custom stepped slider `TimeLimitSlider` and day picker `DayOfWeekSelector`.
+
+Review the updated image in `Screen Workflow/04_Reels_And_Focus/` for the Reels Control Screen.
+- Implement `ReelsControlScreen.kt` using a `LazyColumn`.
+- Implement the "+ Add Custom App" button. When clicked, it should open a `ModalBottomSheet` displaying a list of all installed user applications (fetch via `PackageManager`).
+- Allow the user to select an app, which then gets added to the active restrictions list in the `DataStore` or `Room Database`.
+- Maintain the Clean Architecture flow using ViewModels and UseCases.
 ```
 
 ---
@@ -455,7 +461,35 @@ State 3: On-Device AI Model Missing / Uninitialized
 - Action: "Reload Core" (Neon Cyan outline button).
 
 Visual Style: Minimalist, clean vector style, cyber-dark aesthetic, non-intimidating, informative.
+
+
+
 ```
+
+'''
+মডিউল 07: Overlays and Dialogs (ব্লার এবং সতর্কবার্তা)
+ChatGPT-কে দিন (Prompt 7-A):
+
+Plaintext
+Generate a high-quality UI/UX mockup for the "System Overlays & Alerts" of the SafeScreen Android app. 
+- **Context:** This is a full-screen system alert that floats over another distracting app (like TikTok).
+- **Background:** Heavily frosted glass blur (Glassmorphism effect) covering the entire background.
+- **Center Card:** A sleek, glowing neon-cyan bordered modal card. 
+- **Card Content:** A warning icon (Shield with a lock), headline "Focus Time Active!", and subtitle "You have reached your daily limit for this app. Take a deep breath and disconnect."
+- **Action Button:** A large "Exit to Home Screen" button in Neon Cyan.
+- **Style:** Cyber-dark theme, intrusive but highly premium and elegant.
+ছবিটি জেনারেট হলে 07_Overlays_And_Dialogs/ ফোল্ডারে সেভ করে রাখুন।
+
+ভবিষ্যতে কোডিং এজেন্টকে দেবেন (Prompt 7-B):
+
+Plaintext
+Review the image in `Screen Workflow/07_Overlays_And_Dialogs/`. Implement `LiveBlurOverlayView` and `FocusInterventionOverlay`.
+- Note: These are NOT standard Activities. They must be rendered via `WindowManager` using `TYPE_APPLICATION_OVERLAY`.
+- Use Jetpack Compose's `ComposeView` for the UI.
+- Implement the frosted glass blur background (use `RenderEffect.createBlurEffect` for API 31+).
+- The "Exit to Home" button must trigger an Intent to launch the Android Home Launcher.
+
+'''
 
 #### প্রম্পট ৮-B: Kotlin & Jetpack Compose ইমপ্লিমেন্টেশন (ভবিষ্যত কোডিং এজেন্টের জন্য)
 ```text
@@ -469,6 +503,28 @@ Architectural Requirements:
    - Display `PermissionRevokedBanner` on `HomeScreen` if background checks detect lost overlay permission.
 ```
 
+
+'''
+📱 মডিউল 08: Error and Empty States (খালি বা এরর অবস্থা)
+ChatGPT-কে দিন (Prompt 8-A):
+
+Plaintext
+Generate a high-quality UI/UX mockup for the "Empty & Error States" of the SafeScreen app.
+- **Context:** Show a beautifully designed Empty State for the Analytics/Activity Log screen.
+- **Visuals:** A minimalist, futuristic line-art illustration of a clean, empty folder or a quiet space in neon green/cyan.
+- **Typography:** Headline "All Clear! No Threats Found." and subtitle "Your digital space is currently pure and focused. We'll log any blocked content here."
+- **Action Button:** A subtle "Refresh" or "Go to Settings" outline button.
+- **Style:** Cyber-dark aesthetic, extremely clean, avoiding clutter, frosted glass accents.
+ছবিটি জেনারেট হলে 08_Error_And_Empty_States/ ফোল্ডারে সেভ করে রাখুন।
+
+ভবিষ্যতে কোডিং এজেন্টকে দেবেন (Prompt 8-B):
+
+Plaintext
+Review the image in `Screen Workflow/08_Error_And_Empty_States/`. Implement a reusable `SafeScreenStateView.kt` composable.
+- It should accept parameters for `title`, `description`, `iconRes`, and an optional `onActionClick` lambda.
+- Ensure the typography and spacing exactly match the provided design.
+- Integrate this state gracefully into `DetailedActivityLog` and `StatsScreen` when t
+'''
 ---
 *SafeScreen UI/UX Master Prompt Book — Production Ready.*
 
