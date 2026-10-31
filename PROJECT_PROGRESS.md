@@ -12,18 +12,19 @@
 ---
 
 ## 📅 সর্বশেষ আপডেট তথ্য
-* **তারিখ:** ২৯ অক্টোবর ২০২৬
-* **বর্তমান ফেজ:** Phase 1 Complete (Environment, Architecture, Boilerplate, Documentation & Git Sync Done)
-* **পরবর্তী ফেজ:** Phase 2 (On-Device AI Engine & TFLite Model Integration)
+* **তারিখ:** ৩১ অক্টোবর ২০২৬
+* **বর্তমান পর্যায়:** **UI/UX Design-First Workflow & Prompt Engine Prepared (Stage 2A Complete ✅)**
+* **চলমান কাজ:** ব্যবহারকারী ChatGPT-এর মাধ্যমে `Screen Workflow/` ফোল্ডারে ১৬টি স্ক্রিনের রেফারেন্স ডিজাইন ইমেজ জেনারেট ও সেভ করছেন।
+* **পরবর্তী কোডিং পর্যায়:** Phase 2B (ইমেজগুলোর রেফারেন্স ধরে Kotlin + Jetpack Compose-এ পিক্সেল-পারফেক্ট UI স্ক্রিন তৈরি)।
 * **GitHub Repository:** `https://github.com/saidur1004/SafeScreen.git`
-* **বিল্ড স্ট্যাটাস:** ✅ Gradle Compile & Build Successful (`./gradlew assembleDebug` - 0 errors, 41 tasks executed)
+* **বিল্ড স্ট্যাটাস:** ✅ Gradle Compile & Build Clean (`./gradlew assembleDebug` - 0 errors, 41 tasks executed)
 
 ---
 
 ## ১. আজ পর্যন্ত যা যা কাজ সফলভাবে সম্পন্ন হয়েছে (Completed Milestones)
 
-### ক. প্রজেক্ট ইনিশিয়ালাইজেশন ও কারিগরি এনভায়রনমেন্ট
-1. **প্রজেক্ট লোকেশন ও প্যাকেজ:** `/Users/betopia/StudioProjects/Projects_Another/SafeScreen` ডিরেক্টরিতে `com.safescreen.app` প্যাকেজ আইডিসহ একটি আধুনিক অ্যান্ড্রয়েড Kotlin KTS প্রজেক্ট ইনিশিয়ালাইজ করা হয়েছে।
+### ক. প্রজেক্ট ইনিশিয়ালাইজেশন ও আর্কিটেকচার সেটআপ (Phase 1)
+1. **প্রজেক্ট ক্রিয়েশন:** `/Users/betopia/StudioProjects/Projects_Another/SafeScreen` ডিরেক্টরিতে `com.safescreen.app` প্যাকেজ আইডিসহ সম্পূর্ণ অ্যান্ড্রয়েড Kotlin KTS প্রজেক্ট ইনিশিয়ালাইজ করা হয়েছে।
 2. **টুলচেন ও কম্প্যাটিবিলিটি:**
    - Min SDK: `29` (Android 10 - `AudioPlaybackCapture` সাপোর্টের জন্য বাধ্যতামূলক)
    - Compile SDK & Target SDK: `35` (Android 15)
@@ -39,100 +40,64 @@
    - Room Database `2.6.1` (KSP কম্পাইলার)
    - TensorFlow Lite & TFLite Support `2.16.1`
    - CameraX `1.4.1`
-4. **বিল্ড টেস্ট:** `./gradlew assembleDebug` কমান্ড রান করে ভ্যালিডেট করা হয়েছে। কোনো সিনট্যাক্স, ডিক্লারেশন বা ডিপেন্ডেন্সি কনফ্লিক্ট নেই।
+4. **Clean Architecture ফোল্ডার ও বয়লারপ্লেট:** `di`, `data` (local, repository, tflite), `domain` (model, repository, usecase), `presentation` (theme, components, navigation, screens), ও `services` (Foreground Service) রেডি।
 
 ---
 
-### খ. Clean Architecture ফোল্ডার স্ট্রাকচার ও বয়লারপ্লেট
-`app/src/main/java/com/safescreen/app/` এর অধীনে প্রতিটি লেয়ার সুবিন্যস্তভাবে সাজানো হয়েছে:
-* `/di`:
-  - `DatabaseModule.kt`: Room DB (`AppDatabase`), `StatDao`, ও `StatRepository` প্রোভাইডার।
-  - `AppModule.kt`: `@IoDispatcher`, `@MainDispatcher`, এবং `TFLiteClassifier` সিঙ্গলটন প্রোভাইডার।
-* `/data`:
-  - `local/entity/StatEntity.kt`: ব্লকিং ইভেন্ট ট্র্যাকিংয়ের জন্য Room Entity।
-  - `local/dao/StatDao.kt`: অফলাইন ডেটা কুয়েরি ও হিস্ট্রি রিঅ্যাক্টিভ ফ্লো (`Flow<List<StatEntity>>`)।
-  - `local/AppDatabase.kt`: ডেটাবেস স্কিমা ও মাইগ্রেশন কনফিগারেশন।
-  - `repository/StatRepositoryImpl.kt`: ডেটাবেস ও ডোমেইনের মাঝে রিপোজিটরি ইমপ্লিমেন্টেশন।
-  - `tflite/TFLiteClassifier.kt`: TFLite মডেল ইন্টারপ্রেটার ও ফ্রেম ক্লাসিফিকেশন র‍্যাপার।
-* `/domain`:
-  - `model/ShieldState.kt`: `Inactive`, `Active`, `ThreatDetected(message)`, `Paused` স্টেট।
-  - `model/ProtectionStat.kt`: `ProtectionType` (NSFW, Music, Reels, AppBlocked)।
-  - `repository/StatRepository.kt`: রিপোজিটরি ইন্টারফেস কন্ট্রাক্ট।
-  - `usecase/StartShieldUseCase.kt`: ফোরগ্রাউন্ড সার্ভিস চালুর ইউজকেস।
-  - `usecase/StopShieldUseCase.kt`: সার্ভিস বন্ধের ইউজকেস।
-  - `usecase/GetStatsUseCase.kt`: আজকের ও সর্বমোট ব্লকিং ডেটা পাওয়ার ইউজকেস।
-* `/presentation`:
-  - `theme/`: আধুনিক সাইবার-ডার্ক নিয়ন থিম (Deep Black `#07090E`, Neon Cyan `#00E5FF`, Neon Green `#00FF9D`, Neon Pink `#FF2A6D`) এবং গ্লাস মরফিক এফেক্ট।
-  - `components/`: `ShieldButton.kt` (পালসিং অ্যানিমেটেড নিয়ন শিল্ড সুইচ), `GlassmorphicCard.kt`।
-  - `navigation/`: `Screen.kt` ও `AppNavHost.kt` (৬টি স্ক্রিনের নেভিগেশন রাউট)।
-  - `screens/`:
-    1. `splash/SplashScreen.kt`: ব্র্যান্ড অ্যানিমেশন ও স্টার্টআপ।
-    2. `onboarding/OnboardingScreen.kt`: জিরো-ক্লাউড ও ১০০% প্রাইভেসি ভ্যালু প্রপোজিশন।
-    3. `permission/PermissionHubScreen.kt`: Overlay, Screen Capture, Audio Capture, ও Notification পারমিশন গাইড।
-    4. `home/HomeScreen.kt`: মূল ড্যাশবোর্ড, পালসিং শিল্ড বাটন, লাইভ মেট্রিক্স কার্ড।
-    5. `stats/StatsScreen.kt`: অফলাইন সেভ হওয়া পরিসংখ্যান ও প্রটেকশন চার্ট।
-    6. `settings/SettingsScreen.kt`: NSFW সেনসিটিভিটি, অটো-মিউট, রিলস লিমিট ও অ্যাপ হোয়াইটলিস্ট।
-* `/services`:
-  - `ShieldProtectionService.kt`: `foregroundServiceType="mediaProjection"` ভিত্তিক ফোরগ্রাউন্ড সার্ভিস যাতে ওএস ব্যাকগ্রাউন্ডে সার্ভিস কিল না করে।
-* রুট ক্লাসসমূহ:
-  - `SafeScreenApp.kt`: `@HiltAndroidApp` ক্লাস।
-  - `MainActivity.kt`: `@AndroidEntryPoint` এবং `AppNavHost` লোডার।
-* `AndroidManifest.xml`:
-  - সমস্ত প্রয়োজনীয় পারমিশন (`FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MEDIA_PROJECTION`, `RECORD_AUDIO`, `SYSTEM_ALERT_WINDOW`, `POST_NOTIFICATIONS`, `CAMERA`, `RECEIVE_BOOT_COMPLETED`) এবং সার্ভিস ডিফিনিশন সংযুক্ত।
+### খ. UI/UX স্ক্রিন ডিজাইন ও প্রম্পট ইঞ্জিন প্রস্তুতকরণ (Phase 2A - ৩১ অক্টোবর ২০২৬)
+ব্যবহারকারীর কৌশলগত পছন্দ অনুযায়ী (Design-First / UI-First Strategy) রুট ডিরেক্টরিতে একটি সম্পূর্ণ স্ক্রিন ডিজাইন ওয়ার্কফ্লো তৈরি করা হয়েছে:
+
+1. **ডিরেক্টরি ও ফোল্ডার তৈরি:** `Screen Workflow/` নামে রুট ফোল্ডার তৈরি করা হয়েছে এবং এর অধীনে ৮টি ক্যাটাগরি ফোল্ডার সেটআপ করা হয়েছে:
+   - `01_Onboarding/`
+   - `02_Permissions/`
+   - `03_Home_Dashboard/`
+   - `04_Reels_And_Focus/`
+   - `05_Stats_And_Analytics/`
+   - `06_Settings_And_Security/`
+   - `07_Overlays_And_Dialogs/`
+   - `08_Error_And_Empty_States/`
+2. **মাস্টার প্রম্পট বুক (`Screen Workflow/MASTER_UI_PROMPTS.md`):**
+   - **ChatGPT Master Context Initialization Prompt:** এআই ডিজাইনারের জন্য পূর্ণাঙ্গ কনটেক্সট, ভিশন, কালার টোকেন (Cyber-Dark Deep Black `#07090E`, Neon Cyan `#00E5FF`, Neon Green `#00FF9D`, Neon Pink `#FF2A6D`) এবং গ্লাস মরফিজম গাইডলাইন।
+   - **১৬টি স্ক্রিনের সুনির্দিষ্ট জোড়া প্রম্পট:**
+     - **প্রম্পট A:** ChatGPT দিয়ে পিক্সেল-পারফেক্ট মোবাইল UI ইমেজ তৈরির জন্য প্রম্পট।
+     - **প্রম্পট B:** পরবর্তীতে কোডিং এজেন্ট দ্বারা সংরক্ষিত ইমেজ দেখে Clean Architecture ও Jetpack Compose-এ ইমপ্লিমেন্ট করার নির্দেশিকা।
+3. **ওয়ার্কফ্লো ট্র্যাকার (`Screen Workflow/README.md`):**
+   - ফোল্ডার ম্যাপিং, Mermaid নেভিগেশন ম্যাপ এবং প্রতিটি স্ক্রিনের ইমেজ ও কোডিং স্ট্যাটাস ট্র্যাক করার চেকলিস্ট।
 
 ---
 
-### গ. পূর্ণাঙ্গ প্রজেক্ট ডকুমেন্টেশন সিস্টেম
-রুট ডিরেক্টরি ও `docs/research/` এ মোট ১০টি মাস্টার ডকুমেন্ট তৈরি ও আপডেট করা হয়েছে:
-1. `README.md` — প্রজেক্ট ওভারভিউ, টেক স্ট্যাক, ফোল্ডার স্ট্রাকচার ও বিল্ড রান গাইড।
-2. `Full Project Plan Initial.md` — প্রজেক্টের সম্পূর্ণ বিশদ মাস্টার প্ল্যান (রিলস সেকশন বাস্তবসম্মত বিকল্প দিয়ে আপডেটকৃত)।
-3. `PROJECT_CONTEXT_BN.md` — ভিশন, মূল দর্শন, ৩টি প্রধান স্তম্ভ এবং টেকনিক্যাল বাউন্ডারি।
-4. `ARCHITECTURE.md` — Clean Architecture লেয়ারসমূহ, ডেটাফ্লো এবং Mermaid ডায়গ্রাম।
-5. `DEVELOPMENT_ROADMAP.md` — ৯টি ফেজের রোডম্যাপ (Phase 1 সম্পন্ন, Phase 2 পরবর্তী)।
-6. `FEATURE_MATRIX.md` — সমস্ত ফিচারের স্ট্যাটাস, নির্ভরতা ও জটিলতা মেট্রিক্স।
-7. `TECHNICAL_FEASIBILITY.md` — Android ওএস সীমাবদ্ধতা (`FLAG_SECURE`, Audio Capture, ব্যাটারি বাজেট)।
-8. `PRIVACY_POLICY.md` — Zero-Cloud Policy এবং অন-ডিভাইস ডেটা প্রক্রিয়াকরণের শতভাগ গ্যারান্টি।
-9. `TESTING_STRATEGY.md` — ইউনিট, ইন্টিগ্রেশন, ইনফারেন্স লেটেন্সি বেঞ্চমার্ক ও ব্যাটারি প্রোফাইলিং গাইড।
-10. `docs/research/REELS_CONTROL_RESEARCH_BN.md` — রিলস নিয়ন্ত্রণে Android Sandboxing সীমাবদ্ধতা বনাম `UsageStatsManager` ও `AccessibilityService Overlay` কৌশল।
+## ২. রিলস ও শর্ট-ভিডিও বিষয়ে গৃহীত প্রযুক্তিগত সিদ্ধান্ত
 
----
-
-## ২. রিলস ও শর্ট-ভিডিও বিষয়ে গুরুত্বপূর্ণ প্রযুক্তিগত সিদ্ধান্ত
-
-* **পূর্বের অবাস্তব চিন্তা বাদ দেওয়া হয়েছে:** ৩য় পক্ষের অ্যাপে (Facebook, Instagram, YouTube) CSS-এর মতো DOM মুছে ফেলা বা ১০টি রিলস নিখুঁতভাবে গুনে লক করার ধারণাটি Android OS-এর "Sandboxing" এবং "Dynamic Obfuscation"-এর কারণে প্রায় অসম্ভব ও চরম ভঙ্গুর।
-* **গৃহীত বাস্তবসম্মত বিকল্প সমাধান:**
-  1. **App-Level Time Limit (`UsageStatsManager`):** নির্দিষ্ট অ্যাপে দৈনিক মোট ব্যবহারের সময়সীমা (যেমন সর্বোচ্চ ৩০ মিনিট) নির্ধারণ করে সময় শেষ হলে অ্যাপ ব্লক করা।
-  2. **Accessibility Blocker / Overlay (`AccessibilityService` + `WindowManager`):** ব্যবহারকারী যখন রিলস/শর্টস সেকশনে প্রবেশ করবেন, তখন `AccessibilityService` টেক্সট/নোড শনাক্ত করে তাৎক্ষণিকভাবে স্ক্রিনের ওপর একটি `TYPE_APPLICATION_OVERLAY` ব্লকার কার্ড (যেমন: *"Focus Time Active / Reels Blocked"*) ভাসিয়ে দেবে।
-  3. **Chrome Extension-এ কোনো পরিবর্তন নেই:** ব্রাউজারে DOM Manipulation দিয়ে রিলস সরাসরি হাইড বা রিমুভ করা ১০০% সম্ভব, তাই সেখানে প্রাথমিক পরিকল্পনাটিই বহাল থাকবে।
+* **৩য় পক্ষের অ্যাপে UI মোছা বা অবাস্তব কাউন্টিং বাদ:** অ্যান্ড্রয়েডের কঠোর "Sandboxing" এবং Meta/Google-এর "Dynamic Obfuscation"-এর কারণে ৩য় পক্ষের অ্যাপের ভেতর থেকে বাটন ডিলিট করা কিংবা অবফুসকেটেড অ্যাপে নিখুঁতভাবে ১০টি ভিডিও গোনা অসম্ভব ও ভঙ্গুর।
+* **গৃহীত বাস্তবসম্মত সমাধান:**
+  1. `UsageStatsManager` ব্যবহার করে পুরো অ্যাপের জন্য দৈনিক নির্দিষ্ট সময়সীমা নির্ধারণ (যেমন ৩০ মিনিট পর স্বয়ংক্রিয় অ্যাপ লক)।
+  2. `AccessibilityService` দিয়ে ব্যবহারকারী রিলস/শর্টস সেকশনে ঢুকলে সাথে সাথে `WindowManager` এর মাধ্যমে একটি নিশ্ছিদ্র ব্লকার ওভারলে ভাসিয়ে দেওয়া (`Focus Time Active` কার্ড)।
+  3. Chrome Extension-এ DOM Manipulation বহাল থাকবে।
 
 ---
 
 ## ৩. পরবর্তী এজেন্টের জন্য সুনির্দিষ্ট কাজের সিকোয়েন্স (Next Action Items for AI / Dev)
 
-যেকোনো নতুন এজেন্ট বা ডেভেলপার এই প্রজেক্ট হাতে নেওয়ার পর **Phase 2** থেকে কাজ শুরু করবেন। নিচের সিকোয়েন্সটি কঠোরভাবে অনুসরণ করুন:
+যেকোনো নতুন এজেন্ট বা ডেভেলপার এই প্রজেক্ট হাতে নেওয়ার পর নিচের সিকোয়েন্স অনুযায়ী কাজ করবেন:
 
-### ধাপ ১: অন-ডিভাইস TFLite মডেল সংগ্রহ ও অ্যাসেটস ইন্টিগ্রেশন
-* `app/src/main/assets/` ডিরেক্টরিতে হালকা ও কোয়ান্টাইজড TFLite মডেল যুক্ত করা:
-  - NSFW ইমেজ ক্লাসিফায়ারের জন্য একটি কোয়ান্টাইজড MobileNetV3 / EfficientNet-Lite মডেল (`nsfw_detector.tflite`)।
-  - অডিও ক্লাসিফিকেশনের জন্য YAMNet বা সমমানের লাইটওয়েট মডেল (`audio_classifier.tflite`)।
-* `app/build.gradle.kts` এ `aaptOptions { noCompress "tflite" }` কনফিগারেশন যোগ করা।
+### বর্তমান অবস্থান:
+* ব্যবহারকারী ChatGPT-তে `Screen Workflow/MASTER_UI_PROMPTS.md` ব্যবহার করে স্ক্রিনগুলোর ইমেজ জেনারেট করছেন এবং `Screen Workflow/` এর সংশ্লিষ্ট সাবফোল্ডারে ইমেজগুলো সংরক্ষণ করছেন।
 
-### ধাপ ২: TFLite ক্লাসিফায়ার বাস্তবায়ন (`com.safescreen.app.data.tflite.TFLiteClassifier`)
-* `TFLiteClassifier.kt` ফাইলে `classifyFrame(bitmap: Bitmap)` ফাংশনে আসল টেনসর ইনপুট ও আউটপুট প্রসেসিং সম্পূর্ণ করা।
-* `Interpreter.Options` এ থ্রেড সংখ্যা ও NNAPI / GPU ডেলিগেট কনফিগারেশন করা।
-* টেস্ট বিটম্যাপ দিয়ে ইনফারেন্স স্পিড (<৩০ মিলিসেকেন্ড) বেঞ্চমার্ক করা।
-
-### ধাপ ৩: MediaProjection ফ্রেম ক্যাপচার পাইপলাইন তৈরি (Phase 3)
-* `ShieldProtectionService.kt` এ `MediaProjectionManager`-এর ইনটেন্ট হ্যান্ডেল করে `VirtualDisplay` এবং `ImageReader` তৈরি করা।
-* ফ্রেম স্যাম্পলিং রেট প্রতি সেকেন্ডে ৩ থেকে ৫ ফ্রেমের মধ্যে সীমাবদ্ধ রাখা (ব্যাটারি সংরক্ষণের জন্য)।
-* ক্যাপচার করা ফ্রেম `TFLiteClassifier`-এ পাঠিয়ে NSFW ডিটেক্ট হলে `WindowManager` দিয়ে ব্লার ওভারলে ড্র করা।
-
-### ধাপ ৪: সেশন শেষে এই ফাইল আপডেট ও গিট পুশ
-* কাজ শেষ করে `PROJECT_PROGRESS.md` আপডেট করবেন এবং গিট পুশ করবেন।
+### পরবর্তী ধাপ (যখন ব্যবহারকারী কোড ইমপ্লিমেন্ট করতে বলবেন):
+1. **রেফারেন্স ইমেজ যাচাই:** `Screen Workflow/` ফোল্ডারের ইমেজগুলো দেখুন এবং সংশ্লিষ্ট স্ক্রিনের জন্য `MASTER_UI_PROMPTS.md` ফাইলের **প্রম্পট B** পড়ুন।
+2. **UI কোডিং (Jetpack Compose):**
+   - `presentation/screens/` এর ভেতরে প্রতিটি স্ক্রিনের কম্পোজ কোড লিখুন।
+   - **State Hoisting** বজায় রাখুন (`UiState` ডেটা ক্লাস ও ইভেন্ট ল্যাম্বডা ব্যবহার করুন)।
+   - প্রতিটি স্ক্রিনে ডামি/মক ডেটা দিয়ে `@Preview` তৈরি করুন যাতে অ্যান্ড্রয়েড স্টুডিওতে সরাসরি প্রিভিউ দেখা যায়।
+   - লাইট ও ডার্ক মোডের জন্য কালার টোকেন সামঞ্জস্যপূর্ণ রাখুন।
+3. **ফিচার ও ব্যাকএন্ড সংযোগ (পরবর্তী ধাপসমূহ):**
+   - স্ক্রিন ডিজাইন শেষ হলে Phase 3-তে TFLite মডেল ইন্টিগ্রেশন এবং Phase 4-তে MediaProjection ও AccessibilityService সংযোগ করা হবে।
+4. **সেশন শেষে এই ফাইল আপডেট ও গিট পুশ:**
+   - প্রতিটি কাজের শেষে `PROJECT_PROGRESS.md` আপডেট করতে হবে এবং গিট পুশ করতে হবে।
 
 ---
 
 ## ৪. গিট ও রিপোজিটোরি স্ট্যাটাস (Git Status)
 * **Remote Repository URL:** `https://github.com/saidur1004/SafeScreen.git`
 * **Default Branch:** `main`
-* **Commit History:** সমস্ত প্রাথমিক সোর্স কোড, বিল্ড কনফিগারেশন এবং পূর্ণাঙ্গ ডকুমেন্টেশন মেইন ব্রাঞ্চে কমিট ও পুশ করা হয়েছে।
+* **Commit History:** সমস্ত প্রাথমিক সোর্স কোড, বিল্ড কনফিগারেশন, মাস্টার ডকুমেন্টেশন এবং স্ক্রিন ওয়ার্কফ্লো প্রম্পট ডিরেক্টরি মেইন ব্রাঞ্চে সিঙ্ক করা হয়েছে।
