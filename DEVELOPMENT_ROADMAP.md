@@ -1,91 +1,115 @@
 # SafeScreen — ডেভেলপমেন্ট রোডম্যাপ (Development Roadmap)
 
-এই রোডম্যাপটি SafeScreen প্রজেক্টের পরিকল্পনা থেকে শুরু করে চূড়ান্ত প্রকাশ পর্যন্ত পর্যায়ক্রমিক রূপরেখা প্রদান করে।
+এই রোডম্যাপটি SafeScreen প্রজেক্টের পরিকল্পনা থেকে শুরু করে চূড়ান্ত প্রকাশ পর্যন্ত বাস্তবসম্মত ও পর্যায়ক্রমিক রূপরেখা প্রদান করে। এটি অ্যাপ্লিকেশনের Design-First স্ট্র্যাটেজি এবং আর্কিটেকচারাল নির্ভরতার সাথে সম্পূর্ণ সামঞ্জস্যপূর্ণ।
 
 ---
 
 ## 📌 রোডম্যাপ ফেজসমূহ
 
 ```mermaid
-flowchart LR
-    P1[Phase 1: Setup & Docs] --> P2[Phase 2: AI Engine]
-    P2 --> P3[Phase 3: Screen Blur]
-    P3 --> P4[Phase 4: Audio Mute]
-    P4 --> P5[Phase 5: Reels Control]
-    P5 --> P6[Phase 6: Room & Analytics]
-    P6 --> P7[Phase 7: Security & Lock]
-    P7 --> P8[Phase 8: Chrome Extension]
-    P8 --> P9[Phase 9: Hardening & Release]
+flowchart TD
+    P1[Phase 1: Setup & Architecture Setup ✅] --> P2A[Phase 2A: UI Design System & Master Prompts ✅]
+    P2A --> P2B[Phase 2B: Compose UI Screens & Navigation Graph ⏳]
+    P2B --> P3[Phase 3: Persistence - DataStore & Room DB]
+    P3 --> P4[Phase 4: Android Permissions & Readiness Engine]
+    P4 --> P5[Phase 5: System Overlays & Reels Accessibility Service]
+    P5 --> P6[Phase 6: On-Device AI Core - TFLite Vision & Audio]
+    P6 --> P7[Phase 7: Security Guard - PIN & Biometrics]
+    P7 --> P8[Phase 8: Chrome Extension - Web Companion]
+    P8 --> P9[Phase 9: Profiling, Battery Optimization & Hardening]
+    P9 --> P10[Phase 10: Play Store Compliance & Production Release]
 ```
 
 ---
 
 ### ফেজ ১: প্রজেক্ট ইনিশিয়ালাইজেশন ও আর্কিটেকচার সেটআপ (সম্পন্ন ✅)
-- [x] Android Kotlin KTS প্রজেক্ট সেটআপ (Min SDK 29, Target SDK 35)।
+- [x] Android Kotlin KTS প্রজেক্ট সেটআপ (Min SDK 29, Target SDK 35, Java 21/17, Gradle 8.14)।
 - [x] Jetpack Compose, Material 3, Navigation, Dagger-Hilt, Room, TFLite ডিপেন্ডেন্সি কনফিগারেশন।
 - [x] Clean Architecture অনুযায়ী ৩-লেয়ার ফোল্ডার স্ট্রাকচার (data, domain, presentation, services, di)।
-- [x] নেভিগেশন হোস্ট সহ ৬টি স্ক্রিনের ডামি ও কম্পোনেন্ট আর্কিটেকচার।
 - [x] সাইবার-ডার্ক ও নিয়ন গ্লাস মরফিক থিম ইমপ্লিমেন্টেশন।
-- [x] সার্বিক প্রজেক্ট ডকুমেন্টেশন সিস্টেম প্রস্তুতকরণ।
-- [x] Gradle বিল্ড ও কম্পাইলেশন যাচাই (`./gradlew assembleDebug` সফল)।
+- [x] Gradle বিল্ড ও কম্পাইলেশন যাচাই (`./gradlew clean` ও বিল্ড সফল)।
 
 ---
 
-### ফেজ ২: অন-ডিভাইস মেশিন লার্নিং ইঞ্জিন (On-Device AI Engine)
-- [ ] হালকা ওয়ান-ডিভাইস NSFW ইমেজ ক্লাসিফিকেশন TFLite মডেল (MobileNetV3 বা EfficientNet-Lite ভিত্তিক কোয়ান্টাইজড INT8) নির্বাচন ও ইন্টিগ্রেশন।
-- [ ] ইয়ামনেট (YAMNet) বা কাস্টম অডিও ক্লাসিফিকেশন TFLite মডেল ইন্টিগ্রেশন (মিউজিক বনাম কথা শনাক্ত করার জন্য)।
-- [ ] CPU বনাম NNAPI / GPU ডেলিগেটের পারফরম্যান্স ও লেটেন্সি বেঞ্চমার্কিং।
-- [ ] মেমরি লিক রোধ ও গার্বেজ কালেকশন (GC) প্রেসার কমানোর জন্য অপ্টিমাইজড বাফার ম্যানেজমেন্ট।
+### ফেজ ২A: UI/UX ডিজাইন-ফার্স্ট ওয়ার্কফ্লো ও সেন্ট্রাল ডিজাইন সিস্টেম (সম্পন্ন ✅)
+- [x] `Screen Workflow/` ফোল্ডারের অধীনে ৮টি ক্যাটাগরিতে ১৬টি স্ক্রিনের সম্পূর্ণ ইউজার ফ্লো ম্যাপিং।
+- [x] ChatGPT-এর সাহায্যে ১৬টি স্ক্রিনের ভিজ্যুয়াল রেফারেন্স ডিজাইন ইমেজ তৈরি ও সংরক্ষণ।
+- [x] প্রতিটি স্ক্রিনের জন্য সেলফ-কন্টেইন্ড কোডিং প্রম্পট সহ `Screen Workflow/MASTER_UI_PROMPTS.md` পুনর্লিখন।
+- [x] সেন্ট্রাল ডিজাইন স্পেসিফিকেশন [**`DESIGN.md`**](./DESIGN.md) তৈরি (কালার টোকেন, টাইপোগ্রাফি, গ্লাস মরফিজম, আইকন রুলস ও কোডিং এজেন্টের কাজের নিয়মাবলি)।
+- [x] `PROJECT_PROGRESS.md` হালনাগাদ ও সমস্ত আর্কিটেকচারাল সিদ্ধান্তের নথিবদ্ধকরণ।
 
 ---
 
-### ফেজ ৩: স্ক্রিন ক্যাপচার ও রিয়েল-টাইম ব্লার ওভারলে (Screen Capture & Blur)
-- [ ] `MediaProjectionManager` দিয়ে ইউজার সম্মতি নিয়ে ভার্চুয়াল ডিসপ্লে (`ImageReader`) তৈরি।
-- [ ] ফ্রেমরেট অপটিমাইজেশন: প্রতি সেকেন্ডে সর্বোচ্চ ৩-৫টি ফ্রেম স্যাম্পলিং এবং স্ট্যাটিক স্ক্রিন ডিটেকশন।
-- [ ] `WindowManager`-এর মাধ্যমে `TYPE_APPLICATION_OVERLAY` উইন্ডোতে ব্লার ইফেক্ট ভিউ রেন্ডারিং।
-- [ ] রিয়েল-টাইমে NSFW কনটেন্ট শনাক্ত হলে তাৎক্ষণিক ব্লার ও কনটেন্ট চলে গেলে আনব্লার লজিক।
-- [ ] `FLAG_SECURE` সংক্রান্ত এক্সেপশন হ্যান্ডলিং।
+### ফেজ ২B: প্রেজেন্টেশন লেয়ার ও ১৬টি স্ক্রিনের কম্পোজ ইমপ্লিমেন্টেশন (বর্তমান টার্গেট ⏳)
+- [ ] `presentation/navigation/Screen.kt`-এ ১৬টি স্ক্রিন ও বটম শিটের পূর্ণাঙ্গ রুট ম্যাপ ডিফাইন করা।
+- [ ] কোর অ্যাটমিক কম্পোনেন্টস তৈরি: `TimeLimitSlider`, `SafeScreenStateView`, `NeonPillBadge` ইত্যাদি।
+- [ ] মডিউল ০১: `SplashScreen` ও `OnboardingScreen` (৩-স্লাইড পেজার) তৈরি।
+- [ ] মডিউল ০২: `PermissionHubScreen` ও `BatteryOptimizationDialog` বটম শিট তৈরি।
+- [ ] মডিউল ০৩: `HomeScreen` (পালসিং সেন্ট্রাল শিল্ড, লাইভ মেট্রিক কার্ডস) ও `BlurStylePreviewSheet` তৈরি।
+- [ ] মডিউল ০৪: `ReelsControlScreen` ও `FocusScheduleScreen` তৈরি।
+- [ ] মডিউল ০৫: `StatsScreen` (Compose Canvas চার্ট) ও `DetailedActivityLogScreen` তৈরি।
+- [ ] মডিউল ০৬: `SettingsScreen`, `AppWhitelistScreen` ও `SecurityLockScreen` তৈরি।
+- [ ] মডিউল ০৭: `LiveBlurOverlayView` ও `FocusInterventionOverlay` কম্পোজেবল প্রস্তুতকরণ।
+- [ ] মডিউল ০৮: `SafeScreenStates` (All Clean, Permission Paused, AI Core Error) কম্পোজেবলস তৈরি।
+- [ ] প্রতিটি স্ক্রিনে **State Hoisting** (`UiState` ও `UiEvent`) এবং ডার্ক/লাইট মোডে `@Preview` নিশ্চিতকরণ।
 
 ---
 
-### ফেজ ৪: অডিও ক্যাপচার ও অটো-মিউট প্রোটেকশন (Audio Capture & Auto-Mute)
-- [ ] Android 10+ এর `AudioPlaybackCaptureConfiguration` ব্যবহার করে `AudioRecord` স্ট্রিম ওপেন।
-- [ ] মাইক্রোফোন ইনপুটের বদলে ডিভাইসের ইন্টারনাল মিডিয়া অডিও ট্র্যাক ক্যাপচার।
-- [ ] অডিও স্পেকট্রোগ্রাম ফ্রেম TFLite মডেলে পাঠিয়ে মিউজিক প্যাটার্ন যাচাই।
-- [ ] মিউজিক শনাক্ত হলে `AudioManager.requestAudioFocus` অথবা স্ট্রিম ভলিউম সাপ্রেস করে মিউট করা।
+### ফেজ ৩: লোকাল ডেটা ও কনফিগারেশন ম্যানেজমেন্ট (DataStore & Room DB)
+- [ ] DataStore Preferences সেটআপ (শিল্ড স্টেট, ব্লার স্টাইল ও ইনটেনসিটি, রিলস লিমিট, পিন হ্যাশ)।
+- [ ] Room SQLite ডাটাবেস এনটিটি ও ডিএও সম্প্রসারণ (`StatEntity`, `FocusScheduleEntity`, `WhitelistEntity`)।
+- [ ] ডোমেইন UseCase-সমূহের সাথে রিপোজিটরি ডেটা সংযোগ (`GetStatsUseCase`, `SaveBlurConfigUseCase`)।
+- [ ] ভিউমডেলের `StateFlow`-কে রুম ও ডাটাস্তোরের সাথে রিয়েক্টিভলি যুক্ত করা।
 
 ---
 
-### ফেজ ৫: Reels, Shorts ও TikTok কন্ট্রোল (Short-Form Video Interventions)
-- [ ] `AccessibilityService` কনফিগার করে Facebook, Instagram, YouTube এবং TikTok-এর নোড হায়ারার্কি ট্র্যাক করা।
-- [ ] শর্টস/রিলস স্ক্রিনে প্রবেশ করার ইভেন্ট ও স্ক্রল কাউন্ট হিসাব করা।
-- [ ] দৈনিক সময়সীমা শেষ হলে ওভারলে অ্যালার্ট বা স্বয়ংক্রিয়ভাবে হোম স্ক্রিনে ফিরে আসার জেসচার অ্যাকশন।
-- [ ] অ্যাপ আপডেটজনিত নোড আইডি পরিবর্তন প্রতিরোধে রেজিলিয়েন্ট ফলব্যাক মেকানিজম।
+### ফেজ ৪: পারমিশন ইঞ্জিন ও ডিভাইস রেডি-নেস হাব (Real OS Permissions)
+- [ ] `Settings.canDrawOverlays(context)` ও ওভারলে পারমিশন লঞ্চার হ্যান্ডলিং।
+- [ ] Android 13+ `POST_NOTIFICATIONS` ও `RECORD_AUDIO` রানটাইম পারমিশন হ্যান্ডলিং।
+- [ ] `PowerManager.isIgnoringBatteryOptimizations` ব্যাটারি এক্সেম্পশন রিকোয়েস্ট লঞ্চার।
+- [ ] `AccessibilityManager` এনেবলড সার্ভিস ট্র্যাকিং।
+- [ ] `MediaProjectionManager.createScreenCaptureIntent()` স্ক্রিন শেয়ারিং ইন্টেন্ট লঞ্চার।
 
 ---
 
-### ফেজ ৬: অ্যানালিটিক্স, অফলাইন স্ট্যাটিস্টিকস ও ডেটাবেস
-- [ ] Room SQLite-এ ব্লার কাউন্ট, মিউট কাউন্ট ও স্ক্রলিং টাইম সেভ করার UseCase তৈরি।
-- [ ] `StatsScreen`-এ লাইভ চার্ট ও উইকলি সামারি গ্রাফ (Compose Canvas দিয়ে) রেন্ডার করা।
-- [ ] সম্পূর্ণ ডেটা লোকাল ডিভাইসে এনক্রিপ্ট করার অপশন।
+### ফেজ ৫: সিস্টেম ওভারলে ও রিলস ইন্টারভেনশন সার্ভিস (Background & Overlays)
+- [ ] `ShieldProtectionService` ফোরগ্রাউন্ড সার্ভিস ম্যানেজমেন্ট (`foregroundServiceType="mediaProjection"`)।
+- [ ] `WindowManager` (`TYPE_APPLICATION_OVERLAY`) এ `ComposeView` দিয়ে লাইভ ব্লার উইন্ডো রেন্ডারিং।
+- [ ] `SafeScreenAccessibilityService` রেজিস্টার করে ইনস্টাগ্রাম, ইউটিউব, টিকটক ও ফেসবুকের রিলস নোড ট্র্যাক করা।
+- [ ] দৈনিক সময়সীমা শেষ হলে স্বয়ংক্রিয়ভাবে `FocusInterventionOverlay` ডিসপ্লে ও হোম স্ক্রিনে ফিরে আসার জেসচার।
 
 ---
 
-### ফেজ ৭: অ্যাপ হোয়াইটলিস্ট ও সিকিউরিটি লক (Security & Whitelist)
-- [ ] ইনস্টল করা অ্যাপের লিস্ট আনা এবং ব্যবহারকারীকে সুরক্ষামুক্ত অ্যাপ বেছে নেওয়ার ইন্টারফেস প্রদান।
-- [ ] `BiometricPrompt` এবং পাসকোড লক ইন্টিগ্রেশন, যাতে অনাকাঙ্ক্ষিতভাবে কেউ সেটিংস পরিবর্তন করতে না পারে।
+### ফেজ ৬: অন-ডিভাইস এআই মেশিন লার্নিং কোর (TFLite Vision & Audio Guard)
+- [ ] কোয়ান্টাইজড INT8 NSFW TFLite মডেল (MobileNetV3 / EfficientNet-Lite) `assets/models/` এ যুক্ত করা।
+- [ ] `MediaProjection` -> `ImageReader` ফ্রেম ক্যাপচার লুপ (৩–৫ FPS) ও স্ট্যাটিক স্ক্রিন ডিটেকশন।
+- [ ] `AudioPlaybackCaptureConfiguration` দিয়ে ইন্টারনাল অডিও স্ট্রিম নিয়ে YAMNet ক্লাসিফিকেশন ও অটো-মিউট।
+- [ ] হোয়াইটলিস্ট করা অ্যাপের জন্য ফ্রেম প্রসেসিং ও অডিও ফিল্টারিং বাইপাস লজিক।
 
 ---
 
-### ফেজ ৮: Google Chrome Extension (Web Platform)
-- [ ] Manifest V3 স্ট্রাকচার তৈরি।
-- [ ] ওয়েব পেজে `MutationObserver` দিয়ে ইমেজ ও ভিডিও এলিমেন্ট ডিটেক্ট করা।
-- [ ] WebAssembly / TFLite Web অথবা লাইটওয়েট রুলস দিয়ে ব্রাউজারে ব্লার ও অডিও কন্ট্রোল।
+### ফেজ ৭: সিকিউরিটি গার্ড ও বায়োমেট্রিক অথেন্টিকেশন (Security Lock)
+- [ ] `androidx.biometric.BiometricPrompt` এবং ক্রিপ্টোগ্রাফিক পিন হ্যাশ যাচাই।
+- [ ] হোম স্ক্রিনের শিল্ড অফ করা বা সেটিংস খোলার সময় সিকিউরিটি গেট পপ-আপ।
+- [ ] ভুল পিনের জন্য কুলডাউন টাইম-লক মেকানিজম।
 
 ---
 
-### ফেজ ৯: পারফরম্যান্স অপটিমাইজেশন, টেস্টিং ও প্রোডাকশন
-- [ ] Android Studio Profiler দিয়ে ব্যাটারি কনজাম্পশন ড্রেন প্রোফাইলিং।
-- [ ] রিগ্রেশন ও স্ট্রেস টেস্ট সম্পন্ন করা।
-- [ ] প্রোডাকশন ProGuard/R8 রুলস এবং রিলিজ বিল্ড প্রস্তুতি।
+### ফেজ ৮: Google Chrome Extension (Web Platform Companion)
+- [ ] Manifest V3 স্ট্রাকচার, Service Worker ও Content Scripts তৈরি।
+- [ ] ওয়েবে `DOM MutationObserver` দিয়ে ইমেজ ও ভিডিও ট্র্যাক করে ব্লার করা।
+- [ ] CSS Injection দিয়ে ইউটিউব শর্টস ও ইনস্টাগ্রাম রিলস শেলফ পুরোপুরি লুকিয়ে ফেলা।
 
+---
+
+### ফেজ ৯: পারফরম্যান্স অপটিমাইজেশন, ব্যাটারি প্রোফাইলিং ও হার্ডেনিং
+- [ ] Android Studio Profiler দিয়ে ব্যাটারি খরচ প্রতি ঘণ্টায় < ৩-৪% এবং র‍্যাম < ১৫০MB নিশ্চিত করা।
+- [ ] মেমোরি লিক ও গার্বেজ কালেকশন (GC) প্রেসার অপটিমাইজেশন।
+- [ ] ProGuard / R8 রুলস এবং প্রোডাকশন বিল্ড কনফিগারেশন।
+
+---
+
+### ফেজ ১০: গুগল প্লে কমপ্লায়েন্স ও প্রোডাকশন রিলিজ
+- [ ] Prominent Disclosure ও প্রাইভেসি পলিসি ডায়ালগ কনফার্মেশন।
+- [ ] গুগল প্লে কনসোলে Accessibility & Foreground Service ব্যবহারের সুনির্দিষ্ট ডিক্লারেশন।
+- [ ] প্রোডাকশন রিলিজ বিল্ড (`release.aab`) সাইন ও প্রকাশ।

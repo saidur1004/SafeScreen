@@ -1,530 +1,708 @@
-# SafeScreen — মাস্টার UI/UX স্ক্রিন ডিজাইন ও কোড ইমপ্লিমেন্টেশন প্রম্পট বুক
-> **ব্যবহারের নির্দেশিকা:**  
-> এই ফাইলটিতে SafeScreen অ্যান্ড্রয়েড অ্যাপ্লিকেশনের সমস্ত স্ক্রিনের ডিজাইন ইমেজ ChatGPT থেকে তৈরি করার জন্য এবং পরবর্তীতে কোডিং এজেন্ট দ্বারা Kotlin + Jetpack Compose-এ ইমপ্লিমেন্ট করার জন্য ধাপে ধাপে সাজানো প্রম্পট দেওয়া হয়েছে।
+# SafeScreen — Master UI/UX Screen Design & Production Implementation Guide
+> **Document Purpose:**  
+> এই ফাইলটি SafeScreen অ্যান্ড্রয়েড অ্যাপ্লিকেশনের সমস্ত স্ক্রিনের ভিজ্যুয়াল রেফারেন্স, ডিজাইন আর্কিটেকচার এবং Kotlin + Jetpack Compose-এ পিক্সেল-পারফেক্ট ইমপ্লিমেন্টেশনের জন্য একটি সম্পূর্ণ এবং স্বয়ংসম্পূর্ণ (Self-Contained) মাস্টার প্রম্পট বুক।  
+> প্রতিটি স্ক্রিনের জন্য আলাদা কোডিং এজেন্ট প্রম্পট (Prompt B) এমনভাবে সমৃদ্ধ করা হয়েছে যাতে যেকোনো এআই এজেন্ট বা মানব ডেভেলপার শুধু সেই নির্দিষ্ট প্রম্পটটি পড়েই স্ক্রিনের উদ্দেশ্য, ভিজ্যুয়াল রেফারেন্স, স্টেট ম্যানেজমেন্ট (`UiState`), আর্কিটেকচারাল কানেকশন, ওএস সার্ভিস ইন্টিগ্রেশন এবং টেস্টিং ক্রাইটেরিয়া স্পষ্টভাবে বুঝতে পারে।
 
 ---
 
-# অংশ ১: ChatGPT-এর জন্য মাস্টার কনটেক্সট ইনিশিয়ালাইজেশন প্রম্পট
-*(ডিজাইন তৈরির শুরুতে ChatGPT-তে নতুন একটি চ্যাট খুলে প্রথমেই নিচের সম্পূর্ণ প্রম্পটটি দিন। এটি নিশ্চিত করবে যে ChatGPT অ্যাপটির উদ্দেশ্য ও ডিজাইন থিম পুরোপুরি বুঝে নিয়েছে।)*
+# অংশ ১: এআই ডিজাইনারের জন্য মাস্টার কনটেক্সট ইনিশিয়ালাইজেশন
+*(ChatGPT-তে নতুন কনভারসেশন শুরু করার সময় এই প্রম্পটটি একবার দিতে হবে।)*
 
 ```markdown
 Role & Persona:
-You are an Elite Principal UI/UX Designer and Lead Android Systems Architect specializing in modern, award-winning Mobile App Interfaces. You design high-fidelity, production-grade Android apps adhering strictly to Google Material 3 Design Guidelines, with a futuristic "Cyber-Dark Privacy" and "Clean Minimalist Light" design language.
+You are an Elite Principal Mobile UI/UX Designer and Lead Android Systems Architect specializing in production-grade mobile app interfaces. You design high-fidelity, polished Android apps adhering strictly to Google Material 3 Design Guidelines, with a futuristic "Cyber-Dark Privacy" design language.
 
 Project Context — SafeScreen:
-SafeScreen is a cutting-edge, Privacy-First Digital Wellbeing and On-Device Content Filtering application for Android (Min SDK 29, Android 10+; Target SDK 35, Android 15).
-The core philosophy is "100% On-Device AI, Absolute Zero Cloud Upload, No Trackers".
+SafeScreen is an advanced, Privacy-First Digital Wellbeing and On-Device Content Filtering application for Android (Min SDK 29, Android 10+; Target SDK 35, Android 15).
+Core Philosophy: 100% On-Device AI, Absolute Zero Cloud Upload, No Third-Party Trackers.
 
-The app solves 3 primary problems:
-1. Visual Protection: Detects explicit/NSFW images and video frames in real-time using on-device TFLite models and instantly applies a smooth, frosted-glass blur overlay.
-2. Audio Protection: Detects background music or unwanted sound in supported media using AudioPlaybackCapture API and automatically mutes/suppresses audio.
+Core Problems Addressed:
+1. Visual Protection: Detects explicit/NSFW images and video frames in real-time using on-device TFLite models and instantly applies a frosted-glass blur overlay.
+2. Audio Protection: Detects background music or unwanted sound in supported media using AudioPlaybackCapture API and automatically mutes/suppresses audio via AudioManager.
 3. Reels & Shorts Control: Curbs infinite doomscrolling in Facebook Reels, Instagram Reels, YouTube Shorts, and TikTok using daily time limits (UsageStatsManager) and Focus Intervention Overlays (AccessibilityService + WindowManager).
 
-Design Identity & Visual Language:
-- Aesthetic: Modern Cyberpunk-meets-Apple-Cleanliness. Futuristic yet calm, trust-inspiring, premium, and distraction-free.
-- Color Palette (Dark Mode - Primary):
-  * Deep Backgrounds: Deep Cyber Black (#07090E), Dark Obsidian Surface (#0F141F), Elevated Slate (#161D2D).
-  * Neon Accents: Neon Electric Cyan (#00E5FF) for interactive states, Neon Bio-Green (#00FF9D) for active shield/security, Neon Pink (#FF2A6D) for threat/block warnings, Neon Purple (#9D4EDD) for focus mode.
-  * Text & Glass: Pure White (#F1F5F9), Muted Slate (#94A3B8), Glassmorphic frosted borders (1dp border with 20% alpha gradient).
-- Color Palette (Light Mode - Secondary):
-  * Clean Crisp White (#FFFFFF), Soft Mist Background (#F8FAFC), Deep Charcoal Text (#0F172A), Vivid Cobalt Blue & Teal Accents.
-- Typography: Clean sans-serif (Inter / Roboto Flex style), strong visual hierarchy, bold numbers for counters, readable microcopy.
-- Key Elements: Frosted glassmorphic cards, glowing neon indicator rings, smooth switch toggles, rounded corners (20dp to 28dp), tactile feedback cues.
-
-Instructions for Future Screen Generations:
-1. In this conversation, I will provide sequential prompts to generate high-fidelity UI/UX design mockups for SafeScreen's complete user journey.
-2. Every design MUST maintain strict visual consistency in branding, fonts, icon style (Outlined Material Symbols), and button shapes.
-3. Do NOT produce generic, cluttered, or sci-fi movie interfaces. Produce realistic, implementable, pixel-perfect Android mobile UI mockups that look ready for Google Play Store showcase.
-4. Ensure full responsiveness for modern Android aspect ratios (19.5:9, 20:9), proper system status bars, edge-to-edge navigation bars, and accessible touch targets (minimum 48dp).
-
-Acknowledge that you have thoroughly understood the project vision, core values, color tokens, and design rules. Respond with: "SafeScreen Design Engine Initialized. Please provide the first screen prompt."
+Design Identity & Visual Tokens:
+- Aesthetic: Cyberpunk meets Apple Cleanliness. High contrast, neon accents, dark surfaces, tactile micro-interactions.
+- Color Tokens:
+  * Backgrounds: Deep Cyber Black (`#07090E`), Dark Obsidian Surface (`#0F141F`), Elevated Slate (`#161D2D`), Surface Highlight (`#1E283D`).
+  * Neon Accents: Electric Cyan (`#00E5FF`), Bio-Green (`#00FF9D`), Neon Pink (`#FF2A6D`), Neon Purple (`#9D4EDD`), Warning Yellow (`#FFD166`).
+  * Typography & Grays: Pure White (`#F1F5F9`), Slate Gray (`#94A3B8`), Muted Slate (`#64748B`).
+  * Glassmorphism: Frosted borders (`1dp` solid with `0x33FFFFFF`), glass surface gradient (`0x1A00E5FF`), subtle drop shadows.
+- Typography: Roboto / Inter style, high-legibility sans-serif, bold numbers for metric counters.
 ```
 
 ---
 
-# অংশ ২: সম্পূর্ণ স্ক্রিনের তালিকা ও ব্যবহারকারীর যাত্রাপথ (User Journey)
+# অংশ ২: ব্যবহারকারী যাত্রাপথ ও স্ক্রিন ডিরেক্টরি ম্যাপিং
 
-নিচে অ্যাপটির সম্পূর্ণ ব্যবহারকারী যাত্রাপথকে ৮টি ফোল্ডার ও ১৬টি সুনির্দিষ্ট স্ক্রিন/স্টেটে বিভক্ত করা হলো:
-
-| ক্রম | ফোল্ডার ও স্ক্রিনের নাম | স্ক্রিনের ধরন | প্রধান উদ্দেশ্য ও ভূমিকা |
-| :---: | :--- | :--- | :--- |
-| **01** | `01_Onboarding/01_SplashScreen` | Full Screen | ব্র্যান্ড আইডেন্টিটি, নিয়ন শিল্ড পালস ও ব্যাকগ্রাউন্ড ইনিশিয়ালাইজেশন। |
-| **02** | `01_Onboarding/02_OnboardingPager` | Full Screen | ৩টি ইন্টারেক্টিভ স্লাইড (Visual, Audio, Reels) ও ১০০% প্রাইভেসি অঙ্গীকার। |
-| **03** | `02_Permissions/03_PermissionHub` | Full Screen | Overlay, Screen Capture, Audio, Notification ও Accessibility পারমিশন কার্ডস। |
-| **04** | `02_Permissions/04_BatteryOptimizationDialog` | Dialog / Sheet | ব্যাকগ্রাউন্ড প্রোটেকশন সচল রাখতে আনরেস্ট্রিক্টেড ব্যাটারি অনুমতির ব্যখ্যা। |
-| **05** | `03_Home_Dashboard/05_HomeScreen` | Core Screen | মূল ড্যাশবোর্ড, সেন্ট্রাল পালসিং শিল্ড বাটন, লাইভ ব্লক কাউন্টার ও কুইক টগলস। |
-| **06** | `03_Home_Dashboard/06_BlurStylePreviewSheet` | Bottom Sheet | Gaussian Blur vs Pixelation vs Censored Box প্রিভিউ ও ইনটেনসিটি স্লাইডার। |
-| **07** | `04_Reels_And_Focus/07_ReelsControlScreen` | Full Screen | ইনস্টাগ্রাম, ইউটিউব, টিকটক টার্গেট সিলেকশন, সময়সীমা ও ইন্টারভেনশন মোড। |
-| **08** | `04_Reels_And_Focus/08_FocusScheduleScreen` | Full Screen | পড়াশোনা ও ঘুমের সময়ে রিলস সম্পূর্ণ নিষিদ্ধ রাখার শিডিউলার। |
-| **09** | `05_Stats_And_Analytics/09_StatsScreen` | Core Screen | সাপ্তাহিক/মাসিক ফিল্টারিং চার্ট, ক্যাটাগরি পাই চার্ট ও অ্যাপ ব্রেকডাউন। |
-| **10** | `05_Stats_And_Analytics/10_DetailedActivityLog` | Full Screen | কোন সময়ে কোন অ্যাপে কী ব্লক হয়েছিল তার সম্পূর্ণ অফলাইন টাইমলাইন। |
-| **11** | `06_Settings_And_Security/11_SettingsScreen` | Core Screen | AI সেনসিটিভিটি (Strict/Balanced), স্যাম্পলিং এফপিএস, ডাটা ক্লিয়ার ও পলিসি। |
-| **12** | `06_Settings_And_Security/12_AppWhitelistScreen` | Full Screen | ইনস্টল থাকা অ্যাপের তালিকা ও প্রোটেকশন থেকে বাদ দেওয়ার সুইচ। |
-| **13** | `06_Settings_And_Security/13_SecurityLockScreen` | Full Screen / Sheet | সেটিংস বা শিল্ড আনআর্ম করা আটকাতে সাইবার-ডার্ক PIN প্যাড ও বায়োমেট্রিক। |
-| **14** | `07_Overlays_And_Dialogs/14_LiveBlurOverlayView` | Floating Window | স্ক্রিনে আপত্তিকর দৃশ্য এলে ওএস-এর ওপর যে ফ্রস্টেড ব্লার উইন্ডো রেন্ডার হবে। |
-| **15** | `07_Overlays_And_Dialogs/15_FocusInterventionOverlay` | Floating Window | রিলসে ঢুকলে যে কার্ড ভাসবে: "Focus Time Active! Take a 5-min break"। |
-| **16** | `08_Error_And_Empty_States/16_EmptyAndErrorStates` | State Views | নো-থ্রেট এম্পটি স্টেট, পারমিশন ডিনাইড ওয়ার্নিং ও মডেল লোডিং ফেইলর স্টেট। |
+| ক্রম | মডিউল ও স্ক্রিনের নাম | স্ক্রিনের ধরন | টার্গেট Kotlin ফাইল পাথ | সংরক্ষিত ভিজ্যুয়াল রেফারেন্স ইমেজ |
+| :---: | :--- | :--- | :--- | :--- |
+| **01** | `01_SplashScreen` | Full Screen | `presentation/screens/splash/SplashScreen.kt` | `Screen Workflow/01_Onboarding/SafeScreen Cybersecurity Onboard Due.png` (Left) |
+| **02** | `02_OnboardingPager` | Full Screen | `presentation/screens/onboarding/OnboardingScreen.kt` | `Screen Workflow/01_Onboarding/SafeScreen Cybersecurity Onboard Due.png` (Right) |
+| **03** | `03_PermissionHub` | Full Screen | `presentation/screens/permission/PermissionHubScreen.kt` | `Screen Workflow/02_Permissions/SafeScreen Permission Flow Mocku.png` (Left) |
+| **04** | `04_BatteryOptimizationDialog` | Modal Bottom Sheet | `presentation/screens/permission/BatteryOptimizationDialog.kt` | `Screen Workflow/02_Permissions/SafeScreen Permission Flow Mocku.png` (Right) |
+| **05** | `05_HomeScreen` | Core Screen | `presentation/screens/home/HomeScreen.kt` | `Screen Workflow/03_Home_Dashboard/SafeScreen Neon Shield Dashboard.png` (Left) |
+| **06** | `06_BlurStylePreviewSheet` | Modal Bottom Sheet | `presentation/screens/home/BlurStylePreviewSheet.kt` | `Screen Workflow/03_Home_Dashboard/SafeScreen Neon Shield Dashboard.png` (Right) |
+| **07** | `07_ReelsControlScreen` | Full Screen | `presentation/screens/focus/ReelsControlScreen.kt` | `Screen Workflow/04_Reels_And_Focus/Neon SafeScreen Focus Dashboard.png` (Left) |
+| **08** | `08_FocusScheduleScreen` | Full Screen | `presentation/screens/focus/FocusScheduleScreen.kt` | `Screen Workflow/04_Reels_And_Focus/Neon SafeScreen Focus Dashboard.png` (Right) |
+| **09** | `09_StatsScreen` | Core Screen | `presentation/screens/stats/StatsScreen.kt` | `Screen Workflow/05_Stats_And_Analytics/SafeScreen Neon Protection Dashb.png` (Left) |
+| **10** | `10_DetailedActivityLog` | Full Screen | `presentation/screens/stats/DetailedActivityLogScreen.kt` | `Screen Workflow/05_Stats_And_Analytics/SafeScreen Neon Protection Dashb.png` (Right) |
+| **11** | `11_SettingsScreen` | Core Screen | `presentation/screens/settings/SettingsScreen.kt` | `Screen Workflow/06_Settings_And_Security/SafeScreen Neon Security UI Mock.png` (Left) |
+| **12** | `12_AppWhitelistScreen` | Full Screen | `presentation/screens/settings/AppWhitelistScreen.kt` | `Screen Workflow/06_Settings_And_Security/SafeScreen Neon Security UI Mock.png` (Center) |
+| **13** | `13_SecurityLockScreen` | Full Screen / Sheet | `presentation/screens/settings/SecurityLockScreen.kt` | `Screen Workflow/06_Settings_And_Security/SafeScreen Neon Security UI Mock.png` (Right) |
+| **14** | `14_LiveBlurOverlayView` | WindowManager Overlay | `services/overlay/LiveBlurOverlayView.kt` | `Screen Workflow/07_Overlays_And_Dialogs/SafeScreen Protection and Focus .png` (Left) |
+| **15** | `15_FocusInterventionOverlay` | WindowManager Overlay | `services/overlay/FocusInterventionOverlay.kt` | `Screen Workflow/07_Overlays_And_Dialogs/SafeScreen Protection and Focus .png` (Right) & `Neon Focus Time Alert Overlay.png` |
+| **16** | `16_EmptyAndErrorStates` | Composable Components | `presentation/components/states/SafeScreenStates.kt` | `Screen Workflow/08_Error_And_Empty_States/SafeScreen Neon Status Dashboard.png` & `SafeScreen Activity Log_ All Cle.png` |
 
 ---
 
-# অংশ ৩: পর্যায়ক্রমিক প্রম্পট পেয়ারসমূহ (Prompt A: Image + Prompt B: Kotlin)
+# অংশ ৩: সমৃদ্ধ ও স্বয়ংসম্পূর্ণ কোডিং এজেন্ট প্রম্পটসমূহ
 
 ---
 
-## মডিউল ১: অনবোর্ডিং ফ্লো (Onboarding Flow)
+## 📁 মডিউল ০১: অনবোর্ডিং ও স্প্ল্যাশ ফ্লো (Onboarding & Splash Flow)
 
-### স্ক্রিন ১ ও ২: Splash Screen & Onboarding Pager
-* **ফোল্ডার:** `Screen Workflow/01_Onboarding/`
-* **সংরক্ষণযোগ্য ফাইলের নাম:** `01_SplashScreen.png`, `02_OnboardingPager.png`
+### স্ক্রিন ০১: Splash Screen
+* **টার্গেট ফাইল:** `app/src/main/java/com/safescreen/app/presentation/screens/splash/SplashScreen.kt`
+* **ভিজ্যুয়াল রেফারেন্স:** `Screen Workflow/01_Onboarding/SafeScreen Cybersecurity Onboard Due.png` (বাম পাশের স্ক্রিন)
 
-#### প্রম্পট ১-A: UI/UX ইমেজ জেনারেশন (ChatGPT-এর জন্য)
+#### 📝 প্রম্পট ০১-B: Splash Screen ইমপ্লিমেন্টেশন
 ```text
-Design two high-fidelity modern Android mobile screens side-by-side for the "SafeScreen" app in Cyber-Dark theme:
+Role & Objective:
+Implement the high-fidelity SplashScreen in Kotlin & Jetpack Compose adhering to the Cyber-Dark theme and Clean Architecture.
 
-Screen 1: Splash Screen
-- Canvas: Modern bezel-less Android phone (Google Pixel / Samsung Galaxy format).
-- Background: Deep Cyber Black (#07090E) with a subtle radial gradient glow in Neon Cyan.
-- Center Hero: An intricate 3D-stylized geometric Shield icon glowing in Neon Cyan (#00E5FF) and Bio-Green (#00FF9D).
-- Typography: "SafeScreen" in modern geometric bold typography with letter-spacing, followed by subtitle "Your Digital Purity & Focus Guard" in muted cool grey (#94A3B8).
-- Bottom: A sleek, pulsing pill-shaped indeterminate progress bar with a label "Initializing Neural Core (100% On-Device)..."
+Context & Reference:
+Inspect 'Screen Workflow/01_Onboarding/SafeScreen Cybersecurity Onboard Due.png' (Left Screen).
+The screen serves as the brand launchpad, displays neural core loading status, and handles routing to either Onboarding or Home based on DataStore preferences.
 
-Screen 2: Interactive Onboarding Screen
-- Top: Skip button in top-right corner.
-- Upper Center: An illustrated glassmorphic 3D card showing the 3 core pillars:
-  1. Visual Shield (glowing eye with blur aura)
-  2. Smart Audio Guard (soundwaves auto-muting into silence)
-  3. Doomscroll Breaker (hourglass stopping infinite vertical scrolling)
-- Center Text: Headline "Reclaim Your Focus & Purity", Subtitle "On-device AI actively shields your screen and audio from unwanted content. Zero data ever leaves your phone."
-- Interactive Indicator: 3 glowing pill page-indicators (first one active in neon cyan).
-- Trust Badge: A frosted glass pill with a lock icon: "100% Offline AI • Zero Cloud Upload • No Trackers".
-- Bottom Action: Full-width elevated button with rounded corners (24dp) reading "Get Started" in Neon Cyan with deep black text.
+UI Structure & Components:
+1. Container: Box with fillMaxSize(), background DeepBlack (#07090E) with subtle radial cyan glow behind the logo.
+2. Center Hero:
+   - 3D-stylized Shield graphic with inner glowing padlock.
+   - Animate outer aura breathing pulse using rememberInfiniteTransition (scale: 1.0f -> 1.08f, alpha: 0.6f -> 1.0f).
+3. Brand Typography:
+   - "SafeScreen": "Safe" in TextPrimary (#F1F5F9), "Screen" in NeonCyan (#00E5FF), headlineLarge with bold tracking.
+   - Subtitle: "Your Digital Purity & Focus Guard" in TextSecondary (#94A3B8), bodyMedium.
+4. Loading Indicator:
+   - Sleek pill progress bar (height: 6dp, width: 220dp, NeonCyan with animated shimmer).
+   - Label: "Initializing Neural Core (100% On-Device)..." in TextMuted (#64748B), labelSmall.
+5. Bottom Decorative Waves: Subtle gradient curve in NeonCyan & Bio-Green (#00FF9D).
 
-Visual Style: Hyper-clean Material 3, frosted glass cards (Glassmorphism with 1dp subtle border), ultra-sharp typography, dark aesthetic. No clutter.
-```
+Architecture, State & ViewModel:
+- ViewModel: SplashViewModel with StateFlow<SplashUiState>.
+- Sealed Interface SplashUiState:
+  * data object Loading : SplashUiState
+  * data class NavigateTo(val route: String) : SplashUiState
+- Logic: Check DataStore onboardingCompleted preference and permission status:
+  * If onboardingCompleted == false -> Navigate to Screen.Onboarding.route
+  * If permissions missing -> Navigate to Screen.PermissionHub.route
+  * If all granted -> Navigate to Screen.Home.route
+- Delay: Minimum display time 1200ms for smooth visual experience.
 
-#### প্রম্পট ১-B: Kotlin & Jetpack Compose ইমপ্লিমেন্টেশন (ভবিষ্যত কোডিং এজেন্টের জন্য)
-```text
-Task: Implement the Splash Screen and Onboarding Pager in Kotlin & Jetpack Compose based on the saved reference images in 'Screen Workflow/01_Onboarding/'.
+Responsive & Layout Guidelines:
+- Handle WindowInsets.systemBars to keep content centered regardless of punch-hole camera or status bar.
+- Provide @Preview(showBackground = true) with Theme wrapper.
 
-Architectural Requirements:
-1. Target Package: `com.safescreen.app.presentation.screens.onboarding` and `...screens.splash`.
-2. Clean Architecture: Use a dedicated `OnboardingViewModel` with `StateFlow<OnboardingUiState>` handling current page index and onboarding completed status (persisted via AndroidX DataStore).
-3. Compose Libraries: Use `HorizontalPager` from `androidx.compose.foundation.pager.rememberPagerState`.
-4. Theme Compliance: Use `SafeScreenTheme` color tokens (`DeepBlack`, `NeonCyan`, `NeonGreen`, `TextPrimary`, `TextSecondary`).
-5. Animations: In Splash, animate the scale and alpha of the shield logo using `Animatable` and navigate to Onboarding or Home based on DataStore preferences after 1200ms.
-6. Responsiveness: Ensure proper spacing on small (e.g. 5.5") and large (6.7"+) screens with `WindowInsets.systemBars`. Provide full `@Preview(showBackground = true)` for both Light and Dark variants.
-```
-
----
-
-## মডিউল ২: পারমিশন ম্যানেজমেন্ট হাব (Permission Hub Flow)
-
-### স্ক্রিন ৩ ও ৪: Permission Hub & Battery Optimization Dialog
-* **ফোল্ডার:** `Screen Workflow/02_Permissions/`
-* **সংরক্ষণযোগ্য ফাইলের নাম:** `03_PermissionHub.png`, `04_BatteryOptimizationDialog.png`
-
-#### প্রম্পট ২-A: UI/UX ইমেজ জেনারেশন (ChatGPT-এর জন্য)
-```text
-Design two connected Android screens for the "SafeScreen" Permission System in Cyber-Dark theme:
-
-Screen 1: Permission Hub Screen
-- Header: Back button, Title "System Permissions", Subtitle "To inspect screen frames and audio on-device, SafeScreen requires specific Android permissions. Your data is strictly private."
-- Permission Card List (Vertical Scrollable, Frosted Glass Cards):
-  1. "Display Over Other Apps" (SYSTEM_ALERT_WINDOW) — Description: "Allows drawing instant blur overlays over explicit content." Status: Granted (Bio-Green Checkmark icon).
-  2. "Screen Capture" (MediaProjection) — Description: "Enables local AI frame inspection. No screenshots are ever saved." Status: Action Required ("Grant Access" neon pill button).
-  3. "Audio Playback Capture" (RECORD_AUDIO) — Description: "Allows detecting and muting background music tracks." Status: Action Required ("Grant Access" button).
-  4. "Accessibility Service" — Description: "Detects Reels & Shorts feeds to enforce your screen-time limits." Status: Action Required ("Enable" button).
-  5. "Foreground Notification" (POST_NOTIFICATIONS) — Description: "Keeps the real-time AI shield persistent without being killed by Android." Status: Granted (Bio-Green Checkmark).
-- Bottom Fixed Bar: Sticky bottom bar containing a prominent button "Enter Shield Hub" (Disabled state until critical permissions are granted).
-
-Screen 2: Battery Optimization Dialog (Modal Overlay / Bottom Sheet)
-- A bottom sheet over the dimmed Permission Hub.
-- Sheet Surface: Dark Slate (#161D2D) with 24dp top corner radius and a frosted glass top drag handle.
-- Illustration/Icon: A glowing battery icon with an unmetered lightning bolt in Neon Yellow (#FFD166).
-- Title: "Unrestricted Battery Access"
-- Body Text: "Android aggressively kills background machine learning tasks. To ensure your Shield never sleeps when explicit content appears, please exclude SafeScreen from battery optimization."
-- Action Buttons: "Allow Unrestricted" (Solid Neon Cyan button) and "Later" (Text button in muted grey).
-
-Visual Style: Material 3, elegant dark mode, high contrast, crystal-clear explanation badges, accessible touch targets.
-```
-
-#### প্রম্পট ২-B: Kotlin & Jetpack Compose ইমপ্লিমেন্টেশন (ভবিষ্যত কোডিং এজেন্টের জন্য)
-```text
-Task: Implement the Permission Hub Screen and Battery Optimization Dialog in Kotlin & Jetpack Compose based on 'Screen Workflow/02_Permissions/'.
-
-Architectural Requirements:
-1. Target Package: `com.safescreen.app.presentation.screens.permission`.
-2. State Management: Create `PermissionViewModel` tracking permission states via Android APIs:
-   - `Settings.canDrawOverlays(context)`
-   - `ContextCompat.checkSelfPermission(POST_NOTIFICATIONS)`
-   - `AccessibilityManager` enabled services check
-   - `PowerManager.isIgnoringBatteryOptimizations`
-3. Intent Launchers: Setup `rememberLauncherForActivityResult` for `StartActivityForResult` pointing to `Settings.ACTION_MANAGE_OVERLAY_PERMISSION`, `Settings.ACTION_ACCESSIBILITY_SETTINGS`, and `Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`.
-4. Composables: Build reusable `PermissionCard(title, description, isGranted, onGrantClick)`.
-5. Error/Warning Handling: If user denies twice, show an inline snackbar guiding them to Android App Settings.
+Acceptance Criteria:
+- Shield pulses smoothly without jank.
+- Clean routing without flashing wrong screens.
+- Zero layout overflow on both 5.5" and 6.7"+ devices.
 ```
 
 ---
 
-## মডিউল ৩: মূল ড্যাশবোর্ড ও ব্লার প্রিভিউ (Home & Blur Preview Flow)
+### স্ক্রিন ০২: Onboarding Pager
+* **টার্গেট ফাইল:** `app/src/main/java/com/safescreen/app/presentation/screens/onboarding/OnboardingScreen.kt`
+* **ভিজ্যুয়াল রেফারেন্স:** `Screen Workflow/01_Onboarding/SafeScreen Cybersecurity Onboard Due.png` (ডান পাশের স্ক্রিন)
 
-### স্ক্রিন ৫ ও ৬: Home Dashboard & Blur Style Preview Sheet
-* **ফোল্ডার:** `Screen Workflow/03_Home_Dashboard/`
-* **সংরক্ষণযোগ্য ফাইলের নাম:** `05_HomeScreen.png`, `06_BlurStylePreviewSheet.png`
-
-#### প্রম্পট ৩-A: UI/UX ইমেজ জেনারেশন (ChatGPT-এর জন্য)
+#### 📝 প্রম্পট ০২-B: Onboarding Pager ইমপ্লিমেন্টেশন
 ```text
-Design two high-fidelity Android UI mockups for SafeScreen's Main Dashboard in Cyber-Dark theme:
+Role & Objective:
+Implement the interactive 3-page OnboardingPager in Kotlin & Jetpack Compose, showcasing the three core pillars and the 100% offline privacy pledge.
 
-Screen 1: Home Dashboard (Main Screen)
-- Top App Bar: Left: App logo icon + "SafeScreen"; Right: Live status pill ("SHIELD ACTIVE" in neon green with a pulsating dot) + Settings Gear icon.
-- Central Hero Section (Shield Button):
-  * A massive, ultra-sleek circular button (160dp diameter).
-  * In active state: Surrounded by concentric pulsing neon cyan & bio-green aura waves. Inner core has a crisp glowing Shield Icon.
-  * Status Text below hero: "PROTECTION ENGAGED" in bold uppercase neon typography, sub-label "Analyzing screen & audio locally (5 FPS)".
-- Metric Cards Row (2 Frosted Glass Cards side-by-side):
-  * Card 1: "Explicit Blurred" -> Bold Number "38" in Neon Pink, subtitle "Today's interventions".
-  * Card 2: "Music Muted" -> Bold Number "14" in Neon Cyan, subtitle "Audio tracks silenced".
-- Focus Banner Card:
-  * "Reels & Shorts Usage: 18 / 30 mins used today" with a linear neon purple progress bar at 60%.
-- Quick Feature Toggles (Horizontal row of 3 pill toggles):
-  * [✔ Visual Shield] [✔ Audio Mute] [✔ Reels Blocker]
-- Bottom Navigation Bar: Floating frosted pill bar with 4 items: Home (Active, Neon Cyan), Stats, Focus, Settings.
+Context & Reference:
+Inspect 'Screen Workflow/01_Onboarding/SafeScreen Cybersecurity Onboard Due.png' (Right Screen).
 
-Screen 2: Blur Style Preview Bottom Sheet
-- Pops up over Home Dashboard.
-- Title: "Shield Blur Customization"
-- Style Selector Cards (Row of 3 selectable thumbnail cards):
-  1. "Frosted Glass" (Smooth Gaussian blur) [Selected with neon border]
-  2. "Pixelated Censor" (8-bit digital pixel blocks)
-  3. "Opaque Dark Mask" (Total black shield block)
-- Slider: "Blur Intensity" with numeric percentage indicator (85%).
-- Interactive Preview Area: A split image showing an abstract simulated graphic with the selected blur effect applied in real-time.
-- Confirm Button: "Apply Changes" (Neon Cyan button).
+UI Structure & Components:
+1. Top Bar:
+   - "Skip >" text button in top-end corner (navigates directly to PermissionHub).
+2. Central Feature Card (GlassmorphicCard):
+   - 3 visual columns/pillars:
+     a) "Visual Shield" (Eye icon in glowing cyan aura, subtitle: "Blur NSFW Content").
+     b) "Smart Audio Guard" (Audio waveform icon with mute badge in bio-green, subtitle: "Auto-Mute Unwanted Sound").
+     c) "Doomscroll Breaker" (Hourglass icon in neon purple, subtitle: "Stop Infinite Reels & Shorts").
+3. Headline & Copy:
+   - Title: "Reclaim Your Focus & Purity" ("Reclaim Your" in TextPrimary, "Focus & Purity" in NeonCyan gradient).
+   - Body: "On-device AI actively shields your screen and audio from unwanted content. Zero data ever leaves your phone."
+4. Page Indicators:
+   - 3 rounded pill dots; active page is elongated in NeonCyan, inactive in DarkSurfaceElevated.
+5. Trust Badge (Frosted Pill):
+   - Lock icon in Bio-Green: "100% Offline AI • Zero Cloud Upload • No Trackers".
+6. Primary Action:
+   - Full-width pill button (height: 56dp, shape: 28dp) reading "Get Started" (or "Next" on earlier slides) in solid NeonCyan with DeepBlack bold text.
 
-Visual Style: Premium Cyber-Dark, authentic Android gesture bar, realistic shadows, ultra-detailed textures.
-```
+Architecture & State:
+- Use rememberPagerState(pageCount = { 3 }).
+- State: OnboardingViewModel exposing StateFlow<Int> for currentPage.
+- On "Get Started" or "Skip":
+  * Persist onboardingCompleted = true in DataStore.
+  * Navigate to Screen.PermissionHub.route with popUpTo(Screen.Onboarding.route) { inclusive = true }.
 
-#### প্রম্পট ৩-B: Kotlin & Jetpack Compose ইমপ্লিমেন্টেশন (ভবিষ্যত কোডিং এজেন্টের জন্য)
-```text
-Task: Implement the Home Dashboard and Blur Customization Sheet in Kotlin & Jetpack Compose referencing 'Screen Workflow/03_Home_Dashboard/'.
-
-Architectural Requirements:
-1. Target Package: `com.safescreen.app.presentation.screens.home`.
-2. ViewModel & State: `HomeViewModel` exposing `StateFlow<HomeUiState>`:
-   - `isShieldActive: Boolean`
-   - `statsToday: ProtectionSummary(blurredCount, mutedCount, reelsMinutesUsed, reelsMinutesLimit)`
-   - `activeToggles: Map<ProtectionType, Boolean>`
-   - `blurConfig: BlurConfiguration(style, intensity)`
-3. Service Connection: Trigger `StartShieldUseCase` / `StopShieldUseCase` on central button toggle.
-4. Compose Animation: Use `rememberInfiniteTransition` for the outer pulsing ring of `ShieldButton`.
-5. Modal Bottom Sheet: Use `ModalBottomSheet` from Material 3 with `rememberModalBottomSheetState()`.
+Acceptance Criteria:
+- Smooth horizontal swipe gesture between pages.
+- "Get Started" appears on final slide; "Next" on slides 1 & 2.
+- DataStore accurately records onboarding completion.
 ```
 
 ---
 
-## মডিউল ৪: রিলস ও ডিজিটাল ওয়েলবিয়িং (Reels & Focus Flow)
+## 📁 মডিউল ০২: পারমিশন ম্যানেজমেন্ট হাব (Permissions Flow)
 
-### স্ক্রিন ৭ ও ৮: Reels Control & Focus Schedule Screen
-* **ফোল্ডার:** `Screen Workflow/04_Reels_And_Focus/`
-* **সংরক্ষণযোগ্য ফাইলের নাম:** `07_ReelsControlScreen.png`, `08_FocusScheduleScreen.png`
+### স্ক্রিন ০৩: Permission Hub Screen
+* **টার্গেট ফাইল:** `app/src/main/java/com/safescreen/app/presentation/screens/permission/PermissionHubScreen.kt`
+* **ভিজ্যুয়াল রেফারেন্স:** `Screen Workflow/02_Permissions/SafeScreen Permission Flow Mocku.png` (বাম পাশের স্ক্রিন)
 
-#### প্রম্পট ৪-A: UI/UX ইমেজ জেনারেশন (ChatGPT-এর জন্য)
+#### 📝 প্রম্পট ০৩-B: Permission Hub ইমপ্লিমেন্টেশন
 ```text
-Design two modern Android screens for the Reels & Short-Video Wellbeing module in SafeScreen:
+Role & Objective:
+Implement the PermissionHubScreen in Kotlin & Jetpack Compose to manage Android system permissions with full transparency and real-time status updates.
 
-Screen 1: Reels & Shorts Control Screen
-- Top Bar: Back arrow, Title "Reels & Shorts Control", Info icon.
-- Explanatory Notice: A small warning badge: "Android Sandboxing Notice: App UI cannot be deleted. SafeScreen uses Accessibility Overlays & App-Level time limits to protect you."
-- Monitored Platforms Section:
-  * Vertical list of target apps with brand icons, app names, and independent master toggle switches:
-    1. Instagram (Reels) — Switch ON
-    2. YouTube (Shorts) — Switch ON
-    3. TikTok — Switch ON
-    4. Facebook (Reels) — Switch ON
-- Daily Time Limit Section:
-  * Headline: "Daily Short-Video Allowance"
-  * Interactive circular arc slider or stepped slider with presets: [15 min] [30 min (Selected)] [45 min] [1 hr] [Complete Lockout].
-- Intervention Strategy Selector (Radio card options):
-  * Option 1: "Strict Focus Overlay" (Instantly blocks screen when Reels section is detected) [Selected]
-  * Option 2: "Gentle Nudge" (Floating timer reminder)
-  * Option 3: "Auto-Home Exit" (Performs back/home gesture automatically)
+Context & Reference:
+Inspect 'Screen Workflow/02_Permissions/SafeScreen Permission Flow Mocku.png' (Left Screen).
+Permissions Required:
+1. Display Over Other Apps (SYSTEM_ALERT_WINDOW)
+2. Screen Capture (MediaProjection)
+3. Audio Playback Capture (RECORD_AUDIO)
+4. Accessibility Service (SafeScreenAccessibilityService)
+5. Foreground Notification (POST_NOTIFICATIONS)
 
-Screen 2: Focus Schedule Screen (Bedtime & Study Hours)
-- Header: Title "Focus Time Schedules", Subtitle "Completely block short-video platforms during essential life hours."
-- Schedule Cards:
-  * Card 1: "Night Purity & Sleep" -> 10:00 PM – 06:00 AM (Active, recurring Daily, Bio-Green badge).
-  * Card 2: "Deep Work / Study" -> 09:00 AM – 05:00 PM (Active, Mon-Fri, Neon Purple badge).
-- Add Schedule Button: Floating Action Button (FAB) or dashed outline card "+ Add Custom Focus Block".
-- Day Selector: Pill buttons for M, T, W, T, F, S, S.
+UI Components & Cards:
+1. Header: Back button, Title "System Permissions", glowing shield badge icon.
+2. Explanatory Banner: "To inspect screen frames and audio on-device, SafeScreen requires specific Android permissions. Your data is strictly private." (Privacy text highlighted in NeonCyan).
+3. Permission Card List (LazyColumn):
+   - Reusable Component: PermissionCard(title, codeName, description, icon, isGranted, onActionClick).
+   - If Granted: Show "✔ Granted" with Bio-Green text and icon.
+   - If Action Required: Show NeonCyan pill button ("Grant Access" / "Enable").
+4. Bottom Sticky Action Bar:
+   - "Enter Shield Hub" button (Shield icon + text).
+   - Disabled (dark slate with muted text) if critical permissions (Overlay, MediaProjection) are missing.
+   - Enabled (NeonCyan solid) when all mandatory permissions are satisfied.
 
-Visual Style: Cyber-Dark with Neon Purple (#9D4EDD) accents for focus states, clean cards, precise toggles.
-```
+Architecture & Integration:
+- PermissionViewModel exposing StateFlow<PermissionHubUiState>.
+- Check actual Android system states:
+  * Settings.canDrawOverlays(context)
+  * ContextCompat.checkSelfPermission(POST_NOTIFICATIONS)
+  * AccessibilityManager enabled services check
+  * PowerManager.isIgnoringBatteryOptimizations
+- Handle Activity Result Launchers for Settings intents gracefully.
+- Refresh states on Lifecycle.Event.ON_RESUME.
 
-#### প্রম্পট ৪-B: Kotlin & Jetpack Compose ইমপ্লিমেন্টেশন (ভবিষ্যত কোডিং এজেন্টের জন্য)
-```text
-Task: Implement the Reels Control and Focus Schedule screens in Kotlin & Jetpack Compose referencing 'Screen Workflow/04_Reels_And_Focus/'.
-
-Architectural Requirements:
-1. Target Package: `com.safescreen.app.presentation.screens.focus`.
-2. Architecture & DataStore: Store `ReelsConfig` (enabledApps, dailyMinutesLimit, selectedIntervention, focusSchedules) in DataStore Preferences and Room DB.
-3. System Integration Hook: Provide hooks for `AccessibilityService` and `UsageStatsManager` to query if current time falls within active focus schedule or exceeds daily allowance.
-4. Compose UI Components: Build custom stepped slider `TimeLimitSlider` and day picker `DayOfWeekSelector`.
-
-Review the updated image in `Screen Workflow/04_Reels_And_Focus/` for the Reels Control Screen.
-- Implement `ReelsControlScreen.kt` using a `LazyColumn`.
-- Implement the "+ Add Custom App" button. When clicked, it should open a `ModalBottomSheet` displaying a list of all installed user applications (fetch via `PackageManager`).
-- Allow the user to select an app, which then gets added to the active restrictions list in the `DataStore` or `Room Database`.
-- Maintain the Clean Architecture flow using ViewModels and UseCases.
+Acceptance Criteria:
+- Cards instantly update to "✔ Granted" upon returning from Android Settings.
+- Cannot advance to Home until mandatory permissions are active.
+- Non-blocking explanation dialogs explaining why each permission is essential.
 ```
 
 ---
 
-## মডিউল ৫: অ্যানালিটিক্স ও অ্যাক্টিভিটি হিস্ট্রি (Stats & Analytics Flow)
+### স্ক্রিন ০৪: Battery Optimization Exemption Dialog
+* **টার্গেট ফাইল:** `app/src/main/java/com/safescreen/app/presentation/screens/permission/BatteryOptimizationDialog.kt`
+* **ভিজ্যুয়াল রেফারেন্স:** `Screen Workflow/02_Permissions/SafeScreen Permission Flow Mocku.png` (ডান পাশের স্ক্রিন)
 
-### স্ক্রিন ৯ ও ১০: Stats Screen & Detailed Activity Log
-* **ফোল্ডার:** `Screen Workflow/05_Stats_And_Analytics/`
-* **সংরক্ষণযোগ্য ফাইলের নাম:** `09_StatsScreen.png`, `10_DetailedActivityLog.png`
-
-#### প্রম্পট ৫-A: UI/UX ইমেজ জেনারেশন (ChatGPT-এর জন্য)
+#### 📝 প্রম্পট ০৪-B: Battery Optimization Dialog ইমপ্লিমেন্টেশন
 ```text
-Design two data-rich, elegant Android Analytics screens for SafeScreen in Cyber-Dark theme:
+Role & Objective:
+Implement the BatteryOptimizationDialog modal bottom sheet in Jetpack Compose to prevent Android from aggressively killing the on-device AI foreground service.
 
-Screen 1: Protection Stats Screen
-- Top Bar: Title "Protection Insights", Right: Calendar range selector (Pill tabs: "Today", "7 Days" [Selected], "30 Days").
-- Privacy Guarantee Card: A green-bordered frosted card: "🔒 100% Offline SQLite. All statistics exist solely on your local device."
-- Weekly Activity Chart:
-  * A modern glowing bar chart showing blocked explicit frames and muted audio across Mon-Sun.
-  * Tallest bar glowing in Neon Cyan with an active tooltip bubble: "Thu: 42 Blurred, 18 Muted".
-- Category Breakdown Section (Donut / Segmented Progress Bar):
-  * 55% Explicit Visuals Blurred (Neon Pink)
-  * 30% Background Music Muted (Neon Cyan)
-  * 15% Reels Sessions Intercepted (Neon Purple)
-- Top Intercepted Apps List:
-  * Horizontal bar breakdown: 1. Chrome (54 events), 2. Instagram (32 events), 3. Twitter/X (19 events).
-- Bottom Action: "View Detailed Event Log" with right chevron.
+Context & Reference:
+Inspect 'Screen Workflow/02_Permissions/SafeScreen Permission Flow Mocku.png' (Right Screen).
 
-Screen 2: Detailed Activity Log Screen
-- Top Bar: Back arrow, Title "Activity Timeline", Filter icon.
-- Chronological Event Feed:
-  * Grouped by "Today", "Yesterday".
-  * Event Item 1: Icon (Eye with slash, Neon Pink) -> Title: "Explicit Visual Content Blurred" -> Subtitle: "Browser (com.android.chrome) • 03:42 PM" -> Confidence tag: "94% NSFW score".
-  * Event Item 2: Icon (Mute speaker, Neon Cyan) -> Title: "Background Music Silenced" -> Subtitle: "Shorts Feed • 02:15 PM" -> Duration: "45 sec muted".
-  * Event Item 3: Icon (Lock, Neon Purple) -> Title: "Reels Limit Reached — Overlay Shown" -> Subtitle: "Instagram • 11:20 AM".
-- Action: Clear Log button in top-right with confirmation dialog.
+UI Components:
+1. ModalBottomSheet with shape: RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp), containerColor = DarkSurfaceElevated (#161D2D).
+2. Top frosted drag handle.
+3. Hero Icon: Glowing amber-yellow battery with lightning bolt surrounded by orbital neon rings.
+4. Typography:
+   - Title: "Unrestricted Battery Access" (headlineSmall, TextPrimary).
+   - Body: "Android aggressively kills background machine learning tasks. To ensure your Shield never sleeps when explicit content appears, please exclude SafeScreen from battery optimization."
+5. Actions:
+   - Primary: "Allow Unrestricted" (solid NeonCyan pill button). Triggers Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS.
+   - Secondary: "Later" (TextButton in TextSecondary). Dismisses sheet.
 
-Visual Style: Clean data visualization, dark UI, vibrant neon indicators, high legibility.
-```
-
-#### প্রম্পট ৫-B: Kotlin & Jetpack Compose ইমপ্লিমেন্টেশন (ভবিষ্যত কোডিং এজেন্টের জন্য)
-```text
-Task: Implement the Stats Screen and Detailed Activity Log in Kotlin & Jetpack Compose referencing 'Screen Workflow/05_Stats_And_Analytics/'.
-
-Architectural Requirements:
-1. Target Package: `com.safescreen.app.presentation.screens.stats`.
-2. Room Integration: Collect `Flow<List<ProtectionStat>>` from `GetStatsUseCase` injected via Hilt.
-3. Canvas Charts: Implement the weekly bar chart using native Jetpack Compose `Canvas` with smooth drawing curves and touch detection for tooltips (or Vico chart library).
-4. Performance: Use `LazyColumn` with stable keys (`items(items, key = { it.id })`) to prevent recomposition overhead when new events arrive.
+Acceptance Criteria:
+- Opens automatically if PowerManager.isIgnoringBatteryOptimizations is false after granting overlay permission.
+- Dismissing gracefully returns to PermissionHub.
 ```
 
 ---
 
-## মডিউল ৬: সেটিংস, হোয়াইটলিস্ট ও সিকিউরিটি লক (Settings & Security Flow)
+## 📁 মডিউল ০৩: মূল হোম ড্যাশবোর্ড ও ব্লার প্রিভিউ (Home Dashboard Flow)
 
-### স্ক্রিন ১১, ১২ ও ১৩: Settings, App Whitelist & Security Lock
-* **ফোল্ডার:** `Screen Workflow/06_Settings_And_Security/`
-* **সংরক্ষণযোগ্য ফাইলের নাম:** `11_SettingsScreen.png`, `12_AppWhitelistScreen.png`, `13_SecurityLockScreen.png`
+### স্ক্রিন ০৫: Home Dashboard Screen
+* **টার্গেট ফাইল:** `app/src/main/java/com/safescreen/app/presentation/screens/home/HomeScreen.kt`
+* **ভিজ্যুয়াল রেফারেন্স:** `Screen Workflow/03_Home_Dashboard/SafeScreen Neon Shield Dashboard.png` (বাম পাশের স্ক্রিন)
 
-#### প্রম্পট ৬-A: UI/UX ইমেজ জেনারেশন (ChatGPT-এর জন্য)
+#### 📝 প্রম্পট ০৫-B: Home Dashboard ইমপ্লিমেন্টেশন
 ```text
-Design three connected screens for SafeScreen's System Configuration and Security in Cyber-Dark theme:
+Role & Objective:
+Implement SafeScreen's flagship HomeDashboard in Kotlin & Jetpack Compose, featuring the iconic pulsing central ShieldButton, real-time metric cards, quick feature toggles, and floating bottom navigation.
 
-Screen 1: Settings Screen
-- Sections:
-  1. "AI Detection Engine":
-     - Sensitivity Level: Segmented control [Strict] [Balanced (Default)] [Relaxed].
-     - Performance Profile: "Battery Saver (3 FPS)", "Balanced (5 FPS)", "High Precision (8 FPS)".
-  2. "Security & Protection":
-     - "PIN & Biometric Lock" switch (Toggle ON).
-     - "Prevent Uninstallation Assistance" switch.
-  3. "App Exclusions":
-     - "Manage App Whitelist (5 apps excluded)" with right chevron.
-  4. "Data & Storage":
-     - "Clear Offline Database Cache" button.
-  5. "About": SafeScreen v1.0.0, Privacy Policy link, Open-source licenses.
+Context & Reference:
+Inspect 'Screen Workflow/03_Home_Dashboard/SafeScreen Neon Shield Dashboard.png' (Left Screen).
 
-Screen 2: App Whitelist Screen
-- Top Bar: Back arrow, Title "App Whitelist", Search bar with magnifying glass icon: "Search installed apps...".
-- Header Note: "Whitelisted apps bypass all screen frame inspection and audio filtering."
-- App List (Vertical Scrollable with app icons and package names):
-  * Banking App (com.bank.app) — Switch ON (Exempted)
-  * Google Drive (com.google.android.apps.docs) — Switch ON
-  * WhatsApp — Switch OFF (Protected)
-  * Chrome — Switch OFF (Protected)
-  * Gallery / Photos — Switch ON (Exempted)
+UI Structure & Layout:
+1. Top Bar:
+   - Left: Logo icon + "SafeScreen" typography.
+   - Right: "SHIELD ACTIVE" / "DISARMED" pill badge with live pulsing dot + Settings gear icon button.
+2. Central Hero: ShieldButton Component:
+   - 160dp circular core with 3D shield & padlock.
+   - When Active: Concentric pulsing radial glow (NeonCyan & Bio-Green), animated with rememberInfiniteTransition.
+   - Status text: "PROTECTION ENGAGED" in NeonGreen bold, sub-label: "Analyzing screen & audio locally (5 FPS)".
+   - When Disarmed: Muted slate border, text: "SHIELD DISARMED", sub-label: "Tap to activate protection".
+3. Metric Cards Row (2 Frosted GlassmorphicCards side-by-side):
+   - Card 1: "Explicit Blurred", Big Number "38" (NeonPink), "Today's interventions", right chevron. Clicking navigates to Stats.
+   - Card 2: "Music Muted", Big Number "14" (NeonCyan), "Audio tracks silenced", right chevron.
+4. Focus Banner Card:
+   - "Reels & Shorts Usage: 18 / 30 mins used today" with a linear neon purple progress bar at 60%.
+5. Quick Feature Toggles (Row of 3 cards):
+   - [Visual Shield] (Eye icon, green switch toggle)
+   - [Audio Mute] (Mute icon, cyan switch toggle)
+   - [Reels Blocker] (Hourglass icon, purple switch toggle)
+6. Floating Bottom Navigation Bar:
+   - Glassmorphic floating pill with 4 items: Home (active NeonCyan), Stats, Focus, Settings.
 
-Screen 3: Security Lock Screen (PIN / Biometric)
-- Center: Padlock icon glowing in Neon Green.
-- Header: "SafeScreen Locked", Subtitle: "Enter your 4-digit PIN to modify settings or disarm shield".
-- PIN Dots: 4 glowing circular indicators.
-- Keypad: Glassmorphic numeric dial pad (1-9, Fingerprint icon on bottom-left, 0, Backspace on bottom-right).
-- "Forgot PIN?" link below.
+Architecture & State:
+- HomeViewModel exposing StateFlow<HomeUiState>:
+  * isShieldActive: Boolean
+  * blurredTodayCount: Int
+  * mutedTodayCount: Int
+  * reelsMinutesUsed: Int
+  * reelsMinutesLimit: Int
+  * isVisualShieldEnabled: Boolean
+  * isAudioMuteEnabled: Boolean
+  * isReelsBlockerEnabled: Boolean
+- Wiring:
+  * Toggling master shield calls StartShieldUseCase / StopShieldUseCase.
+  * If PIN lock is enabled, intercept disarm with SecurityLockScreen.
+  * Tapping metrics navigates to Screen.Stats.route.
 
-Visual Style: Consistent dark theme, sharp borders, high security aesthetic, responsive keypad layout.
-```
-
-#### প্রম্পট ৬-B: Kotlin & Jetpack Compose ইমপ্লিমেন্টেশন (ভবিষ্যত কোডিং এজেন্টের জন্য)
-```text
-Task: Implement Settings, App Whitelist, and Security Lock screens in Kotlin & Jetpack Compose referencing 'Screen Workflow/06_Settings_And_Security/'.
-
-Architectural Requirements:
-1. Target Package: `com.safescreen.app.presentation.screens.settings`.
-2. Biometric Integration: Connect `androidx.biometric.BiometricPrompt` with `BiometricManager.Authenticators.BIOMETRIC_STRONG or DEVICE_CREDENTIAL`.
-3. Whitelist Repository: Fetch device apps using `PackageManager.getInstalledApplications()` on IO Dispatcher; store excluded package names in Room DB.
-4. Security Lock Logic: Require PIN verification before toggling master shield off or opening settings if `isPinLockEnabled` is true.
-```
-
----
-
-## মডিউল ৭: সিস্টেম ওভারলে ও ফ্লোটিং উইন্ডো (System Overlays Flow)
-
-### স্ক্রিন ১৪ ও ১৫: Live Blur Overlay & Focus Intervention Overlay
-* **ফোল্ডার:** `Screen Workflow/07_Overlays_And_Dialogs/`
-* **সংরক্ষণযোগ্য ফাইলের নাম:** `14_LiveBlurOverlayView.png`, `15_FocusInterventionOverlay.png`
-
-#### প্রম্পট ৭-A: UI/UX ইমেজ জেনারেশন (ChatGPT-এর জন্য)
-```text
-Design two distinct Android System Floating Overlays for SafeScreen (Simulated over a mock social media feed):
-
-Screen 1: Live Visual Blur Overlay (Real-Time Protection in Action)
-- Context: A simulated web browser or social feed displaying a mock photo.
-- Overlay Effect:
-  * The center portion of the screen containing explicit content is covered with a frosted, high-intensity Gaussian blur effect.
-  * Over the blurred area: A neat, semi-transparent dark glass pill badge with an eye-slash icon and text: "Protected by SafeScreen AI".
-  * The rest of the phone's UI (status bar, navigation bar, text around the image) remains visible and accessible.
-
-Screen 2: Focus Intervention Overlay (Reels / Shorts Blocker Screen)
-- Context: A user opened Instagram Reels or YouTube Shorts after exceeding their 30-minute daily limit.
-- Overlay Appearance:
-  * An unmissable full-screen dark frosted glass card floating over the dimmed video feed.
-  * Hero Icon: An hourglass enclosed in a glowing Neon Purple Shield (#9D4EDD).
-  * Headline: "Focus Time Active"
-  * Message: "You've reached your daily 30-minute limit for short videos. Your time is valuable — give your mind a restful break."
-  * Action Buttons (Side-by-side or stacked):
-    1. "Take a 5-Min Walk" (Solid Neon Purple button)
-    2. "Exit to Home Screen" (Outlined button, triggers back/home action)
-    3. Micro-link: "Emergency 2-min pass" (requires security PIN).
-
-Visual Style: Modern floating window look, authentic Android window manager type TYPE_APPLICATION_OVERLAY representation.
-```
-
-#### প্রম্পট ৭-B: Kotlin & Jetpack Compose ইমপ্লিমেন্টেশন (ভবিষ্যত কোডিং এজেন্টের জন্য)
-```text
-Task: Implement the Live Blur Overlay and Focus Intervention Overlay in Kotlin & Jetpack Compose referencing 'Screen Workflow/07_Overlays_And_Dialogs/'.
-
-Architectural Requirements:
-1. Target Package: `com.safescreen.app.services.overlay`.
-2. System Service Integration: Use `WindowManager.LayoutParams`:
-   - `type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY`
-   - `flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN`
-3. Compose View in WindowManager: Inflate Compose UI into WindowManager using `ComposeView` with `setViewTreeLifecycleOwner` and `setViewTreeSavedStateRegistryOwner`.
-4. Dismiss & Action Handling: Clicking "Exit to Home" should fire an intent with `Intent.ACTION_MAIN` and `Intent.CATEGORY_HOME`.
+Acceptance Criteria:
+- Pulse animation is smooth (60 FPS) without recomposition bottlenecks.
+- Toggles instantly update local DataStore and notify ShieldProtectionService.
+- Seamless bottom navigation switching.
 ```
 
 ---
 
-## মডিউল ৮: এরর, এম্পটি ও এজ কেস স্টেটস (Empty, Error & Edge States)
+### স্ক্রিন ০৬: Blur Style Preview Sheet
+* **টার্গেট ফাইল:** `app/src/main/java/com/safescreen/app/presentation/screens/home/BlurStylePreviewSheet.kt`
+* **ভিজ্যুয়াল রেফারেন্স:** `Screen Workflow/03_Home_Dashboard/SafeScreen Neon Shield Dashboard.png` (ডান পাশের স্ক্রিন)
 
-### স্ক্রিন ১৬: Empty Stats & Error Fallbacks
-* **ফোল্ডার:** `Screen Workflow/08_Error_And_Empty_States/`
-* **সংরক্ষণযোগ্য ফাইলের নাম:** `16_EmptyAndErrorStates.png`
-
-#### প্রম্পট ৮-A: UI/UX ইমেজ জেনারেশন (ChatGPT-এর জন্য)
+#### 📝 প্রম্পট ০৬-B: Blur Style Preview Sheet ইমপ্লিমেন্টেশন
 ```text
-Design three cohesive UI State illustrations/cards on a single showcase board in Cyber-Dark theme for SafeScreen:
+Role & Objective:
+Implement the BlurStylePreviewSheet bottom sheet in Jetpack Compose to let users customize the visual filter applied to explicit content.
 
-State 1: Empty Stats State (Clean Slate)
-- Graphic: A pristine floating shield surrounded by gentle green sparkles.
-- Title: "All Clean & Clear"
-- Description: "No explicit visuals or music interruptions detected yet today. Enjoy your safe digital journey!"
+Context & Reference:
+Inspect 'Screen Workflow/03_Home_Dashboard/SafeScreen Neon Shield Dashboard.png' (Right Screen).
 
-State 2: Critical Permission Revoked Warning
-- Graphic: A shield with a caution triangle in Warning Yellow (#FFD166).
-- Title: "Shield Paused: Screen Access Needed"
-- Description: "Android revoked MediaProjection or Overlay access. SafeScreen cannot protect you until permissions are restored."
-- Action: "Restore Permissions" (Solid yellow button with dark text).
+UI Components:
+1. Header: Palette icon + "Shield Blur Customization", subtitle: "Choose your preferred blur style for explicit content."
+2. 3 Style Selection Cards:
+   - Style 1: "Frosted Glass" (Smooth Gaussian blur) [Selected indicator with checkmark]
+   - Style 2: "Pixelated Censor" (8-bit digital blocks)
+   - Style 3: "Opaque Dark Mask" (Total black shield block)
+3. Slider Control:
+   - "Blur Intensity" label with percentage counter (e.g. 85%).
+   - Custom NeonCyan slider with smooth tactile drag.
+4. Interactive Split Comparison View:
+   - Left half: Original sample graphic (landscape).
+   - Right half: Simulated real-time blur applied according to selected style & intensity.
+   - Center draggable split handle (<> icon).
+5. Bottom Action: "✔ Apply Changes" (NeonCyan pill button).
 
-State 3: On-Device AI Model Missing / Uninitialized
-- Graphic: A neural network brain icon with a small disconnect wrench.
-- Title: "AI Core Uninitialized"
-- Description: "The local TFLite neural model was not found in local assets. Tap to self-repair or reload model."
-- Action: "Reload Core" (Neon Cyan outline button).
+State & Persistence:
+- Persist BlurStyle (GAUSSIAN, PIXELATED, OPAQUE) and blurIntensity (0.1f - 1.0f) in DataStore.
+- Inform LiveBlurOverlayManager of the new configuration.
 
-Visual Style: Minimalist, clean vector style, cyber-dark aesthetic, non-intimidating, informative.
-
-
-
+Acceptance Criteria:
+- Split comparison responds smoothly to slider drag.
+- Selected style persists across app restarts.
 ```
 
-'''
-মডিউল 07: Overlays and Dialogs (ব্লার এবং সতর্কবার্তা)
-ChatGPT-কে দিন (Prompt 7-A):
-
-Plaintext
-Generate a high-quality UI/UX mockup for the "System Overlays & Alerts" of the SafeScreen Android app. 
-- **Context:** This is a full-screen system alert that floats over another distracting app (like TikTok).
-- **Background:** Heavily frosted glass blur (Glassmorphism effect) covering the entire background.
-- **Center Card:** A sleek, glowing neon-cyan bordered modal card. 
-- **Card Content:** A warning icon (Shield with a lock), headline "Focus Time Active!", and subtitle "You have reached your daily limit for this app. Take a deep breath and disconnect."
-- **Action Button:** A large "Exit to Home Screen" button in Neon Cyan.
-- **Style:** Cyber-dark theme, intrusive but highly premium and elegant.
-ছবিটি জেনারেট হলে 07_Overlays_And_Dialogs/ ফোল্ডারে সেভ করে রাখুন।
-
-ভবিষ্যতে কোডিং এজেন্টকে দেবেন (Prompt 7-B):
-
-Plaintext
-Review the image in `Screen Workflow/07_Overlays_And_Dialogs/`. Implement `LiveBlurOverlayView` and `FocusInterventionOverlay`.
-- Note: These are NOT standard Activities. They must be rendered via `WindowManager` using `TYPE_APPLICATION_OVERLAY`.
-- Use Jetpack Compose's `ComposeView` for the UI.
-- Implement the frosted glass blur background (use `RenderEffect.createBlurEffect` for API 31+).
-- The "Exit to Home" button must trigger an Intent to launch the Android Home Launcher.
-
-'''
-
-#### প্রম্পট ৮-B: Kotlin & Jetpack Compose ইমপ্লিমেন্টেশন (ভবিষ্যত কোডিং এজেন্টের জন্য)
-```text
-Task: Implement the Empty State and Error State composables in Kotlin & Jetpack Compose referencing 'Screen Workflow/08_Error_And_Empty_States/'.
-
-Architectural Requirements:
-1. Target Package: `com.safescreen.app.presentation.components.states`.
-2. Reusability: Create a flexible composable `SafeScreenStateView(icon, title, message, actionText, onActionClick)`.
-3. Wiring:
-   - Display `EmptyState` in `StatsScreen` when Room DB returns 0 entries.
-   - Display `PermissionRevokedBanner` on `HomeScreen` if background checks detect lost overlay permission.
-```
-
-
-'''
-📱 মডিউল 08: Error and Empty States (খালি বা এরর অবস্থা)
-ChatGPT-কে দিন (Prompt 8-A):
-
-Plaintext
-Generate a high-quality UI/UX mockup for the "Empty & Error States" of the SafeScreen app.
-- **Context:** Show a beautifully designed Empty State for the Analytics/Activity Log screen.
-- **Visuals:** A minimalist, futuristic line-art illustration of a clean, empty folder or a quiet space in neon green/cyan.
-- **Typography:** Headline "All Clear! No Threats Found." and subtitle "Your digital space is currently pure and focused. We'll log any blocked content here."
-- **Action Button:** A subtle "Refresh" or "Go to Settings" outline button.
-- **Style:** Cyber-dark aesthetic, extremely clean, avoiding clutter, frosted glass accents.
-ছবিটি জেনারেট হলে 08_Error_And_Empty_States/ ফোল্ডারে সেভ করে রাখুন।
-
-ভবিষ্যতে কোডিং এজেন্টকে দেবেন (Prompt 8-B):
-
-Plaintext
-Review the image in `Screen Workflow/08_Error_And_Empty_States/`. Implement a reusable `SafeScreenStateView.kt` composable.
-- It should accept parameters for `title`, `description`, `iconRes`, and an optional `onActionClick` lambda.
-- Ensure the typography and spacing exactly match the provided design.
-- Integrate this state gracefully into `DetailedActivityLog` and `StatsScreen` when t
-'''
 ---
-*SafeScreen UI/UX Master Prompt Book — Production Ready.*
 
+## 📁 মডিউল ০৪: রিলস ও ডিজিটাল ওয়েলবিয়িং (Reels & Focus Flow)
+
+### স্ক্রিন ০৭: Reels & Shorts Control Screen
+* **টার্গেট ফাইল:** `app/src/main/java/com/safescreen/app/presentation/screens/focus/ReelsControlScreen.kt`
+* **ভিজ্যুয়াল রেফারেন্স:** `Screen Workflow/04_Reels_And_Focus/Neon SafeScreen Focus Dashboard.png` (বাম স্ক্রিন) & `photo_6284782712203710858_w.jpg`
+
+#### 📝 প্রম্পট ০৭-B: Reels & Shorts Control ইমপ্লিমেন্টেশন
+```text
+Role & Objective:
+Implement the Reels & Shorts Control screen in Kotlin & Jetpack Compose to configure short-video platform monitoring, daily allowances, and intervention strategies.
+
+Context & Reference:
+Inspect 'Screen Workflow/04_Reels_And_Focus/Neon SafeScreen Focus Dashboard.png' (Left Screen) and 'photo_6284782712203710858_w.jpg'.
+
+UI Structure & Components:
+1. Top Bar: Back arrow, Title "Reels & Shorts Control", Info icon dialog trigger.
+2. OS Notice Card (Warning Amber):
+   - "Android Sandboxing Notice: App UI cannot be deleted. SafeScreen uses Accessibility Overlays & App-Level time limits to protect you."
+3. Monitored Platforms Section:
+   - App List with official logos and independent switches:
+     * Instagram (Reels) — Switch ON
+     * YouTube (Shorts) — Switch ON
+     * TikTok — Switch ON
+     * Facebook (Reels) — Switch ON
+   - "+ Add Custom App" dashed button (opens app selector dialog for other installed short-form apps).
+4. Daily Short-Video Allowance Gauge:
+   - Semi-circular arc gauge or stepped slider with presets: [15 min] [30 min (Selected)] [45 min] [1 hr] [Complete Lockout].
+   - Large numeric readout: "30 min per day".
+5. Intervention Strategy (Radio Card Group):
+   - Option 1: "Strict Focus Overlay" (Instantly blocks screen when Reels section is detected) [Selected]
+   - Option 2: "Gentle Nudge" (Floating timer reminder)
+   - Option 3: "Auto-Home Exit" (Performs back/home gesture automatically)
+6. Bottom Action: "✔ Save Settings" (NeonCyan pill button).
+
+Architecture & Integration:
+- ViewModel: ReelsControlViewModel managing ReelsConfig data class.
+- Persistence: DataStore Preferences & Room DB.
+- AccessibilityService Hook: Service queries isAppMonitored(packageName) and time limit before displaying overlay.
+
+Acceptance Criteria:
+- Selecting "Complete Lockout" sets allowance to 0 min.
+- Custom app additions persist in Room DB.
+```
+
+---
+
+### স্ক্রিন ০৮: Focus Schedule Screen
+* **টার্গেট ফাইল:** `app/src/main/java/com/safescreen/app/presentation/screens/focus/FocusScheduleScreen.kt`
+* **ভিজ্যুয়াল রেফারেন্স:** `Screen Workflow/04_Reels_And_Focus/Neon SafeScreen Focus Dashboard.png` (ডান পাশের স্ক্রিন)
+
+#### 📝 প্রম্পট ০৮-B: Focus Schedule ইমপ্লিমেন্টেশন
+```text
+Role & Objective:
+Implement the Focus Schedule Screen in Jetpack Compose to schedule recurring distraction-free blocks (such as bedtime, study hours, or prayer times) during which short-video platforms are completely locked out.
+
+Context & Reference:
+Inspect 'Screen Workflow/04_Reels_And_Focus/Neon SafeScreen Focus Dashboard.png' (Right Screen).
+
+UI Components:
+1. Top Bar: Back arrow, Title "Focus Time Schedules", Info icon.
+2. Subtitle: "Completely block short-video platforms during essential life hours."
+3. Preset & Custom Schedule Cards:
+   - Card 1: "Night Purity & Sleep" (Crescent moon icon, 10:00 PM – 06:00 AM, badge: "✔ Active" Bio-Green, days: "Daily", toggle switch ON).
+   - Card 2: "Deep Work / Study" (Graduation cap icon, 09:00 AM – 05:00 PM, badge: "✔ Active" NeonPurple, days: "Mon – Fri", toggle switch ON).
+4. Day Selector: Pill buttons for [M] [T] [W] [T] [F] [S] [S].
+5. Add Schedule Button: Dashed outline card "+ Add Custom Focus Block".
+6. Inspiration Hero Graphic: Clock shield graphic with message: "Stay Focused. Live Healthier. Let SafeScreen help you build better habits."
+7. Floating Action Button (FAB): NeonPurple (+) button for quick schedule addition.
+
+Architecture:
+- Room FocusScheduleEntity (id, title, startTime, endTime, daysOfWeek, isEnabled).
+- DAO & Repository with reactive Flow<List<FocusSchedule>>.
+
+Acceptance Criteria:
+- Toggling a schedule immediately takes effect in the background check engine.
+- Adding a new custom schedule with time picker works smoothly.
+```
+
+---
+
+## 📁 মডিউল ০৫: অ্যানালিটিক্স ও হিস্ট্রি (Stats & Analytics Flow)
+
+### স্ক্রিন ০৯: Protection Stats Screen
+* **টার্গেট ফাইল:** `app/src/main/java/com/safescreen/app/presentation/screens/stats/StatsScreen.kt`
+* **ভিজ্যুয়াল রেফারেন্স:** `Screen Workflow/05_Stats_And_Analytics/SafeScreen Neon Protection Dashb.png` (বাম পাশের স্ক্রিন)
+
+#### 📝 প্রম্পট ০৯-B: Protection Stats Screen ইমপ্লিমেন্টেশন
+```text
+Role & Objective:
+Implement the data-rich ProtectionStatsScreen in Kotlin & Jetpack Compose to visualize local offline filtering metrics without any cloud analytics.
+
+Context & Reference:
+Inspect 'Screen Workflow/05_Stats_And_Analytics/SafeScreen Neon Protection Dashb.png' (Left Screen).
+
+UI Structure & Components:
+1. Top Bar:
+   - App icon + "Protection Insights".
+   - Time Range Selector: Pill segment [Today] [7 Days (Active Cyan)] [30 Days].
+2. Privacy Guarantee Banner:
+   - Green-bordered frosted card: "🔒 100% Offline SQLite. All statistics exist solely on your local device."
+3. Weekly Activity Overview Card:
+   - Custom Compose Canvas Bar Chart:
+     * Dual bars for each day (Mon - Sun): Pink bar for Blocked Frames, Cyan bar for Muted Audio.
+     * Active glowing tooltip on selected day (e.g. "Thu: 42 Blurred, 18 Muted").
+4. Category Breakdown Card:
+   - Donut Chart / Segmented Progress Arc:
+     * 55% Explicit Visuals Blurred (NeonPink)
+     * 30% Background Music Muted (NeonCyan)
+     * 15% Reels Sessions Intercepted (NeonPurple)
+5. Top Intercepted Apps Card:
+   - Ranked list with app icons, package names, event count, and proportional fill bars:
+     * 1. Chrome (54 events)
+     * 2. Instagram (32 events)
+     * 3. Twitter / X (19 events)
+6. Bottom Action: "View Detailed Event Log" (Card with chevron right).
+
+Architecture & State:
+- StatsViewModel collecting Flow<StatsUiState> from GetStatsUseCase.
+- If event count is 0, render EmptyStatsView from Module 08.
+
+Acceptance Criteria:
+- Canvas charts animate on enter and handle touch selection smoothly.
+- Zero external analytics SDKs used.
+```
+
+---
+
+### স্ক্রিন ১০: Detailed Activity Log Screen
+* **টার্গেট ফাইল:** `app/src/main/java/com/safescreen/app/presentation/screens/stats/DetailedActivityLogScreen.kt`
+* **ভিজ্যুয়াল রেফারেন্স:** `Screen Workflow/05_Stats_And_Analytics/SafeScreen Neon Protection Dashb.png` (ডান পাশের স্ক্রিন)
+
+#### 📝 প্রম্পট ১০-B: Detailed Activity Log ইমপ্লিমেন্টেশন
+```text
+Role & Objective:
+Implement the chronological Activity Timeline in Jetpack Compose showing every local protection event with category badges, timestamps, confidence scores, and clear-history controls.
+
+Context & Reference:
+Inspect 'Screen Workflow/05_Stats_And_Analytics/SafeScreen Neon Protection Dashb.png' (Right Screen).
+
+UI Components:
+1. Top Bar: Back arrow, "Activity Timeline", Filter icon, "Clear Log" red trash button.
+2. Grouped Feed (LazyColumn):
+   - Group Headers: "Today • Oct 31, 2026", "Yesterday • Oct 30, 2026" with collapsible chevrons.
+   - Event Card 1: Eye-slash in NeonPink -> "Explicit Visual Content Blurred", Subtitle: "Browser (com.android.chrome) • 03:42 PM", Pill badge: "94% NSFW score".
+   - Event Card 2: Mute icon in NeonCyan -> "Background Music Silenced", Subtitle: "Shorts Feed • 02:15 PM", Pill badge: "45 sec muted".
+   - Event Card 3: Lock in NeonPurple -> "Reels Limit Reached — Overlay Shown", Subtitle: "Instagram • 11:20 AM".
+3. Clear Log Confirmation Dialog:
+   - Warning triangle in WarningYellow: "Clear Activity Log? This will permanently remove all protection activity history from this device. Are you sure?"
+   - Actions: "Clear Log" (NeonCyan button) & "Cancel".
+
+Acceptance Criteria:
+- Clicking Clear Log wipes Room StatEntity table and instantly switches UI to Screen 16 Empty State.
+- Stable LazyColumn items prevent scroll lag.
+```
+
+---
+
+## 📁 মডিউল ০৬: সেটিংস, হোয়াইটলিস্ট ও সিকিউরিটি লক (Settings & Security Flow)
+
+### স্ক্রিন ১১: Main Settings Screen
+* **টার্গেট ফাইল:** `app/src/main/java/com/safescreen/app/presentation/screens/settings/SettingsScreen.kt`
+* **ভিজ্যুয়াল রেফারেন্স:** `Screen Workflow/06_Settings_And_Security/SafeScreen Neon Security UI Mock.png` (বাম পাশের স্ক্রিন)
+
+#### 📝 প্রম্পট ১১-B: Settings Screen ইমপ্লিমেন্টেশন
+```text
+Role & Objective:
+Implement the comprehensive Settings Screen in Jetpack Compose to manage AI sensitivity, sampling FPS, security toggles, and data hygiene.
+
+Context & Reference:
+Inspect 'Screen Workflow/06_Settings_And_Security/SafeScreen Neon Security UI Mock.png' (Left Screen).
+
+UI Sections & Cards:
+1. Section 1: "AI Detection Engine" (Chip icon, subtitle: "Control how strictly SafeScreen works"):
+   - Sensitivity Level: 3-segmented pill [Strict] [Balanced (Default)] [Relaxed].
+   - Performance Profile: 3-segmented pill [Battery Saver (3 FPS)] [Balanced (5 FPS)] [High Precision (8 FPS)].
+2. Section 2: "Security & Protection":
+   - "PIN & Biometric Lock" switch toggle.
+   - "Prevent Uninstallation Assistance" switch toggle.
+3. Section 3: "App Exclusions":
+   - Card: "Manage App Whitelist (5 apps excluded)" with right chevron. Navigates to Screen 12.
+4. Section 4: "Data & Storage":
+   - Button: "Clear Offline Database Cache" with trash icon.
+5. Section 5: "About":
+   - App version "SafeScreen v1.0.0", Privacy Policy link, Open-source licenses link.
+
+Architecture:
+- SettingsViewModel syncing with DataStore Preferences.
+- Changing FPS dynamically updates the background MediaProjection ImageReader frame rate.
+
+Acceptance Criteria:
+- All toggles react with zero lag and persist immediately.
+```
+
+---
+
+### স্ক্রিন ১২: App Whitelist Screen
+* **টার্গেট ফাইল:** `app/src/main/java/com/safescreen/app/presentation/screens/settings/AppWhitelistScreen.kt`
+* **ভিজ্যুয়াল রেফারেন্স:** `Screen Workflow/06_Settings_And_Security/SafeScreen Neon Security UI Mock.png` (মাঝের স্ক্রিন)
+
+#### 📝 প্রম্পট ১২-B: App Whitelist Screen ইমপ্লিমেন্টেশন
+```text
+Role & Objective:
+Implement the App Whitelist Screen in Jetpack Compose to let users exempt trusted applications (such as banking, personal gallery, or office apps) from screen inspection and audio capture.
+
+Context & Reference:
+Inspect 'Screen Workflow/06_Settings_And_Security/SafeScreen Neon Security UI Mock.png' (Center Screen).
+
+UI Components:
+1. Top Bar: Back arrow, "App Whitelist", Shield icon.
+2. Search Bar: Magnifying glass, "Search installed apps..." with live query filtering.
+3. Informational Banner: "Whitelisted apps bypass all screen frame inspection and audio filtering."
+4. App List (LazyColumn):
+   - Items with App Icon, App Name, Package Name, "Exempted" / "Protected" status badge, and toggle switch.
+   - Defaults: Banking apps pre-suggested for exemption.
+5. Sticky Bottom Summary Bar:
+   - Shield icon: "5 Apps in Whitelist. These apps are exempted from SafeScreen checks."
+
+Integration:
+- Fetch installed apps using PackageManager on Dispatchers.IO.
+- Save whitelisted packages in Room WhitelistDao.
+- ShieldProtectionService queries isPackageWhitelisted() in real-time.
+
+Acceptance Criteria:
+- Search filters 100+ installed apps smoothly with no UI thread freeze.
+```
+
+---
+
+### স্ক্রিন ১৩: Security Lock Screen (PIN & Biometric)
+* **টার্গেট ফাইল:** `app/src/main/java/com/safescreen/app/presentation/screens/settings/SecurityLockScreen.kt`
+* **ভিজ্যুয়াল রেফারেন্স:** `Screen Workflow/06_Settings_And_Security/SafeScreen Neon Security UI Mock.png` (ডান পাশের স্ক্রিন)
+
+#### 📝 প্রম্পট ১৩-B: Security Lock Screen ইমপ্লিমেন্টেশন
+```text
+Role & Objective:
+Implement the Cyber-Dark PIN Pad and Biometric authentication gate in Jetpack Compose to guard against unauthorized shield disarming or settings tampering.
+
+Context & Reference:
+Inspect 'Screen Workflow/06_Settings_And_Security/SafeScreen Neon Security UI Mock.png' (Right Screen).
+
+UI Components:
+1. Center Hero: Glowing green/cyan padlock with circuit traces.
+2. Header: "SafeScreen Locked", subtitle: "Enter your 4-digit PIN to modify settings or disarm shield".
+3. PIN Indicator: 4 glowing circular dots (hollow when empty, filled neon when entered).
+4. Glassmorphic Numeric Keypad:
+   - Grid of buttons: [1] [2 ABC] [3 DEF] [4 GHI] [5 JKL] [6 MNO] [7 PQRS] [8 TUV] [9 WXYZ].
+   - Bottom Row: [Fingerprint Icon] [0] [Backspace Icon].
+5. "Forgot PIN?" text button at bottom.
+
+Architecture & Security:
+- BiometricPrompt integration using BIOMETRIC_STRONG or DEVICE_CREDENTIAL.
+- PIN stored as cryptographic hash (SHA-256 with salt) in DataStore.
+- Shake animation and haptic feedback on invalid PIN attempt.
+- 5 failed attempts locks keypad for 30 seconds.
+
+Acceptance Criteria:
+- Biometric prompt triggers automatically on screen enter if enabled.
+- Correct PIN returns onUnlockSuccess() callback.
+```
+
+---
+
+## 📁 মডিউল ০৭: সিস্টেম ওভারলে ও ফ্লোটিং উইন্ডো (System Overlays Flow)
+
+### স্ক্রিন ১৪: Live Visual Blur Overlay View
+* **টার্গেট ফাইল:** `app/src/main/java/com/safescreen/app/services/overlay/LiveBlurOverlayView.kt`
+* **ভিজ্যুয়াল রেফারেন্স:** `Screen Workflow/07_Overlays_And_Dialogs/SafeScreen Protection and Focus .png` (বাম পাশের স্ক্রিন)
+
+#### 📝 প্রম্পট ১৪-B: Live Blur Overlay ইমপ্লিমেন্টেশন
+```text
+Role & Objective:
+Implement the system-level floating blur overlay in Kotlin & Jetpack Compose to dynamically mask explicit content over third-party apps via Android WindowManager.
+
+Context & Reference:
+Inspect 'Screen Workflow/07_Overlays_And_Dialogs/SafeScreen Protection and Focus .png' (Left Screen).
+
+OS WindowManager Configuration:
+- Type: WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+- Flags: FLAG_NOT_FOCUSABLE or FLAG_LAYOUT_IN_SCREEN or FLAG_NOT_TOUCH_MODAL
+- Format: PixelFormat.TRANSLUCENT
+
+UI Components:
+1. Localized Blur Box: Renders over the detected bounding box of explicit content.
+2. Frosted Blur Filter: Uses RenderEffect (Android 12+) or Gaussian shader / pixelation fallback.
+3. Center Trust Badge:
+   - Dark glass pill badge: Eye-slash icon in white + "Protected by SafeScreen AI" with glowing cyan border.
+4. Non-Intrusive Pass-Through: Touch gestures outside the blurred box must pass through to the underlying application.
+
+Architecture:
+- Hosted in ShieldProtectionService using ComposeView attached to WindowManager.
+- Show/Hide driven by TFLite inference result StateFlow.
+
+Acceptance Criteria:
+- Overlay displays within 50ms of threat detection.
+- Disappears automatically when the user scrolls away from explicit content.
+```
+
+---
+
+### স্ক্রিন ১৫: Focus Intervention Overlay (Reels Blocker)
+* **টার্গেট ফাইল:** `app/src/main/java/com/safescreen/app/services/overlay/FocusInterventionOverlay.kt`
+* **ভিজ্যুয়াল রেফারেন্স:** `Screen Workflow/07_Overlays_And_Dialogs/SafeScreen Protection and Focus .png` (ডান পাশের স্ক্রিন) & `Neon Focus Time Alert Overlay.png`
+
+#### 📝 প্রম্পট ১৫-B: Focus Intervention Overlay ইমপ্লিমেন্টেশন
+```text
+Role & Objective:
+Implement the full-screen Focus Intervention Overlay that intercepts social media doomscrolling when daily time limits are exhausted.
+
+Context & Reference:
+Inspect 'Screen Workflow/07_Overlays_And_Dialogs/SafeScreen Protection and Focus .png' (Right Screen) and 'Neon Focus Time Alert Overlay.png'.
+
+UI Structure & Components:
+1. Background: Full-screen semi-translucent dark frosted scrim (dimming underlying video).
+2. Floating Intervention Card (GlassmorphicCard with NeonPurple / NeonCyan glowing border):
+   - Hero: Glowing 3D Shield enclosing an Hourglass icon.
+   - Headline: "Focus Time Active!" (headlineMedium, NeonCyan/Purple).
+   - Message: "You've reached your daily 30-minute limit for short videos. Your time is valuable — give your mind a restful break."
+3. Action Buttons:
+   - Button 1: "Take a 5-Min Walk" (Walking icon, solid NeonPurple pill button). Starts a 5-minute break countdown.
+   - Button 2: "Exit to Home Screen" (Home icon, outlined button). Fires Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME).
+   - Micro-Action: "Emergency 2-min pass (Requires PIN)". Triggers PIN prompt before temporary pass.
+4. Footer: "SafeScreen • Your Focus, Our Priority".
+
+Acceptance Criteria:
+- Completely halts user interaction with the Reels feed.
+- "Exit to Home" safely minimizes the target app and returns user to Android launcher.
+```
+
+---
+
+## 📁 মডিউল ০৮: এরর, এম্পটি ও ফলব্যাক স্টেটস (Error & Empty States)
+
+### স্ক্রিন ১৬: Empty, Warning & Error State Composables
+* **টার্গেট ফাইল:** `app/src/main/java/com/safescreen/app/presentation/components/states/SafeScreenStates.kt`
+* **ভিজ্যুয়াল রেফারেন্স:** `Screen Workflow/08_Error_And_Empty_States/SafeScreen Neon Status Dashboard.png` & `SafeScreen Activity Log_ All Cle.png`
+
+#### 📝 প্রম্পট ১৬-B: Empty, Warning & Error States ইমপ্লিমেন্টেশন
+```text
+Role & Objective:
+Implement reusable, responsive UI state composables for clean-slate empty states, permission revoked warnings, and neural model missing errors.
+
+Context & Reference:
+Inspect 'Screen Workflow/08_Error_And_Empty_States/SafeScreen Neon Status Dashboard.png' and 'SafeScreen Activity Log_ All Cle.png'.
+
+3 Distinct State Composables to Implement:
+
+1. EmptyStatsState (All Clean & Clear):
+   - Hero: Glowing Bio-Green shield with checkmark inside, surrounded by neon sparkles.
+   - Title: "All Clean & Clear" (NeonGreen).
+   - Subtitle: "No explicit visuals or music interruptions detected yet today. Enjoy your safe digital journey!"
+   - Metric Pill Row: [0 Blurred] [0 Muted] [0 Blocked].
+   - Badge: "✔ Stay Focused, Stay Safe 💚".
+
+2. PermissionRevokedWarning (Shield Paused):
+   - Hero: Amber-yellow shield with exclamation mark.
+   - Title: "⏸ Shield Paused: Screen Access Needed" (WarningYellow).
+   - Subtitle: "Android revoked MediaProjection or Overlay access. SafeScreen cannot protect you until permissions are restored."
+   - Action: "Restore Permissions" (Solid yellow button). Launches PermissionHub.
+   - Helper Note: "Go to Settings and grant the required permissions."
+
+3. ModelUninitializedError (AI Core Error):
+   - Hero: Glowing neon purple brain icon with pink wrench.
+   - Title: "AI Core Uninitialized" (NeonPink).
+   - Subtitle: "The local TFLite neural model was not found in local assets. Tap to self-repair or reload model."
+   - Action: "🔄 Reload Core" (NeonCyan outline button).
+   - Helper Note: "This will reload the AI model from local storage."
+
+Acceptance Criteria:
+- Reusable across any screen via SafeScreenStateView(type, onAction).
+- Clean previews in both Light and Dark modes.
+```
+
+---
+*SafeScreen Master UI/UX Screen Design & Production Implementation Guide — Enhanced and Verified.*
