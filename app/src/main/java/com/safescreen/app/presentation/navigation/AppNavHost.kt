@@ -44,6 +44,9 @@ fun AppNavHost(
 
         composable(Screen.PermissionHub.route) {
             PermissionHubScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
                 onAllPermissionsGranted = {
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Onboarding.route) { inclusive = true }
@@ -80,4 +83,3 @@ fun AppNavHost(
         }
     }
 }
-
