@@ -28,6 +28,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ScreenShare
 import androidx.compose.material.icons.filled.AccessibilityNew
+import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Lock
@@ -36,6 +37,7 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -68,6 +70,7 @@ import com.safescreen.app.presentation.theme.SafeScreenTheme
 import com.safescreen.app.presentation.theme.TextMuted
 import com.safescreen.app.presentation.theme.TextPrimary
 import com.safescreen.app.presentation.theme.TextSecondary
+import com.safescreen.app.presentation.theme.WarningYellow
 
 /**
  * Types of Android System Permissions monitored by SafeScreen.
@@ -99,6 +102,8 @@ data class PermissionItemState(
  */
 data class PermissionHubUiState(
     val permissions: List<PermissionItemState> = defaultPermissions,
+    val isBatteryOptimizedExempted: Boolean = false,
+    val showBatteryDialog: Boolean = false,
     val isLoading: Boolean = false
 ) {
     val areAllGranted: Boolean
@@ -169,6 +174,9 @@ val defaultPermissions = listOf(
  */
 sealed interface PermissionHubUiEvent {
     data class RequestPermission(val type: PermissionType) : PermissionHubUiEvent
+    data object OpenBatteryDialog : PermissionHubUiEvent
+    data object DismissBatteryDialog : PermissionHubUiEvent
+    data object AllowUnrestrictedBattery : PermissionHubUiEvent
     data object EnterShieldHub : PermissionHubUiEvent
     data object NavigateBack : PermissionHubUiEvent
 }
@@ -195,6 +203,18 @@ fun PermissionHubScreen(
                         }
                     )
                 }
+                PermissionHubUiEvent.OpenBatteryDialog -> {
+                    state = state.copy(showBatteryDialog = true)
+                }
+                PermissionHubUiEvent.DismissBatteryDialog -> {
+                    state = state.copy(showBatteryDialog = false)
+                }
+                PermissionHubUiEvent.AllowUnrestrictedBattery -> {
+                    state = state.copy(
+                        showBatteryDialog = false,
+                        isBatteryOptimizedExempted = true
+                    )
+                }
                 PermissionHubUiEvent.EnterShieldHub -> {
                     if (state.areAllGranted) {
                         onAllPermissionsGranted()
@@ -211,6 +231,7 @@ fun PermissionHubScreen(
 /**
  * Pure stateless Composable adhering to State Hoisting.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PermissionHubContent(
     uiState: PermissionHubUiState,
@@ -263,18 +284,19 @@ fun PermissionHubContent(
                     )
                 )
 
-                // Right Shield Badge Indicator
+                // Right Shield Badge Indicator (Clickable to trigger Battery Dialog)
                 Box(
                     modifier = Modifier
                         .size(42.dp)
                         .clip(CircleShape)
                         .background(NeonCyan.copy(alpha = 0.12f))
-                        .border(1.dp, NeonCyan.copy(alpha = 0.4f), CircleShape),
+                        .border(1.dp, NeonCyan.copy(alpha = 0.4f), CircleShape)
+                        .clickable { onEvent(PermissionHubUiEvent.OpenBatteryDialog) },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Default.Shield,
-                        contentDescription = "Security Shield",
+                        contentDescription = "Security Shield / Battery Access",
                         tint = NeonCyan,
                         modifier = Modifier.size(22.dp)
                     )
@@ -359,6 +381,52 @@ fun PermissionHubContent(
                                 textAlign = TextAlign.Center
                             )
                         )
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        // Interactive Battery Optimization Banner Chip
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(
+                                    if (uiState.isBatteryOptimizedExempted) {
+                                        NeonGreen.copy(alpha = 0.12f)
+                                    } else {
+                                        WarningYellow.copy(alpha = 0.12f)
+                                    }
+                                )
+                                .border(
+                                    width = 1.dp,
+                                    color = if (uiState.isBatteryOptimizedExempted) {
+                                        NeonGreen.copy(alpha = 0.4f)
+                                    } else {
+                                        WarningYellow.copy(alpha = 0.4f)
+                                    },
+                                    shape = RoundedCornerShape(16.dp)
+                                )
+                                .clickable { onEvent(PermissionHubUiEvent.OpenBatteryDialog) }
+                                .padding(horizontal = 14.dp, vertical = 8.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (uiState.isBatteryOptimizedExempted) Icons.Default.CheckCircle else Icons.Default.Bolt,
+                                contentDescription = null,
+                                tint = if (uiState.isBatteryOptimizedExempted) NeonGreen else WarningYellow,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = if (uiState.isBatteryOptimizedExempted) {
+                                    "Unrestricted Battery: Active ✔"
+                                } else {
+                                    "Unrestricted Battery Access (Tap to configure)"
+                                },
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = if (uiState.isBatteryOptimizedExempted) NeonGreen else WarningYellow
+                                )
+                            )
+                        }
                     }
                 }
 
@@ -428,6 +496,14 @@ fun PermissionHubContent(
                     }
                 }
             }
+        }
+
+        // ModalBottomSheet for Battery Optimization
+        if (uiState.showBatteryDialog) {
+            BatteryOptimizationDialog(
+                onDismiss = { onEvent(PermissionHubUiEvent.DismissBatteryDialog) },
+                onAllowUnrestricted = { onEvent(PermissionHubUiEvent.AllowUnrestrictedBattery) }
+            )
         }
     }
 }
@@ -574,7 +650,10 @@ private fun PermissionHubScreenAllGrantedPreview() {
     val allGrantedPermissions = defaultPermissions.map { it.copy(isGranted = true) }
     SafeScreenTheme {
         PermissionHubContent(
-            uiState = PermissionHubUiState(permissions = allGrantedPermissions),
+            uiState = PermissionHubUiState(
+                permissions = allGrantedPermissions,
+                isBatteryOptimizedExempted = true
+            ),
             onEvent = {}
         )
     }

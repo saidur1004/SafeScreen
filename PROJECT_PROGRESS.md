@@ -19,19 +19,20 @@
 
 ## 📅 সর্বশেষ আপডেট তথ্য
 * **সর্বশেষ আপডেটের তারিখ:** ০১ নভেম্বর ২০২৬
-* **বর্তমান পর্যায়:** **Phase 2B — Module 02, Prompt 1 Completed (Verified Build ✅)**
+* **বর্তমান পর্যায়:** **Phase 2B — Module 02 Completed (PermissionHubScreen & BatteryOptimizationDialog Verified ✅)**
 * **কোডিং এজেন্টের সর্বশেষ সম্পাদিত কাজের সংক্ষিপ্ত সামারি:**
-  1. `presentation/screens/permission/PermissionHubScreen.kt` সম্পূর্ণ পুনর্লিখন করা হয়েছে:
-     - টপ অ্যাপ বার: সার্কুলার ব্যাক বাটন (`Icons.AutoMirrored.Filled.ArrowBack`), বোল্ড টাইটেল ("System Permissions"), এবং সাইবার শিল্ড ব্যাজ।
-     - সেন্ট্রাল হিরো: গ্লোয়িং সাইবার শিল্ড এম্বলম ও প্যাডলক, সাথে স্বচ্ছ প্রাইভেসি নোটিশ ("Your data is strictly private." নিয়ন সায়ান হাইলাইট সহ)।
-     - ৫টি ফ্রস্টেড পারমিশন কার্ড (Overlay, Screen Capture, Audio, Accessibility, Notification) যাতে ব্যবহারকারীর চাহিদা অনুযায়ী ডামি স্টেটে "Screen Capture" ও "Overlay" কে 'Granted' (সবুজ টিক) এবং "Audio" ও "Accessibility" কে 'Pending' (Grant বাটন) হিসেবে দেখানো হয়েছে।
-     - State Hoisting: `PermissionHubUiState` ও `PermissionHubUiEvent` সিল্ড ইন্টারফেস যুক্ত।
-     - ইন্টারঅ্যাক্টিভ টেস্টিং: "Grant Access" বা "Enable" বাটনে ট্যাপ করলে রিয়েল-টাইমে গ্রিন টিক চিহ্নে পরিণত হয়।
-     - স্টিকি বটম বার: "Enter Shield Hub" বাটন, যা সমস্ত পারমিশন গ্রান্টেড না হওয়া পর্যন্ত ডিজেবলড থাকে এবং সব গ্রান্টেড হলে উজ্জ্বল নিয়ন সায়ান ও এনাবলড হয়।
-     - লাইট ও ডার্ক মোডের জন্য দুটি আলাদা `@Preview` (Initial State ও All Granted State)।
-  2. `AppNavHost.kt` ফাইলে `onNavigateBack = { navController.popBackStack() }` ওয়্যারিং সম্পন্ন করা হয়েছে।
-  3. **বিল্ড ও কম্পাইলেশন যাচাই:** `./gradlew assembleDebug` সফলভাবে পাস করেছে (`BUILD SUCCESSFUL in 42s`, 41 tasks, 0 errors)।
-* **পরবর্তী কোডিং পর্যায়:** **Phase 2B — Module 02, Prompt 2 (`BatteryOptimizationDialog.kt` বটম শিট - ব্যবহারকারীর অনুমতির অপেক্ষায় ⏳)**
+  1. `presentation/screens/permission/BatteryOptimizationDialog.kt` সম্পূর্ণ তৈরি করা হয়েছে:
+     - Material 3 `ModalBottomSheet` ব্যবহার করে ফ্রস্টেড ডার্ক সারফেস (`DarkSurfaceElevated` `#161D2D`) ও টপ ড্র্যাগ হ্যান্ডেল।
+     - হিরো ব্যাটারি গ্রাফিক: কেন্দ্রে উজ্জ্বল হলুদ ব্যাটারি বডি ও বজ্রপাত আইকন (`Icons.Default.Bolt`) এবং ক্যানভাসে আঁকা টিল্টেড অরবিটাল রিংস ও অ্যাম্বিয়েন্ট পালসিং অরা অ্যানিমেশন (`rememberInfiniteTransition`)।
+     - বোল্ড টাইটেল ("Unrestricted Battery Access") ও বিস্তারিত ব্যাখ্যামূলক টেক্সট।
+     - প্রাইমারি বাটন: "Allow Unrestricted" (সলিড নিয়ন সায়ান পিল বাটন)।
+     - সেকেন্ডারি বাটন: "Later" (টেক্সট বাটন)।
+     - ডার্ক মোডের জন্য `@Preview` যুক্ত।
+  2. `PermissionHubScreen.kt` এর সাথে `BatteryOptimizationDialog` ইন্টিগ্রেট করা হয়েছে:
+     - স্ক্রিনে একটি ইন্টারেক্টিভ চিপ ব্যানার যুক্ত: *"⚡ Unrestricted Battery Access (Tap to configure)"* এবং টপ শিল্ড আইকন ট্যাপ করলেও বটম শিট ওপেন হয়।
+     - "Allow Unrestricted" চাপলে ব্যানারটি সবুজ "Active ✔" এ পরিণত হয় এবং ডায়ালগ ডিসমিস হয়। "Later" চাপলেও স্মুথলি ডিসমিস হয়।
+  3. **বিল্ড ও কম্পাইলেশন যাচাই:** `./gradlew assembleDebug` সফলভাবে সম্পন্ন (`BUILD SUCCESSFUL in 38s`, 41 tasks, 0 errors)।
+* **পরবর্তী কোডিং পর্যায়:** **Phase 2B — Module 03, Prompt 1 (`HomeScreen.kt` - ড্যাশবোর্ড, সেন্ট্রাল পালসিং শিল্ড ও লাইভ মেট্রিক কার্ডস)**
 * **গিট রিপোজিটরি স্ট্যাটাস:** `https://github.com/saidur1004/SafeScreen.git` (Branch: `main`)।
 
 ---
@@ -51,8 +52,8 @@
 | **Navigation Graph** | পূর্ণাঙ্গ ১৬টি স্ক্রিন ও বটম শিটের জন্য রুট ম্যাপিং | ✅ Completed & Verified | `presentation/navigation/Screen.kt` |
 | **Module 01 Screens** | `SplashScreen` ও `OnboardingScreen` পিক্সেল-পারফেক্ট ইমপ্লিমেন্টেশন | ✅ Completed & Verified | `presentation/screens/splash/`, `.../onboarding/` |
 | **Module 02 - Prompt 1** | `PermissionHubScreen` ফ্রস্টেড কার্ডস ও স্টেট হোস্টিং | ✅ Completed & Verified | `presentation/screens/permission/PermissionHubScreen.kt` |
-| **Module 02 - Prompt 2** | `BatteryOptimizationDialog` আনরেস্ট্রিক্টেড ব্যাটারি বটম শিট | ⏳ Awaiting Approval | `presentation/screens/permission/` |
-| **Module 03 Screens** | `HomeScreen` ও `BlurStylePreviewSheet` | ⏳ Planned (Phase 2B) | `presentation/screens/home/` |
+| **Module 02 - Prompt 2** | `BatteryOptimizationDialog` আনরেস্ট্রিক্টেড ব্যাটারি বটম শিট | ✅ Completed & Verified | `presentation/screens/permission/BatteryOptimizationDialog.kt` |
+| **Module 03 Screens** | `HomeScreen` ও `BlurStylePreviewSheet` | ⏳ Next Up (Phase 2B) | `presentation/screens/home/` |
 | **Module 04 Screens** | `ReelsControlScreen` ও `FocusScheduleScreen` | ⏳ Planned (Phase 2B) | `presentation/screens/focus/` |
 | **Module 05 Screens** | `StatsScreen` ও `DetailedActivityLogScreen` | ⏳ Planned (Phase 2B) | `presentation/screens/stats/` |
 | **Module 06 Screens** | `SettingsScreen`, `AppWhitelistScreen` ও `SecurityLockScreen` | ⏳ Planned (Phase 2B) | `presentation/screens/settings/` |
@@ -80,24 +81,25 @@
 - সেন্ট্রালাইজড [**`DESIGN.md`**](./DESIGN.md) তৈরি।
 - [**`DEVELOPMENT_ROADMAP.md`**](./DEVELOPMENT_ROADMAP.md) আপডেট করে ১০টি সুস্পষ্ট ফেজে পুনর্বিন্যাস।
 
-### গ. ফেজ ২B বাস্তবায়ন প্রগ্রেস (Phase 2B In-Progress)
+### গ. ফেজ ২B বাস্তবায়ন প্রগ্রেস (Phase 2B - Modules 01 & 02 Complete ✅)
 - `Screen.kt`-এ ১৬টি রুটের সম্পূর্ণ সংজ্ঞা।
 - `NeonPillBadge.kt` শেয়ার্ড কম্পোনেন্ট তৈরি।
 - `SplashScreen.kt` ও `OnboardingScreen.kt` পিক্সেল-পারফেক্ট ইমপ্লিমেন্টেশন।
-- `PermissionHubScreen.kt` (Module 02 Prompt 1) স্টেট হোস্টিং সহ ইমপ্লিমেন্ট ও বিল্ড ভেরিফাই সম্পন্ন।
+- `PermissionHubScreen.kt` (Module 02 Prompt 1) ফ্রস্টেড কার্ডস ও স্টেট হোস্টিং সম্পন্ন।
+- `BatteryOptimizationDialog.kt` (Module 02 Prompt 2) আনরেস্ট্রিক্টেড ব্যাটারি বটম শিট সম্পন্ন।
 
 ---
 
 ## ৩. পরবর্তী এজেন্টের জন্য সুস্পষ্ট কাজের নির্দেশনা ও সিকোয়েন্স (Next Agent Handoff)
 
 ### ১. পরবর্তী টাস্ক (Next Prompt):
-* **Phase 2B — Module 02: Prompt 2 (`BatteryOptimizationDialog.kt`)**
+* **Phase 2B — Module 03: Prompt 1 (`HomeScreen.kt` - Main Dashboard)**
 * **কখন শুরু করবেন:** ব্যবহারকারী চ্যাটে স্পষ্ট অনুমতি দেওয়ার পর।
 
 ### ২. রেফারেন্স ও গাইডলাইন:
-* **ভিজ্যুয়াল রেফারেন্স:** `Screen Workflow/02_Permissions/SafeScreen Permission Flow Mocku.png` (ডান পাশের বটম শিট)।
-* **প্রম্পট গাইড:** `Screen Workflow/MASTER_UI_PROMPTS.md`-এর **প্রম্পট ০৪-B**।
-* **টার্গেট ফাইল:** `app/src/main/java/com/safescreen/app/presentation/screens/permission/BatteryOptimizationDialog.kt`।
+* **ভিজ্যুয়াল রেফারেন্স:** `Screen Workflow/03_Home_Dashboard/SafeScreen Neon Shield Dashboard.png` (বাম পাশের স্ক্রিন)।
+* **প্রম্পট গাইড:** `Screen Workflow/MASTER_UI_PROMPTS.md`-এর **প্রম্পট ০৫-B**।
+* **টার্গেট ফাইল:** `app/src/main/java/com/safescreen/app/presentation/screens/home/HomeScreen.kt`।
 
 ### ৩. কোডিংয়ের সময় আবশ্যিক নিয়ম:
 * প্রতিটি স্ক্রিনে **State Hoisting** বজায় রাখুন (`UiState` ডাটা ক্লাস ও `UiEvent` সিল্ড ইন্টারফেস)।
