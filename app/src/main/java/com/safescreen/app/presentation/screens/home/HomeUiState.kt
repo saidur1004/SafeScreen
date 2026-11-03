@@ -12,7 +12,10 @@ data class HomeUiState(
     val isVisualShieldEnabled: Boolean = true,
     val isAudioMuteEnabled: Boolean = true,
     val isReelsBlockerEnabled: Boolean = false,
-    val activeBottomNav: BottomNavDestination = BottomNavDestination.Home
+    val activeBottomNav: BottomNavDestination = BottomNavDestination.Home,
+    val showBlurPreviewSheet: Boolean = false,
+    val currentBlurStyle: BlurStyle = BlurStyle.FROSTED_GLASS,
+    val currentBlurIntensity: Float = 0.85f
 ) {
     val reelsPercentage: Float
         get() = if (reelsMinutesLimit > 0) {
@@ -38,8 +41,12 @@ sealed interface HomeUiEvent {
     data class SetVisualShield(val enabled: Boolean) : HomeUiEvent
     data class SetAudioMute(val enabled: Boolean) : HomeUiEvent
     data class SetReelsBlocker(val enabled: Boolean) : HomeUiEvent
+    data object OpenBlurStyleSheet : HomeUiEvent
+    data object DismissBlurStyleSheet : HomeUiEvent
+    data class ApplyBlurStyle(val style: BlurStyle, val intensity: Float) : HomeUiEvent
     data object NavigateToStats : HomeUiEvent
     data object NavigateToSettings : HomeUiEvent
     data object NavigateToFocus : HomeUiEvent
     data object NavigateToBlurPreview : HomeUiEvent
 }
+

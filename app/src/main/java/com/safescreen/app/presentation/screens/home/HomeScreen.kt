@@ -38,6 +38,7 @@ import androidx.compose.material.icons.filled.CenterFocusStrong
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.HourglassTop
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.VideoLibrary
@@ -115,10 +116,26 @@ fun HomeScreen(
                 is HomeUiEvent.SetReelsBlocker -> {
                     state = state.copy(isReelsBlockerEnabled = event.enabled)
                 }
+                is HomeUiEvent.OpenBlurStyleSheet -> {
+                    state = state.copy(showBlurPreviewSheet = true)
+                }
+                is HomeUiEvent.DismissBlurStyleSheet -> {
+                    state = state.copy(showBlurPreviewSheet = false)
+                }
+                is HomeUiEvent.ApplyBlurStyle -> {
+                    state = state.copy(
+                        showBlurPreviewSheet = false,
+                        currentBlurStyle = event.style,
+                        currentBlurIntensity = event.intensity
+                    )
+                }
                 is HomeUiEvent.NavigateToStats -> onNavigateToStats()
                 is HomeUiEvent.NavigateToSettings -> onNavigateToSettings()
                 is HomeUiEvent.NavigateToFocus -> onNavigateToFocus()
-                is HomeUiEvent.NavigateToBlurPreview -> onNavigateToBlurPreview()
+                is HomeUiEvent.NavigateToBlurPreview -> {
+                    state = state.copy(showBlurPreviewSheet = true)
+                    onNavigateToBlurPreview()
+                }
             }
         }
     )
@@ -173,6 +190,7 @@ fun HomeScreenContent(
             // A. Top Bar
             HomeTopBar(
                 isShieldActive = uiState.isShieldActive,
+                onCustomizeBlurClick = { onEvent(HomeUiEvent.OpenBlurStyleSheet) },
                 onSettingsClick = { onEvent(HomeUiEvent.NavigateToSettings) }
             )
 
@@ -239,6 +257,7 @@ fun HomeScreenContent(
                     isEnabled = uiState.isVisualShieldEnabled,
                     activeSwitchColor = NeonCyan,
                     onToggle = { onEvent(HomeUiEvent.SetVisualShield(it)) },
+                    onCardClick = { onEvent(HomeUiEvent.OpenBlurStyleSheet) },
                     modifier = Modifier.weight(1f)
                 )
 
@@ -284,16 +303,29 @@ fun HomeScreenContent(
                 .align(Alignment.BottomCenter)
                 .padding(horizontal = 24.dp, vertical = 18.dp)
         )
+
+        // 5. Blur Style Customization Bottom Sheet (Screen 06 / Module 03)
+        if (uiState.showBlurPreviewSheet) {
+            BlurStylePreviewSheet(
+                initialStyle = uiState.currentBlurStyle,
+                initialIntensity = uiState.currentBlurIntensity,
+                onDismiss = { onEvent(HomeUiEvent.DismissBlurStyleSheet) },
+                onApply = { style, intensity ->
+                    onEvent(HomeUiEvent.ApplyBlurStyle(style, intensity))
+                }
+            )
+        }
     }
 }
 
 /**
- * Top brand bar with glowing shield icon, title, active pill badge, and settings button.
+ * Top brand bar with glowing shield icon, title, active pill badge, palette button, and settings button.
  */
 @Composable
 private fun HomeTopBar(
     isShieldActive: Boolean,
-    onSettingsClick: () -> Unit
+    onCustomizeBlurClick: () -> Unit = {},
+    onSettingsClick: () -> Unit = {}
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "topBadgePulse")
     val dotPulseScale by infiniteTransition.animateFloat(
@@ -410,6 +442,30 @@ private fun HomeTopBar(
                         )
                     )
                 }
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            // Palette / Blur Customization Button
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .background(Color(0x990D1726))
+                    .border(
+                        width = 1.dp,
+                        color = NeonCyan.copy(alpha = 0.35f),
+                        shape = CircleShape
+                    )
+                    .clickable(onClick = onCustomizeBlurClick),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Palette,
+                    contentDescription = "Customize Blur Style",
+                    tint = NeonCyan,
+                    modifier = Modifier.size(19.dp)
+                )
             }
 
             Spacer(modifier = Modifier.width(8.dp))
@@ -655,13 +711,20 @@ private fun QuickFeatureToggleCard(
     isEnabled: Boolean,
     activeSwitchColor: Color,
     onToggle: (Boolean) -> Unit,
+    onCardClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     GlassmorphicCard(
         modifier = modifier.clickable(
             interactionSource = remember { MutableInteractionSource() },
             indication = null,
-            onClick = { onToggle(!isEnabled) }
+            onClick = {
+                if (onCardClick != null) {
+                    onCardClick()
+                } else {
+                    onToggle(!isEnabled)
+                }
+            }
         ),
         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 12.dp)
     ) {

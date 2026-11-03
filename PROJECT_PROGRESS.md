@@ -19,33 +19,33 @@
 
 ## 📅 সর্বশেষ আপডেট তথ্য
 * **সর্বশেষ আপডেটের তারিখ:** ০৩ নভেম্বর ২০২৬
-* **বর্তমান পর্যায়:** **Phase 2B — Module 03, Prompt 1 Completed (`HomeScreen.kt` Flagship Dashboard Verified ✅)**
+* **বর্তমান পর্যায়:** **Phase 2B — Module 03 Completed (HomeScreen & BlurStylePreviewSheet 100% Verified ✅)**
 * **কোডিং এজেন্টের সর্বশেষ সম্পাদিত কাজের সংক্ষিপ্ত সামারি:**
-  1. **Module 03, Prompt 1 (`HomeScreen.kt` & `HomeUiState.kt`) সম্পূর্ণ ইমপ্লিমেন্টেশন:**
-     - **টপ ব্র্যান্ড বার:** SafeScreen সাইবার লোগো ফ্রেম, টু-টোন টাইটেল ("Safe" White + "Screen" Cyan), লাইভ পালসিং ডট সহ ফ্রস্টেড "SHIELD ACTIVE" / "DISARMED" পিল ব্যাজ, এবং সেটিংস গিয়ার বাটন।
-     - **সেন্ট্রাল হিরো `ShieldButton.kt` আপগ্রেড:**
-       * ব্যাকগ্রাউন্ডে সাইমেট্রিক্যাল সাইবার সার্কিট লাইনস ও নোড সার্কেলস (Canvas-based)।
-       * কনসেন্ট্রিক অ্যানিমেটেড পালসিং অরা রিং (NeonCyan ও NeonGreen গ্লো)।
-       * ডটেড রেডার আউটার ট্র্যাক রিং।
-       * ৩ডি বেভেল্ড মেটালিক শিল্ড (একটিভে সায়ান-গ্রিন গ্র্যাডিয়েন্ট ও সেন্টার হাইলাইট লাইন, ডিসআর্মডে ডার্ক মেটালিক স্লেট লুক)।
-       * সেন্টারে গ্লোয়িং হোয়াইট প্যাডলক এবং মসৃণ স্ট্যাটাস ট্রানজিশন ("PROTECTION ENGAGED" / "SHIELD DISARMED")।
-     - **লাইভ মেট্রিক কার্ডস (Horizontal Grid):**
-       * কার্ড ১: "Explicit Blurred" (বোল্ড নিয়ন পিঙ্ক "38", crossed eye আইকন, আজকের ইন্টারভেনশন ও শেভরন)।
-       * কার্ড ২: "Music Muted" (বোল্ড নিয়ন সায়ান "14", muted speaker আইকন, অডিও ট্র্যাক ট্র্যাকিং ও শেভরন)।
-     - **ফোকাস উইজেট (Focus Usage Banner):**
-       * "Reels & Shorts Usage: 18 / 30 mins used today" (৬০% ব্যবহারের হিসাব) এবং কাস্টম নিয়ন পার্পল হরাইজন্টাল প্রগ্রেস বার।
-     - **কুইক ফিচার টগলস (3 Compact Cards Row):**
-       * Visual Shield (গ্রিন আইকন), Audio Mute (সায়ান আইকন), এবং Reels Blocker (পার্পল আইকন) এর জন্য সম্পূর্ণ ক্লিকেবল ৩টি গ্লাস কার্ড।
-       * `NeonSwitch.kt` কম্পোনেন্ট তৈরি করা হয়েছে (স্মুথ স্লাইডিং থাম্ব, ফ্রস্টেড ট্র্যাক ও নিয়ন গ্লো)।
-     - **ফ্লোটিং বটম নেভিগেশন পিল (`FloatingBottomNavigationBar`):**
-       * নিচে `CyberBackgroundWaves`-এর ওপরে ভাসমান ফ্রস্টেড গ্লাস ক্যাপসুল বার (Home [Active Cyan], Stats, Focus, Settings)।
-  2. **বিল্ড ও এমুলেটর লাইভ ভেরিফিকেশন:**
-     - `./gradlew assembleDebug` সফল (`BUILD SUCCESSFUL in 3s`, 0 errors)।
-     - অ্যান্ড্রয়েড এমুলেটর `emulator-5554` এ ইনস্টল করে টেস্ট সম্পন্ন:
-       * একটিভ স্টেট ভেরিফাইড (`home_screen_active.png`)।
-       * শিল্ড ডিসআর্মড ট্রানজিশন ভেরিফাইড (`home_screen_disarmed.png`)।
-       * রিলস ব্লকার সুইচ টগল ভেরিফাইড (`home_screen_reels_switched.png`)।
-* **পরবর্তী কোডিং পর্যায়:** **Phase 2B — Module 03, Prompt 2 (`BlurStylePreviewSheet.kt` - শিল্ড ব্লার কাস্টমাইজেশন বটম শিট ও ইন্টারেক্টিভ স্লাইডার)**
+  1. **Module 03, Prompt 2 (`BlurStylePreviewSheet.kt`) সম্পূর্ণ ইমপ্লিমেন্টেশন:**
+     - **Material 3 ModalBottomSheet:** ডার্ক এলিভেটেড ফ্রস্টেড সারফেস (`DarkSurfaceElevated` `#161D2D`), রাউন্ডেড টপ কর্নার্স (28dp), এবং টপ ফ্রস্টেড পিল ড্র্যাগ হ্যান্ডেল।
+     - **হেডার ও টাইটেল:** সাইবার নিয়ন সায়ান প্যালেট আইকন ফ্রেম (`palette`), বোল্ড টাইটেল ("Shield Blur Customization"), এবং সাবটাইটেল।
+     - **৩টি সিলেক্টেবল ব্লার স্টাইল কার্ডস (Interactive Style Grid):**
+       * *Frosted Glass:* স্মুথ গাউসিয়ান ব্লার প্রিভিউ থাম্বনেইল, অ্যাক্টিভ নিয়ন সায়ান বর্ডার ও টপ-রাইট চেকমার্ক ব্যাজ (`✓`)।
+       * *Pixelated Censor:* ৮-বিট ডিজিটাল ব্লকস মেকানিক্স ও লাইভ পিক্সেল প্যালেট প্রিভিউ।
+       * *Opaque Dark Mask:* টোটাল ব্ল্যাক শিল্ড মাস্ক ও প্রাইভেসি ব্লক।
+     - **ব্লার ইনটেনসিটি স্লাইডার:** লাইভ পার্সেন্টেজ রিডআউট ("85%") সহ কাস্টম নিয়ন সায়ান স্লাইডার (রিয়েল-টাইমে অ্যাডজাস্টেবল)।
+     - **ইন্টারেক্টিভ স্প্লিট প্রিভিউ ("Before / After" Mockup):**
+       * বাঁয়ে ক্রিস্প অরিজিনাল সিন (মাউন্টেন পিকস, পাইন ট্রি বেল্ট এবং ট্রাঙ্কুইল লেক ওয়াটার)।
+       * ডানে সিলেক্টেড স্টাইল ও ইনটেনসিটির ওপর ভিত্তি করে রিয়েল-টাইম ফিল্টারড ভিউ (গাউসিয়ান ওয়াশ, ডিজিটাল মোজাইক বা পিচ ব্ল্যাক মাস্ক)।
+       * মাঝে ভার্টিক্যাল ডিভাইডার ও ড্র্যাগেবল হ্যান্ডেল (`< >`), যা ব্যবহারকারী ৮% থেকে ৯২% পর্যন্ত স্লাইড করে প্রিভিউ যাচাই করতে পারেন।
+     - **প্রাইমারি বাটন:** ফুল-উইডথ সলিড নিয়ন সায়ান ক্যাপসুল বাটন ("✔ Apply Changes"), ট্যাপে কাস্টমাইজেশন সেভ হয়ে শিট মসৃণভাবে ডিসমিস হয়।
+  2. **HomeScreen-এর সাথে পূর্ণাঙ্গ সংযোগ:**
+     - টপ বারে প্যালেট আইকন বাটন এবং "Visual Shield" কার্ডে ট্যাপ করলে শিট ওপেন হয়।
+     - `HomeUiState`-এ `currentBlurStyle` এবং `currentBlurIntensity` যুক্ত করা হয়েছে।
+  3. **বিল্ড ও এমুলেটর লাইভ ভেরিফিকেশন:**
+     - `./gradlew assembleDebug` সফল (`BUILD SUCCESSFUL in 4s`, 0 errors)।
+     - অ্যান্ড্রয়েড এমুলেটর `emulator-5554` এ লাইভ টেস্ট সম্পন্ন:
+       * বটম শিট ওপেন ও ফ্রস্টেড গ্লাস ভেরিফাইড (`blur_sheet_verified.png`)।
+       * "Pixelated Censor" নির্বাচন ও লাইভ ৮-বিট মোজাইক রেন্ডারিং ভেরিফাইড (`blur_sheet_pixelated.png`)।
+       * স্প্লিট স্লাইডার ড্র্যাগ করে লেফটে মুভ ভেরিফাইড (`blur_sheet_dragged.png`)।
+       * "Opaque Dark Mask" নির্বাচন ভেরিফাইড (`blur_sheet_opaque.png`)।
+       * "Apply Changes" চেপে মসৃণভাবে শিট ক্লোজ হওয়া ভেরিফাইড (`home_after_sheet_applied.png`)।
+* **পরবর্তী কোডিং পর্যায়:** **Phase 2B — Module 04: Prompt 1 (`ReelsControlScreen.kt` - রিলস প্ল্যাটফর্ম মনিটরিং ও ডেইলি লিমিট)**
 * **গিট রিপোজিটরি স্ট্যাটাস:** `https://github.com/saidur1004/SafeScreen.git` (Branch: `main`)।
 
 ---
@@ -67,7 +67,8 @@
 | **Module 02 - Prompt 1** | `PermissionHubScreen` ফ্রস্টেড কার্ডস, ৩ডি শিল্ড ও পারমিশন কন্ট্রোল | ✅ Fully Polished & Verified | `presentation/screens/permission/PermissionHubScreen.kt` |
 | **Module 02 - Prompt 2** | `BatteryOptimizationDialog` আনরেস্ট্রিক্টেড ব্যাটারি বটম শিট ও অরবিটাল রিংস | ✅ Fully Polished & Verified | `presentation/screens/permission/BatteryOptimizationDialog.kt` |
 | **Module 03 - Prompt 1** | `HomeScreen` ফ্ল্যাগশিপ ড্যাশবোর্ড, ৩ডি শিল্ড বাটন, লাইভ মেট্রিক্স ও ফ্লোটিং নেভ পিল | ✅ Fully Completed & Verified | `presentation/screens/home/HomeScreen.kt` |
-| **Module 03 - Prompt 2** | `BlurStylePreviewSheet` শিল্ড ব্লার কাস্টমাইজেশন বটম শিট | ⏳ Next Up (Phase 2B) | `presentation/screens/home/BlurStylePreviewSheet.kt` |
+| **Module 03 - Prompt 2** | `BlurStylePreviewSheet` শিল্ড ব্লার কাস্টমাইজেশন বটম শিট ও ইন্টারেক্টিভ স্প্লিট স্লাইডার | ✅ Fully Completed & Verified | `presentation/screens/home/BlurStylePreviewSheet.kt` |
+| **Module 04 Screens** | `ReelsControlScreen` ও `FocusScheduleScreen` | ⏳ Next Up (Phase 2B) | `presentation/screens/focus/` |
 | **Module 04 Screens** | `ReelsControlScreen` ও `FocusScheduleScreen` | ⏳ Planned (Phase 2B) | `presentation/screens/focus/` |
 | **Module 05 Screens** | `StatsScreen` ও `DetailedActivityLogScreen` | ⏳ Planned (Phase 2B) | `presentation/screens/stats/` |
 | **Module 06 Screens** | `SettingsScreen`, `AppWhitelistScreen` ও `SecurityLockScreen` | ⏳ Planned (Phase 2B) | `presentation/screens/settings/` |
@@ -95,26 +96,27 @@
 - সেন্ট্রালাইজড [**`DESIGN.md`**](./DESIGN.md) তৈরি।
 - [**`DEVELOPMENT_ROADMAP.md`**](./DEVELOPMENT_ROADMAP.md) আপডেট করে ১০টি সুস্পষ্ট ফেজে পুনর্বিন্যাস।
 
-### গ. ফেজ ২B বাস্তবায়ন প্রগ্রেস (Phase 2B - Modules 01, 02 & 03-P1 Complete ✅)
+### গ. ফেজ ২B বাস্তবায়ন প্রগ্রেস (Phase 2B - Modules 01, 02 & 03 Complete ✅)
 - `Screen.kt`-এ ১৬টি রুটের সম্পূর্ণ সংজ্ঞা।
 - `NeonPillBadge.kt`, `NeonSwitch.kt`, `CyberBackgroundWaves.kt` শেয়ার্ড কম্পোনেন্ট তৈরি।
 - `SplashScreen.kt` ও `OnboardingScreen.kt` পিক্সেল-পারফেক্ট ইমপ্লিমেন্টেশন।
 - `PermissionHubScreen.kt` (Module 02 Prompt 1) ফ্রস্টেড কার্ডস ও স্টেট হোস্টিং সম্পন্ন।
 - `BatteryOptimizationDialog.kt` (Module 02 Prompt 2) আনরেস্ট্রিক্টেড ব্যাটারি বটম শিট সম্পন্ন।
 - `HomeScreen.kt` ও `ShieldButton.kt` (Module 03 Prompt 1) ফ্ল্যাগশিপ ড্যাশবোর্ড, ৩ডি শিল্ড বাটন, লাইভ মেট্রিক্স ও ফ্লোটিং নেভ বার সম্পন্ন।
+- `BlurStylePreviewSheet.kt` (Module 03 Prompt 2) শিল্ড ব্লার কাস্টমাইজেশন বটম শিট ও ইন্টারেক্টিভ স্প্লিট স্লাইডার সম্পন্ন।
 
 ---
 
 ## ৩. পরবর্তী এজেন্টের জন্য সুস্পষ্ট কাজের নির্দেশনা ও সিকোয়েন্স (Next Agent Handoff)
 
 ### ১. পরবর্তী টাস্ক (Next Prompt):
-* **Phase 2B — Module 03: Prompt 2 (`BlurStylePreviewSheet.kt` - Shield Blur Customization Sheet)**
+* **Phase 2B — Module 04: Prompt 1 (`ReelsControlScreen.kt` - Reels & Shorts Control Screen)**
 * **কখন শুরু করবেন:** ব্যবহারকারী চ্যাটে স্পষ্ট অনুমতি দেওয়ার পর।
 
 ### ২. রেফারেন্স ও গাইডলাইন:
-* **ভিজ্যুয়াল রেফারেন্স:** `Screen Workflow/03_Home_Dashboard/SafeScreen Neon Shield Dashboard.png` (ডান পাশের স্ক্রিন)।
-* **প্রম্পট গাইড:** `Screen Workflow/MASTER_UI_PROMPTS.md`-এর **প্রম্পট ০৬-B**।
-* **টার্গেট ফাইল:** `app/src/main/java/com/safescreen/app/presentation/screens/home/BlurStylePreviewSheet.kt`।
+* **ভিজ্যুয়াল রেফারেন্স:** `Screen Workflow/04_Reels_And_Focus/Neon SafeScreen Focus Dashboard.png` (বাম পাশের স্ক্রিন)।
+* **প্রম্পট গাইড:** `Screen Workflow/MASTER_UI_PROMPTS.md`-এর **প্রম্পট ০৭-B**।
+* **টার্গেট ফাইল:** `app/src/main/java/com/safescreen/app/presentation/screens/focus/ReelsControlScreen.kt`।
 
 ### ৩. কোডিংয়ের সময় আবশ্যিক নিয়ম:
 * প্রতিটি স্ক্রিনে **State Hoisting** বজায় রাখুন (`UiState` ডাটা ক্লাস ও `UiEvent` সিল্ড ইন্টারফেস)।
