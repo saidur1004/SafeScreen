@@ -203,8 +203,10 @@ fun PermissionHubScreen(
                 PermissionHubUiEvent.AllowUnrestrictedBattery -> {
                     state = state.copy(
                         showBatteryDialog = false,
-                        isBatteryOptimizedExempted = true
+                        isBatteryOptimizedExempted = true,
+                        permissions = state.permissions.map { it.copy(isGranted = true) }
                     )
+                    onAllPermissionsGranted()
                 }
                 PermissionHubUiEvent.EnterShieldHub -> {
                     if (state.areAllGranted) {

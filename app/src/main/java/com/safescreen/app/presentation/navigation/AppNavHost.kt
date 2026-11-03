@@ -13,6 +13,7 @@ import com.safescreen.app.presentation.screens.onboarding.OnboardingScreen
 import com.safescreen.app.presentation.screens.permission.PermissionHubScreen
 import com.safescreen.app.presentation.screens.settings.SettingsScreen
 import com.safescreen.app.presentation.screens.splash.SplashScreen
+import com.safescreen.app.presentation.screens.stats.DetailedActivityLogScreen
 import com.safescreen.app.presentation.screens.stats.StatsScreen
 
 @Composable
@@ -96,8 +97,15 @@ fun AppNavHost(
                     navController.popBackStack()
                 },
                 onNavigateToDetailedLog = {
-                    // Ready for Module 05 Prompt 2: DetailedActivityLogScreen
                     navController.navigate(Screen.DetailedActivityLog.route)
+                }
+            )
+        }
+
+        composable(Screen.DetailedActivityLog.route) {
+            DetailedActivityLogScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
                 }
             )
         }
