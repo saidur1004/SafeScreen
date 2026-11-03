@@ -31,3 +31,4 @@ sealed interface SecurityUiEvent {
     data object ForgotPin : SecurityUiEvent
     data object NavigateBack : SecurityUiEvent
 }
+
