@@ -19,30 +19,23 @@
 
 ## 📅 সর্বশেষ আপডেট তথ্য
 * **সর্বশেষ আপডেটের তারিখ:** ০৩ নভেম্বর ২০২৬
-* **বর্তমান পর্যায়:** **Phase 2B — Module 05 Fully Completed & Verified: Prompt 1 (`StatsScreen`) & Prompt 2 (`DetailedActivityLogScreen`) ✅**
+* **বর্তমান পর্যায়:** **Phase 2B — Module 06: Prompt 1 (`SettingsScreen.kt`) এবং Global Floating Bottom Navigation Bar সফলভাবে সম্পন্ন ও ১০০% পিক্সেল-পারফেক্ট ভেরিফাইড! ✅**
 * **কোডিং এজেন্টের সর্বশেষ সম্পাদিত কাজের সংক্ষিপ্ত সামারি:**
-  1. **Global UI Sanity Check & Fixes (Step 1):**
-     - পূর্বে নির্মিত সমস্ত স্ক্রিন (`Splash`, `Onboarding`, `PermissionHub`, `BatteryDialog`, `Home`, `BlurSheet`, `ReelsControl`, `FocusSchedule`, `StatsScreen`) এর গ্লোবাল স্যানিটি চেক সম্পন্ন।
-     - নেভিগেশন ফ্লো (Splash -> Onboarding -> PermissionHub -> BatteryDialog -> Home -> Stats -> DetailedActivityLog) সম্পূর্ণভাবে মসৃণ ও কোনো ক্র্যাশ ছাড়া ভেরিফাই করা হয়েছে।
-     - "Allow Unrestricted" বাটনে ক্লিক করলে সমস্ত পারমিশন স্টেট আপডেট হয়ে সরাসরি হোম স্ক্রিনে যাওয়ার অটো-হ্যান্ডলিং যুক্ত করা হয়েছে।
-  2. **Module 05: Prompt 2 (`DetailedActivityLogScreen.kt`) ইমপ্লিমেন্টেশন (Step 2):**
-     - **`ActivityLogUiState.kt`:** `LogCategory` (ALL, VISUAL, AUDIO, REELS), `ActivityLogItem`, `DateGroupedLogs`, `ActivityLogUiState`, `ActivityLogUiEvent` এবং ডিফল্ট রিয়ালিস্টিক ডাটা মডেল।
-     - **`DetailedActivityLogScreen.kt` (১০০% রেফারেন্স ম্যাচ):**
-       * **Top Bar:** ফ্রস্টেড ব্যাক বাটন, "Activity Timeline" টাইটেল, সায়ান ফিল্টার আইকন এবং লাল রঙের নিয়ন `[ 🗑️ Clear Log ]` ক্যাপসুল বাটন।
-       * **Filter Bar:** ফিল্টার আইকনে ট্যাপ করলে মসৃণ অ্যানিমেশনের মাধ্যমে `[All] [Visual] [Audio] [Reels]` পিল সিলেক্টর স্লাইড-ইন হয় এবং ক্যাটাগরি অনুযায়ী ফিল্টার কাজ করে।
-       * **Grouped Feed:** "Today • Oct 31, 2026" ও "Yesterday • Oct 30, 2026" ডেট গ্রুপ হেডার্স উইথ সায়ান ক্যালেন্ডার আইকন ও এক্সপ্যান্ড/কলাপ্স শেভরন অ্যানিমেশন।
-       * **Activity Cards:**
-         - Visual: নিয়ন পিঙ্ক আইকন ও অরা, "Explicit Visual Content Blurred", সোর্স ইনফো ও "94% NSFW score" পিল ব্যাজ।
-         - Audio: নিয়ন সায়ান আইকন ও অরা, "Background Music Silenced", সোর্স ইনফো ও "45 sec muted" পিল ব্যাজ।
-         - Reels: নিয়ন পার্পল লক আইকন ও অরা, "Reels Limit Reached — Overlay Shown"।
-       * **Clear Activity Log Modal:** গ্লোয়িং অ্যাম্বার/গোল্ডেন ওয়ার্নিং ট্রায়াঙ্গেল `⚠️`, কনফার্মেশন টেক্সট, সলিড সায়ান `[ 🗑️ Clear Log ]` বাটন ও আউটলাইন্ড `[ Cancel ]` বাটন।
-       * **Screen 16 Empty State Integration:** লগ ক্লিয়ার করলে সাথে সাথে "All Clean & Clear" বায়ো-গ্রিন শিল্ড উইথ চেকমার্ক, ৩টি জিরো-মেট্রিক পিল এবং "Restore Sample Data" অপশন প্রদর্শিত হয়।
+  1. **Global Floating Bottom Navigation Bar আর্কিটেকচার:**
+     - `FloatingBottomNavigationBar.kt` কম্পোনেন্ট তৈরি করা হয়েছে যা নিয়ন গ্লো, মাল্টি-স্টপ গ্লাস বর্ডার এবং সিলেক্টেড নিয়ন হ্যালো ইফেক্ট ধারণ করে।
+     - `AppNavHost.kt`-এ গ্লোবাল বটম বারকে সংযুক্ত করা হয়েছে যাতে ৪টি প্রধান ট্যাবে (`Home`, `Stats`, `Focus`, `Settings`) এটি স্থায়ীভাবে দেখা যায় এবং যেকোনো ইনার স্ক্রিনে (`DetailedActivityLog`, `ReelsControl`, `Splash`, `Onboarding`, `PermissionHub`) স্বয়ংক্রিয়ভাবে মসৃণ অ্যানিমেশনে হাইড হয়ে যায়।
+  2. **Module 06 Prompt 1 (`SettingsScreen.kt`):**
+     - **Header:** টপ ব্র্যান্ড ব্যাজ, বোল্ড "Settings" হেডলাইন, সাবটাইটেল এবং ৩ডি গ্লোয়িং শিল্ড উইথ টিউন/গিয়ার ব্যাজ।
+     - **Section 1: AI Detection Engine:** মাইক্রোচিপ আইকন, সেনসিটিভিটি লেভেল ৩-সেগমেন্টেড পিল (`[Strict] [Balanced] [Relaxed]`), এবং পারফরম্যান্স প্রোফাইল ৩-সেগমেন্টেড পিল (`[Battery Saver (3 FPS)] [Balanced (5 FPS)] [High Precision (8 FPS)]`)।
+     - **Section 2: Security & Protection:** "PIN & Biometric Lock" এবং "Prevent Uninstallation" দুটিই ট্যাকটাইল `NeonSwitch` টগল দিয়ে সজ্জিত।
+     - **Section 3: App Exclusions:** "Manage App Whitelist (5 apps excluded)" গ্লাস কার্ড উইথ শেভরন।
+     - **Section 4: Data & Storage:** "Clear Offline Database Cache" ক্যাপসুল বাটন এবং সাইবার-ডার্ক গ্লাস কনফার্মেশন অ্যালার্ট ডায়ালগ।
+     - **Section 5: About SafeScreen:** v1.0.0 সংস্করণ, বায়ো/নিয়ন গ্রিন একটিভ স্ট্যাটাস, প্রাইভেসি পলিসি ও ওপেন সোর্স লাইসেন্স লিংকস।
   3. **বিল্ড ও এমুলেটর লাইভ ভেরিফিকেশন:**
-     - `./gradlew assembleDebug` সফল (`BUILD SUCCESSFUL in 2s`, 0 errors, 0 warnings)।
-     - এমুলেটরে সমস্ত ফ্লো ও ডায়ালগ ইন্টারেকশন লাইভ টেস্ট ও ভেরিফাই করা হয়েছে।
-* **পরবর্তী কোডিং পর্যায়:** **Phase 2B — Module 06: Prompt 1 (`SettingsScreen.kt` - Main Settings & AI Sensitivity Controls)**
+     - `./gradlew assembleDebug` সফল (`BUILD SUCCESSFUL in 4s`, 0 errors, 0 warnings)।
+     - এমুলেটরে ৪টি প্রধান ট্যাবের ন্যাভিগেশন, ইনার স্ক্রিনে বটম বার হাইড/শো এবং সেটিংসের সমস্ত ইন্টারেকশন লাইভ টেস্ট ও ভেরিফাই করা হয়েছে।
+* **পরবর্তী কোডিং পর্যায়:** **Phase 2B — Module 06: Prompt 2 (`AppWhitelistScreen.kt` - Manage App Whitelist)**
 * **গিট রিপোজিটরি স্ট্যাটাস:** `https://github.com/saidur1004/SafeScreen.git` (Branch: `main`)।
-
 ---
 
 ## ১. ভেরিফাইড ফিচার ও সামগ্রিক প্রজেক্ট স্ট্যাটাস (Verified Status Matrix)
@@ -67,7 +60,8 @@
 | **Module 04 - Prompt 2** | `FocusScheduleScreen` ফোকাস শিডিউল, রুটিন কার্ডস ও ডে পিলস | ✅ Fully Completed & Verified | `presentation/screens/focus/FocusScheduleScreen.kt` |
 | **Module 05 - Prompt 1** | `StatsScreen` ডুয়াল-বার ক্যানভাস ট্রেন্ড চার্ট, ডোনাট ক্যাটাগরি ব্রেকডাউন ও টপ অ্যাপস | ✅ Fully Completed & Verified | `presentation/screens/stats/StatsScreen.kt` |
 | **Module 05 - Prompt 2** | `DetailedActivityLogScreen` ক্রোনোলজিক্যাল টাইমলাইন, ফিল্টার্স ও ক্লিয়ার হিস্ট্রি মডাল | ✅ Fully Completed & Verified | `presentation/screens/stats/DetailedActivityLogScreen.kt` |
-| **Module 06 Screens** | `SettingsScreen`, `AppWhitelistScreen` ও `SecurityLockScreen` | ⏳ Next Up (Phase 2B) | `presentation/screens/settings/` |
+| **Module 06 - Prompt 1** | `SettingsScreen` এআই সেনসিটিভিটি, এফপিএস প্রোফাইলস, সিকিউরিটি লক ও ডাটা হাইজিন | ✅ Fully Completed & Verified | `presentation/screens/settings/SettingsScreen.kt` |
+| **Module 06 - Prompt 2** | `AppWhitelistScreen` ও `SecurityLockScreen` | ⏳ Next Up (Phase 2B) | `presentation/screens/settings/` |
 | **Module 07 Overlays**| `LiveBlurOverlayView` ও `FocusInterventionOverlay` | ⏳ Planned (Phase 2B) | `services/overlay/` |
 | **Module 08 States** | `SafeScreenStates` (Clean, Paused, AI Core Error) | ⏳ Planned (Phase 2B) | `presentation/components/states/` |
 | **Local Persistence** | DataStore Preferences & Room Database Entity/DAO | ⏳ Planned (Phase 3) | `AppDatabase.kt`, `StatDao.kt` |

@@ -198,9 +198,9 @@ fun StatsContent(
                 )
             }
 
-            // Bottom Spacing
+            // Bottom Spacing for Floating Nav Bar
             item {
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(110.dp))
             }
         }
     }

@@ -1,5 +1,7 @@
 package com.safescreen.app.presentation.screens.home
 
+import com.safescreen.app.presentation.components.BottomNavDestination
+
 /**
  * UI State for the Main Home Dashboard.
  */
@@ -21,16 +23,6 @@ data class HomeUiState(
         get() = if (reelsMinutesLimit > 0) {
             (reelsMinutesUsed.toFloat() / reelsMinutesLimit.toFloat()).coerceIn(0f, 1f)
         } else 0f
-}
-
-/**
- * Bottom Navigation destinations available from the floating pill.
- */
-enum class BottomNavDestination {
-    Home,
-    Stats,
-    Focus,
-    Settings
 }
 
 /**

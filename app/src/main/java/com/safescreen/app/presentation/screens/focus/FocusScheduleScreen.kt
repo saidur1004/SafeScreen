@@ -281,7 +281,7 @@ fun FocusScheduleContent(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth(),
-                contentPadding = PaddingValues(top = 2.dp, bottom = 80.dp),
+                contentPadding = PaddingValues(top = 2.dp, bottom = 115.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 // 1. Preset & Custom Schedule Cards

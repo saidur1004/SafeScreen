@@ -1,11 +1,20 @@
 package com.safescreen.app.presentation.navigation
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.safescreen.app.presentation.components.BottomNavDestination
+import com.safescreen.app.presentation.components.GlobalFloatingBottomBar
 import com.safescreen.app.presentation.screens.focus.FocusScheduleScreen
 import com.safescreen.app.presentation.screens.focus.ReelsControlScreen
 import com.safescreen.app.presentation.screens.home.HomeScreen
@@ -15,6 +24,7 @@ import com.safescreen.app.presentation.screens.settings.SettingsScreen
 import com.safescreen.app.presentation.screens.splash.SplashScreen
 import com.safescreen.app.presentation.screens.stats.DetailedActivityLogScreen
 import com.safescreen.app.presentation.screens.stats.StatsScreen
+import com.safescreen.app.presentation.theme.DeepBlack
 
 @Composable
 fun AppNavHost(
@@ -22,100 +32,171 @@ fun AppNavHost(
     navController: NavHostController = rememberNavController(),
     startDestination: String = Screen.Splash.route
 ) {
-    NavHost(
-        navController = navController,
-        startDestination = startDestination,
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
+    // Define the 4 primary persistent tabs
+    val isMainTab = currentRoute in listOf(
+        Screen.Home.route,
+        Screen.Stats.route,
+        Screen.FocusSchedule.route,
+        Screen.Settings.route
+    )
+
+    val activeDestination = when (currentRoute) {
+        Screen.Home.route -> BottomNavDestination.Home
+        Screen.Stats.route -> BottomNavDestination.Stats
+        Screen.FocusSchedule.route -> BottomNavDestination.Focus
+        Screen.Settings.route -> BottomNavDestination.Settings
+        else -> BottomNavDestination.Home
+    }
+
+    Box(
         modifier = modifier
+            .fillMaxSize()
+            .background(DeepBlack)
     ) {
-        composable(Screen.Splash.route) {
-            SplashScreen(
-                onNavigateNext = {
-                    navController.navigate(Screen.Onboarding.route) {
-                        popUpTo(Screen.Splash.route) { inclusive = true }
+        NavHost(
+            navController = navController,
+            startDestination = startDestination,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            composable(Screen.Splash.route) {
+                SplashScreen(
+                    onNavigateNext = {
+                        navController.navigate(Screen.Onboarding.route) {
+                            popUpTo(Screen.Splash.route) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
+            composable(Screen.Onboarding.route) {
+                OnboardingScreen(
+                    onContinue = {
+                        navController.navigate(Screen.PermissionHub.route)
+                    }
+                )
+            }
+
+            composable(Screen.PermissionHub.route) {
+                PermissionHubScreen(
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    },
+                    onAllPermissionsGranted = {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Onboarding.route) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
+            composable(Screen.Home.route) {
+                HomeScreen(
+                    onNavigateToStats = {
+                        navController.navigate(Screen.Stats.route) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onNavigateToSettings = {
+                        navController.navigate(Screen.Settings.route) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onNavigateToFocus = {
+                        navController.navigate(Screen.FocusSchedule.route) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                )
+            }
+
+            composable(Screen.ReelsControl.route) {
+                ReelsControlScreen(
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    },
+                    onNavigateToSchedule = {
+                        navController.navigate(Screen.FocusSchedule.route)
+                    }
+                )
+            }
+
+            composable(Screen.FocusSchedule.route) {
+                FocusScheduleScreen(
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+
+            composable(Screen.Stats.route) {
+                StatsScreen(
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    },
+                    onNavigateToDetailedLog = {
+                        navController.navigate(Screen.DetailedActivityLog.route)
+                    }
+                )
+            }
+
+            composable(Screen.DetailedActivityLog.route) {
+                DetailedActivityLogScreen(
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+
+            composable(Screen.Settings.route) {
+                SettingsScreen(
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    },
+                    onNavigateToWhitelist = {
+                        // Will navigate to AppWhitelistScreen when implemented in Prompt 2
+                        // navController.navigate(Screen.AppWhitelist.route)
+                    }
+                )
+            }
+        }
+
+        // Global Cyber-Dark Glassmorphic Floating Bottom Bar
+        GlobalFloatingBottomBar(
+            visible = isMainTab,
+            activeDestination = activeDestination,
+            onDestinationSelected = { destination ->
+                val targetRoute = when (destination) {
+                    BottomNavDestination.Home -> Screen.Home.route
+                    BottomNavDestination.Stats -> Screen.Stats.route
+                    BottomNavDestination.Focus -> Screen.FocusSchedule.route
+                    BottomNavDestination.Settings -> Screen.Settings.route
+                }
+                if (currentRoute != targetRoute) {
+                    navController.navigate(targetRoute) {
+                        popUpTo(navController.graph.findStartDestination().id) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
                     }
                 }
-            )
-        }
-
-        composable(Screen.Onboarding.route) {
-            OnboardingScreen(
-                onContinue = {
-                    navController.navigate(Screen.PermissionHub.route)
-                }
-            )
-        }
-
-        composable(Screen.PermissionHub.route) {
-            PermissionHubScreen(
-                onNavigateBack = {
-                    navController.popBackStack()
-                },
-                onAllPermissionsGranted = {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Onboarding.route) { inclusive = true }
-                    }
-                }
-            )
-        }
-
-        composable(Screen.Home.route) {
-            HomeScreen(
-                onNavigateToStats = {
-                    navController.navigate(Screen.Stats.route)
-                },
-                onNavigateToSettings = {
-                    navController.navigate(Screen.Settings.route)
-                },
-                onNavigateToFocus = {
-                    navController.navigate(Screen.ReelsControl.route)
-                }
-            )
-        }
-
-        composable(Screen.ReelsControl.route) {
-            ReelsControlScreen(
-                onNavigateBack = {
-                    navController.popBackStack()
-                },
-                onNavigateToSchedule = {
-                    navController.navigate(Screen.FocusSchedule.route)
-                }
-            )
-        }
-
-        composable(Screen.FocusSchedule.route) {
-            FocusScheduleScreen(
-                onNavigateBack = {
-                    navController.popBackStack()
-                }
-            )
-        }
-
-        composable(Screen.Stats.route) {
-            StatsScreen(
-                onNavigateBack = {
-                    navController.popBackStack()
-                },
-                onNavigateToDetailedLog = {
-                    navController.navigate(Screen.DetailedActivityLog.route)
-                }
-            )
-        }
-
-        composable(Screen.DetailedActivityLog.route) {
-            DetailedActivityLogScreen(
-                onNavigateBack = {
-                    navController.popBackStack()
-                }
-            )
-        }
-
-        composable(Screen.Settings.route) {
-            SettingsScreen(
-                onNavigateBack = {
-                    navController.popBackStack()
-                }
-            )
-        }
+            },
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
     }
 }
