@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -29,6 +30,7 @@ fun GlassmorphicCard(
     borderWidth: Dp = 1.dp,
     borderColor: Color = Color.White.copy(alpha = 0.22f),
     backgroundColor: Color = Color(0xFF131D2D),
+    contentPadding: PaddingValues = PaddingValues(16.dp),
     content: @Composable BoxScope.() -> Unit
 ) {
     Box(
@@ -54,7 +56,7 @@ fun GlassmorphicCard(
                 ),
                 shape = shape
             )
-            .padding(16.dp),
+            .padding(contentPadding),
         content = content
     )
 }

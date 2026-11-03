@@ -19,20 +19,33 @@
 
 ## 📅 সর্বশেষ আপডেট তথ্য
 * **সর্বশেষ আপডেটের তারিখ:** ০৩ নভেম্বর ২০২৬
-* **বর্তমান পর্যায়:** **Phase 2B — Module 01 & 02 UI/UX Polish Complete & Verified on Android Emulator ✅**
+* **বর্তমান পর্যায়:** **Phase 2B — Module 03, Prompt 1 Completed (`HomeScreen.kt` Flagship Dashboard Verified ✅)**
 * **কোডিং এজেন্টের সর্বশেষ সম্পাদিত কাজের সংক্ষিপ্ত সামারি:**
-  1. **UI/UX পলিশিং ও রিফ্যাক্টরিং (Cyber-Dark Glassmorphism Standard):**
-     - `CyberBackgroundWaves.kt` তৈরি করা হয়েছে: বটম ব্যাকগ্রাউন্ডে সাইবার পাঙ্ক স্টাইলের ডাবল নিয়ন সিল্ক ওয়েভস (Neon Cyan এবং Bio-Green স্মুথ কিউবিক বেজিয়ার কার্ভস ও সফট আলফা গ্লো)।
-     - `GlassmorphicCard.kt` আপগ্রেড: ট্রু গ্লাস ট্রান্সলুসেন্সি (মাল্টি-স্টপ ডার্ক নেভি-স্লেটের সেমি-ট্রান্সপারেন্ট গ্র্যাডিয়েন্ট এবং টপ-লেফট টু বটম-রাইট 1dp স্পেকুলার হাইলাইট গ্র্যাডিয়েন্ট বর্ডার)।
-     - `SplashScreen.kt` রি-ডিজাইন: কাস্টম ক্যানভাসে ড্র করা ৩ডি বেভেল্ড শিল্ড গ্র্যাডিয়েন্ট (Neon Cyan ও Neon Green মেটালিক ফিনিশ), সেন্টারে গ্লোয়িং প্যাডলক, ব্যাকগ্রাউন্ডে কনসেন্ট্রিক পালসিং অরা, টু-টোন "SafeScreen" টাইপোগ্রাফি এবং নিয়ন ক্যাপসুল প্রগ্রেস বার।
-     - `OnboardingScreen.kt` রি-ডিজাইন: ৩-পিলার সমন্বিত গ্লাস কার্ড (Visual Shield উইথ স্ক্যান আই ফ্রেম, Smart Audio Guard উইথ গ্রিন ইকুয়ালাইজার ওয়েভ ও মিউট ব্যাজ, Doomscroll Breaker উইথ আওয়ারগ্লাস), "Skip >" ফ্রস্টেড পিল, অফলাইন ট্রাস্ট ব্যাজ এবং হাইলি ক্লিকেবল ফুল-উইডথ নিয়ন সায়ান ক্যাপসুল বাটন।
-     - `PermissionHubScreen.kt` রি-ডিজাইন: ফ্রস্টেড সার্কুলার ব্যাক ও শিল্ড অ্যাকশন বাটন, গ্লোয়িং ৩ডি শিল্ড এম্ব্লেম, ৫টি পারমিশনের জন্য পৃথক নিয়ন আইকন ফ্রেম ও গ্রান্টেড/গ্রান্ট অ্যাকসেস ইন্টারেকশন, এবং বটম ফ্রস্টেড "Enter Shield Hub" বার।
-     - `BatteryOptimizationDialog.kt` রি-ডিজাইন: ফ্রস্টেড ডার্ক মডাল বটম শিট, কেন্দ্রে গোল্ডেন গ্লোয়িং ব্যাটারি ও লাইটনিং বোল্ট, ক্যানভাসে আঁকা টিল্টেড অরবিটাল রিংস ও স্পার্কল স্টারস (`✦`), এবং ফুল-উইডথ ক্যাপসুল বাটন।
+  1. **Module 03, Prompt 1 (`HomeScreen.kt` & `HomeUiState.kt`) সম্পূর্ণ ইমপ্লিমেন্টেশন:**
+     - **টপ ব্র্যান্ড বার:** SafeScreen সাইবার লোগো ফ্রেম, টু-টোন টাইটেল ("Safe" White + "Screen" Cyan), লাইভ পালসিং ডট সহ ফ্রস্টেড "SHIELD ACTIVE" / "DISARMED" পিল ব্যাজ, এবং সেটিংস গিয়ার বাটন।
+     - **সেন্ট্রাল হিরো `ShieldButton.kt` আপগ্রেড:**
+       * ব্যাকগ্রাউন্ডে সাইমেট্রিক্যাল সাইবার সার্কিট লাইনস ও নোড সার্কেলস (Canvas-based)।
+       * কনসেন্ট্রিক অ্যানিমেটেড পালসিং অরা রিং (NeonCyan ও NeonGreen গ্লো)।
+       * ডটেড রেডার আউটার ট্র্যাক রিং।
+       * ৩ডি বেভেল্ড মেটালিক শিল্ড (একটিভে সায়ান-গ্রিন গ্র্যাডিয়েন্ট ও সেন্টার হাইলাইট লাইন, ডিসআর্মডে ডার্ক মেটালিক স্লেট লুক)।
+       * সেন্টারে গ্লোয়িং হোয়াইট প্যাডলক এবং মসৃণ স্ট্যাটাস ট্রানজিশন ("PROTECTION ENGAGED" / "SHIELD DISARMED")।
+     - **লাইভ মেট্রিক কার্ডস (Horizontal Grid):**
+       * কার্ড ১: "Explicit Blurred" (বোল্ড নিয়ন পিঙ্ক "38", crossed eye আইকন, আজকের ইন্টারভেনশন ও শেভরন)।
+       * কার্ড ২: "Music Muted" (বোল্ড নিয়ন সায়ান "14", muted speaker আইকন, অডিও ট্র্যাক ট্র্যাকিং ও শেভরন)।
+     - **ফোকাস উইজেট (Focus Usage Banner):**
+       * "Reels & Shorts Usage: 18 / 30 mins used today" (৬০% ব্যবহারের হিসাব) এবং কাস্টম নিয়ন পার্পল হরাইজন্টাল প্রগ্রেস বার।
+     - **কুইক ফিচার টগলস (3 Compact Cards Row):**
+       * Visual Shield (গ্রিন আইকন), Audio Mute (সায়ান আইকন), এবং Reels Blocker (পার্পল আইকন) এর জন্য সম্পূর্ণ ক্লিকেবল ৩টি গ্লাস কার্ড।
+       * `NeonSwitch.kt` কম্পোনেন্ট তৈরি করা হয়েছে (স্মুথ স্লাইডিং থাম্ব, ফ্রস্টেড ট্র্যাক ও নিয়ন গ্লো)।
+     - **ফ্লোটিং বটম নেভিগেশন পিল (`FloatingBottomNavigationBar`):**
+       * নিচে `CyberBackgroundWaves`-এর ওপরে ভাসমান ফ্রস্টেড গ্লাস ক্যাপসুল বার (Home [Active Cyan], Stats, Focus, Settings)।
   2. **বিল্ড ও এমুলেটর লাইভ ভেরিফিকেশন:**
-     - `./gradlew assembleDebug` সফলভাবে সম্পন্ন (`BUILD SUCCESSFUL in 20s`, 0 errors, 0 warnings)।
-     - সক্রিয় অ্যান্ড্রয়েড এমুলেটর (`emulator-5554`) এ APK ইনস্টল ও লাইভ টেস্ট সম্পন্ন।
-     - `SplashScreen`, `OnboardingScreen`, `PermissionHubScreen` ও `BatteryOptimizationDialog`-এর স্ক্রিনশট ক্যাপচার করে রেফারেন্স মকআপের সাথে পিক্সেল-পারফেক্ট ম্যাচিং নিশ্চিত করা হয়েছে।
-* **পরবর্তী কোডিং পর্যায়:** **Phase 2B — Module 03, Prompt 1 (`HomeScreen.kt` - ড্যাশবোর্ড, সেন্ট্রাল পালসিং শিল্ড ও লাইভ মেট্রিক কার্ডস)**
+     - `./gradlew assembleDebug` সফল (`BUILD SUCCESSFUL in 3s`, 0 errors)।
+     - অ্যান্ড্রয়েড এমুলেটর `emulator-5554` এ ইনস্টল করে টেস্ট সম্পন্ন:
+       * একটিভ স্টেট ভেরিফাইড (`home_screen_active.png`)।
+       * শিল্ড ডিসআর্মড ট্রানজিশন ভেরিফাইড (`home_screen_disarmed.png`)।
+       * রিলস ব্লকার সুইচ টগল ভেরিফাইড (`home_screen_reels_switched.png`)।
+* **পরবর্তী কোডিং পর্যায়:** **Phase 2B — Module 03, Prompt 2 (`BlurStylePreviewSheet.kt` - শিল্ড ব্লার কাস্টমাইজেশন বটম শিট ও ইন্টারেক্টিভ স্লাইডার)**
 * **গিট রিপোজিটরি স্ট্যাটাস:** `https://github.com/saidur1004/SafeScreen.git` (Branch: `main`)।
 
 ---
@@ -45,7 +58,7 @@
 | **Architecture** | 3-Layer Clean Architecture (data, domain, presentation, services, di) | ✅ Completed & Verified | `app/src/main/java/com/safescreen/app/` |
 | **DI** | Dagger-Hilt 2.52 + Hilt Navigation Compose | ✅ Completed & Verified | `AppModule.kt`, `DatabaseModule.kt`, `SafeScreenApp.kt` |
 | **UI Design System** | Cyber-Dark Theme, Tokens, Glassmorphism, Material 3, Typography | ✅ Completed & Verified | `DESIGN.md`, `Color.kt`, `Theme.kt`, `Typography.kt` |
-| **Reusable UI Atoms** | `GlassmorphicCard`, `ShieldButton`, `NeonPillBadge`, `CyberBackgroundWaves` | ✅ Completed & Verified | `presentation/components/` |
+| **Reusable UI Atoms** | `GlassmorphicCard`, `ShieldButton`, `NeonPillBadge`, `NeonSwitch`, `CyberBackgroundWaves` | ✅ Completed & Verified | `presentation/components/` |
 | **Workflow Mockups** | ১৬টি স্ক্রিনের ভিজ্যুয়াল ডিজাইন ইমেজ (৮টি মডিউল) | ✅ Completed & Verified | `Screen Workflow/` (১১টি ইমেজ ফাইল সংরক্ষিত ও পরীক্ষিত) |
 | **Prompt Book** | ১৬টি স্ক্রিনের সেলফ-কন্টেইন্ড কোডিং এজেন্ট প্রম্পট বুক | ✅ Completed & Verified | `Screen Workflow/MASTER_UI_PROMPTS.md` |
 | **Technical Roadmap** | বাস্তবসম্মত ১০-ফেজ ডেভেলপমেন্ট রোডম্যাপ | ✅ Completed & Verified | `DEVELOPMENT_ROADMAP.md` |
@@ -53,7 +66,8 @@
 | **Module 01 Screens** | `SplashScreen` ও `OnboardingScreen` প্রিমিয়াম সাইবার-গ্লাস পোলিশ | ✅ Fully Polished & Verified | `presentation/screens/splash/`, `.../onboarding/` |
 | **Module 02 - Prompt 1** | `PermissionHubScreen` ফ্রস্টেড কার্ডস, ৩ডি শিল্ড ও পারমিশন কন্ট্রোল | ✅ Fully Polished & Verified | `presentation/screens/permission/PermissionHubScreen.kt` |
 | **Module 02 - Prompt 2** | `BatteryOptimizationDialog` আনরেস্ট্রিক্টেড ব্যাটারি বটম শিট ও অরবিটাল রিংস | ✅ Fully Polished & Verified | `presentation/screens/permission/BatteryOptimizationDialog.kt` |
-| **Module 03 Screens** | `HomeScreen` ও `BlurStylePreviewSheet` | ⏳ Next Up (Phase 2B) | `presentation/screens/home/` |
+| **Module 03 - Prompt 1** | `HomeScreen` ফ্ল্যাগশিপ ড্যাশবোর্ড, ৩ডি শিল্ড বাটন, লাইভ মেট্রিক্স ও ফ্লোটিং নেভ পিল | ✅ Fully Completed & Verified | `presentation/screens/home/HomeScreen.kt` |
+| **Module 03 - Prompt 2** | `BlurStylePreviewSheet` শিল্ড ব্লার কাস্টমাইজেশন বটম শিট | ⏳ Next Up (Phase 2B) | `presentation/screens/home/BlurStylePreviewSheet.kt` |
 | **Module 04 Screens** | `ReelsControlScreen` ও `FocusScheduleScreen` | ⏳ Planned (Phase 2B) | `presentation/screens/focus/` |
 | **Module 05 Screens** | `StatsScreen` ও `DetailedActivityLogScreen` | ⏳ Planned (Phase 2B) | `presentation/screens/stats/` |
 | **Module 06 Screens** | `SettingsScreen`, `AppWhitelistScreen` ও `SecurityLockScreen` | ⏳ Planned (Phase 2B) | `presentation/screens/settings/` |
@@ -81,25 +95,26 @@
 - সেন্ট্রালাইজড [**`DESIGN.md`**](./DESIGN.md) তৈরি।
 - [**`DEVELOPMENT_ROADMAP.md`**](./DEVELOPMENT_ROADMAP.md) আপডেট করে ১০টি সুস্পষ্ট ফেজে পুনর্বিন্যাস।
 
-### গ. ফেজ ২B বাস্তবায়ন প্রগ্রেস (Phase 2B - Modules 01 & 02 Complete ✅)
+### গ. ফেজ ২B বাস্তবায়ন প্রগ্রেস (Phase 2B - Modules 01, 02 & 03-P1 Complete ✅)
 - `Screen.kt`-এ ১৬টি রুটের সম্পূর্ণ সংজ্ঞা।
-- `NeonPillBadge.kt` শেয়ার্ড কম্পোনেন্ট তৈরি।
+- `NeonPillBadge.kt`, `NeonSwitch.kt`, `CyberBackgroundWaves.kt` শেয়ার্ড কম্পোনেন্ট তৈরি।
 - `SplashScreen.kt` ও `OnboardingScreen.kt` পিক্সেল-পারফেক্ট ইমপ্লিমেন্টেশন।
 - `PermissionHubScreen.kt` (Module 02 Prompt 1) ফ্রস্টেড কার্ডস ও স্টেট হোস্টিং সম্পন্ন।
 - `BatteryOptimizationDialog.kt` (Module 02 Prompt 2) আনরেস্ট্রিক্টেড ব্যাটারি বটম শিট সম্পন্ন।
+- `HomeScreen.kt` ও `ShieldButton.kt` (Module 03 Prompt 1) ফ্ল্যাগশিপ ড্যাশবোর্ড, ৩ডি শিল্ড বাটন, লাইভ মেট্রিক্স ও ফ্লোটিং নেভ বার সম্পন্ন।
 
 ---
 
 ## ৩. পরবর্তী এজেন্টের জন্য সুস্পষ্ট কাজের নির্দেশনা ও সিকোয়েন্স (Next Agent Handoff)
 
 ### ১. পরবর্তী টাস্ক (Next Prompt):
-* **Phase 2B — Module 03: Prompt 1 (`HomeScreen.kt` - Main Dashboard)**
+* **Phase 2B — Module 03: Prompt 2 (`BlurStylePreviewSheet.kt` - Shield Blur Customization Sheet)**
 * **কখন শুরু করবেন:** ব্যবহারকারী চ্যাটে স্পষ্ট অনুমতি দেওয়ার পর।
 
 ### ২. রেফারেন্স ও গাইডলাইন:
-* **ভিজ্যুয়াল রেফারেন্স:** `Screen Workflow/03_Home_Dashboard/SafeScreen Neon Shield Dashboard.png` (বাম পাশের স্ক্রিন)।
-* **প্রম্পট গাইড:** `Screen Workflow/MASTER_UI_PROMPTS.md`-এর **প্রম্পট ০৫-B**।
-* **টার্গেট ফাইল:** `app/src/main/java/com/safescreen/app/presentation/screens/home/HomeScreen.kt`।
+* **ভিজ্যুয়াল রেফারেন্স:** `Screen Workflow/03_Home_Dashboard/SafeScreen Neon Shield Dashboard.png` (ডান পাশের স্ক্রিন)।
+* **প্রম্পট গাইড:** `Screen Workflow/MASTER_UI_PROMPTS.md`-এর **প্রম্পট ০৬-B**।
+* **টার্গেট ফাইল:** `app/src/main/java/com/safescreen/app/presentation/screens/home/BlurStylePreviewSheet.kt`।
 
 ### ৩. কোডিংয়ের সময় আবশ্যিক নিয়ম:
 * প্রতিটি স্ক্রিনে **State Hoisting** বজায় রাখুন (`UiState` ডাটা ক্লাস ও `UiEvent` সিল্ড ইন্টারফেস)।

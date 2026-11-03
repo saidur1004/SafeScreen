@@ -1,18 +1,48 @@
 package com.safescreen.app.presentation.screens.home
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.CenterFocusStrong
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.HourglassTop
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.VideoLibrary
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -24,155 +54,789 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.safescreen.app.presentation.components.CyberBackgroundWaves
 import com.safescreen.app.presentation.components.GlassmorphicCard
+import com.safescreen.app.presentation.components.NeonSwitch
 import com.safescreen.app.presentation.components.ShieldButton
 import com.safescreen.app.presentation.theme.DeepBlack
 import com.safescreen.app.presentation.theme.NeonCyan
 import com.safescreen.app.presentation.theme.NeonGreen
 import com.safescreen.app.presentation.theme.NeonPink
+import com.safescreen.app.presentation.theme.NeonPurple
 import com.safescreen.app.presentation.theme.TextMuted
 import com.safescreen.app.presentation.theme.TextPrimary
+import com.safescreen.app.presentation.theme.TextSecondary
 
+/**
+ * Flagship Home Dashboard for SafeScreen (Screen 05 / Module 03).
+ *
+ * Implements the full Cyber-Dark Glassmorphism aesthetic featuring:
+ * - Top brand bar with glowing live status pill & settings action.
+ * - Central 3D beveled pulsing ShieldButton with circuit traces.
+ * - Live Metric Cards for explicit visuals blurred and music tracks muted.
+ * - Reels & Shorts daily usage banner with neon purple progress indicator.
+ * - Quick feature toggles for Visual Shield, Audio Mute, and Reels Blocker.
+ * - Bottom floating cyber glass navigation pill.
+ */
 @Composable
 fun HomeScreen(
-    onNavigateToStats: () -> Unit,
-    onNavigateToSettings: () -> Unit
+    onNavigateToStats: () -> Unit = {},
+    onNavigateToSettings: () -> Unit = {},
+    onNavigateToFocus: () -> Unit = {},
+    onNavigateToBlurPreview: () -> Unit = {}
 ) {
-    var isShieldActive by remember { mutableStateOf(true) }
+    var state by remember { mutableStateOf(HomeUiState()) }
+
+    HomeScreenContent(
+        uiState = state,
+        onEvent = { event ->
+            when (event) {
+                is HomeUiEvent.ToggleShield -> {
+                    state = state.copy(isShieldActive = !state.isShieldActive)
+                }
+                is HomeUiEvent.SetVisualShield -> {
+                    state = state.copy(isVisualShieldEnabled = event.enabled)
+                }
+                is HomeUiEvent.SetAudioMute -> {
+                    state = state.copy(isAudioMuteEnabled = event.enabled)
+                }
+                is HomeUiEvent.SetReelsBlocker -> {
+                    state = state.copy(isReelsBlockerEnabled = event.enabled)
+                }
+                is HomeUiEvent.NavigateToStats -> onNavigateToStats()
+                is HomeUiEvent.NavigateToSettings -> onNavigateToSettings()
+                is HomeUiEvent.NavigateToFocus -> onNavigateToFocus()
+                is HomeUiEvent.NavigateToBlurPreview -> onNavigateToBlurPreview()
+            }
+        }
+    )
+}
+
+@Composable
+fun HomeScreenContent(
+    uiState: HomeUiState,
+    onEvent: (HomeUiEvent) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val scrollState = rememberScrollState()
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(DeepBlack)
-            .padding(20.dp)
+            .windowInsetsPadding(WindowInsets.systemBars)
     ) {
+        // 1. Ambient Top Radial Glow Canvas
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        NeonCyan.copy(alpha = if (uiState.isShieldActive) 0.16f else 0.04f),
+                        NeonGreen.copy(alpha = if (uiState.isShieldActive) 0.06f else 0.01f),
+                        Color.Transparent
+                    ),
+                    center = Offset(size.width * 0.5f, size.height * 0.22f),
+                    radius = size.width * 0.70f
+                )
+            )
+        }
+
+        // 2. Signature Bottom Cyber Silk Curves
+        CyberBackgroundWaves(
+            modifier = Modifier.align(Alignment.BottomCenter),
+            height = 190.dp,
+            intensity = if (uiState.isShieldActive) 1.0f else 0.4f
+        )
+
+        // 3. Scrollable Main Content Column
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState)
+                .padding(horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Top Bar
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = "SafeScreen",
-                        style = MaterialTheme.typography.headlineMedium
-                    )
-                    Text(
-                        text = "On-Device Neural Guardian",
-                        style = MaterialTheme.typography.bodyMedium.copy(color = TextMuted)
-                    )
-                }
+            Spacer(modifier = Modifier.height(14.dp))
 
-                Row {
-                    IconButton(onClick = onNavigateToStats) {
-                        Icon(
-                            imageVector = Icons.Default.BarChart,
-                            contentDescription = "Stats",
-                            tint = NeonCyan
-                        )
-                    }
-                    IconButton(onClick = onNavigateToSettings) {
-                        Icon(
-                            imageVector = Icons.Default.Settings,
-                            contentDescription = "Settings",
-                            tint = TextPrimary
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(48.dp))
-
-            // Central Shield Toggle
-            ShieldButton(
-                isActive = isShieldActive,
-                onToggle = { isShieldActive = !isShieldActive }
+            // A. Top Bar
+            HomeTopBar(
+                isShieldActive = uiState.isShieldActive,
+                onSettingsClick = { onEvent(HomeUiEvent.NavigateToSettings) }
             )
 
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(18.dp))
 
-            // Live Metrics Summary
+            // B. Hero 3D Shield Button with Circuit Traces & Pulse Aura
+            ShieldButton(
+                isActive = uiState.isShieldActive,
+                onToggle = { onEvent(HomeUiEvent.ToggleShield) }
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // C. Live Metric Cards Grid (Explicit Blurred & Music Muted)
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                MetricCard(
-                    title = "Blocked Today",
-                    value = "24",
-                    subtitle = "Explicit frames blurred",
-                    color = NeonPink,
+                // Card 1: Explicit Blurred
+                MetricStatCard(
+                    title = "Explicit Blurred",
+                    value = "${uiState.blurredTodayCount}",
+                    subtitle = "Today's interventions",
+                    icon = Icons.Default.VisibilityOff,
+                    accentColor = NeonPink,
+                    onClick = { onEvent(HomeUiEvent.NavigateToStats) },
                     modifier = Modifier.weight(1f)
                 )
 
-                MetricCard(
+                // Card 2: Music Muted
+                MetricStatCard(
                     title = "Music Muted",
-                    value = "12",
-                    subtitle = "Audio tracks intercepted",
-                    color = NeonCyan,
+                    value = "${uiState.mutedTodayCount}",
+                    subtitle = "Audio tracks silenced",
+                    icon = Icons.AutoMirrored.Filled.VolumeOff,
+                    accentColor = NeonCyan,
+                    onClick = { onEvent(HomeUiEvent.NavigateToStats) },
                     modifier = Modifier.weight(1f)
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
-            GlassmorphicCard(modifier = Modifier.fillMaxWidth()) {
+            // D. Focus Widget: Reels & Shorts Daily Usage Banner
+            FocusUsageBanner(
+                minutesUsed = uiState.reelsMinutesUsed,
+                minutesLimit = uiState.reelsMinutesLimit,
+                percentage = uiState.reelsPercentage,
+                onClick = { onEvent(HomeUiEvent.NavigateToFocus) }
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // E. Quick Feature Toggles (Visual Shield, Audio Mute, Reels Blocker)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                // Toggle 1: Visual Shield
+                QuickFeatureToggleCard(
+                    title = "Visual\nShield",
+                    icon = Icons.Default.Visibility,
+                    iconTint = NeonGreen,
+                    isEnabled = uiState.isVisualShieldEnabled,
+                    activeSwitchColor = NeonCyan,
+                    onToggle = { onEvent(HomeUiEvent.SetVisualShield(it)) },
+                    modifier = Modifier.weight(1f)
+                )
+
+                // Toggle 2: Audio Mute
+                QuickFeatureToggleCard(
+                    title = "Audio\nMute",
+                    icon = Icons.AutoMirrored.Filled.VolumeOff,
+                    iconTint = NeonCyan,
+                    isEnabled = uiState.isAudioMuteEnabled,
+                    activeSwitchColor = NeonCyan,
+                    onToggle = { onEvent(HomeUiEvent.SetAudioMute(it)) },
+                    modifier = Modifier.weight(1f)
+                )
+
+                // Toggle 3: Reels Blocker
+                QuickFeatureToggleCard(
+                    title = "Reels\nBlocker",
+                    icon = Icons.Default.HourglassTop,
+                    iconTint = NeonPurple,
+                    isEnabled = uiState.isReelsBlockerEnabled,
+                    activeSwitchColor = NeonPurple,
+                    onToggle = { onEvent(HomeUiEvent.SetReelsBlocker(it)) },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            // Extra bottom spacing to ensure content is never obscured by the floating nav bar
+            Spacer(modifier = Modifier.height(105.dp))
+        }
+
+        // 4. Floating Cyber Glass Bottom Navigation Bar
+        FloatingBottomNavigationBar(
+            activeDestination = uiState.activeBottomNav,
+            onDestinationSelected = { destination ->
+                when (destination) {
+                    BottomNavDestination.Home -> { /* Already on Home */ }
+                    BottomNavDestination.Stats -> onEvent(HomeUiEvent.NavigateToStats)
+                    BottomNavDestination.Focus -> onEvent(HomeUiEvent.NavigateToFocus)
+                    BottomNavDestination.Settings -> onEvent(HomeUiEvent.NavigateToSettings)
+                }
+            },
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(horizontal = 24.dp, vertical = 18.dp)
+        )
+    }
+}
+
+/**
+ * Top brand bar with glowing shield icon, title, active pill badge, and settings button.
+ */
+@Composable
+private fun HomeTopBar(
+    isShieldActive: Boolean,
+    onSettingsClick: () -> Unit
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "topBadgePulse")
+    val dotPulseScale by infiniteTransition.animateFloat(
+        initialValue = 0.9f,
+        targetValue = 1.35f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1200, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "dotPulseScale"
+    )
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Brand Emblem & Title
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(
+                        Brush.linearGradient(
+                            listOf(
+                                Color(0xFF132238),
+                                Color(0xFF0A1320)
+                            )
+                        )
+                    )
+                    .border(
+                        width = 1.dp,
+                        brush = Brush.linearGradient(
+                            listOf(
+                                NeonCyan.copy(alpha = 0.7f),
+                                NeonGreen.copy(alpha = 0.4f)
+                            )
+                        ),
+                        shape = RoundedCornerShape(10.dp)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Shield,
+                    contentDescription = "SafeScreen Logo",
+                    tint = NeonCyan,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(10.dp))
+
+            Row {
+                Text(
+                    text = "Safe",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.ExtraBold,
+                        color = Color.White,
+                        fontSize = 22.sp
+                    )
+                )
+                Text(
+                    text = "Screen",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.ExtraBold,
+                        color = NeonCyan,
+                        fontSize = 22.sp
+                    )
+                )
+            }
+        }
+
+        // Live Status Pill & Settings Button
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Live Status Pill Badge
+            Box(
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(Color(0xCC0D1726))
+                    .border(
+                        width = 1.dp,
+                        color = if (isShieldActive) NeonGreen.copy(alpha = 0.45f) else Color.White.copy(alpha = 0.12f),
+                        shape = CircleShape
+                    )
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                contentAlignment = Alignment.Center
+            ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column {
-                        Text(
-                            text = "Reels & Shorts Timer",
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        Text(
-                            text = "Daily limit: 15 / 30 mins used",
-                            style = MaterialTheme.typography.bodyMedium.copy(color = TextMuted)
-                        )
-                    }
+                    // Pulsing Dot
+                    Box(
+                        modifier = Modifier
+                            .size(7.dp)
+                            .scale(if (isShieldActive) dotPulseScale else 1.0f)
+                            .clip(CircleShape)
+                            .background(if (isShieldActive) NeonGreen else TextMuted)
+                    )
+
+                    Spacer(modifier = Modifier.width(6.dp))
+
                     Text(
-                        text = "50%",
-                        style = MaterialTheme.typography.titleLarge.copy(color = NeonGreen)
+                        text = if (isShieldActive) "SHIELD ACTIVE" else "DISARMED",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.8.sp,
+                            fontSize = 10.5.sp,
+                            color = if (isShieldActive) NeonGreen else TextMuted
+                        )
                     )
                 }
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            // Settings Button
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .background(Color(0x990D1726))
+                    .border(
+                        width = 1.dp,
+                        color = Color.White.copy(alpha = 0.12f),
+                        shape = CircleShape
+                    )
+                    .clickable(onClick = onSettingsClick),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = "Settings",
+                    tint = TextPrimary,
+                    modifier = Modifier.size(19.dp)
+                )
             }
         }
     }
 }
 
+/**
+ * Metric stat card displaying interventions count and category branding.
+ */
 @Composable
-private fun MetricCard(
+private fun MetricStatCard(
     title: String,
     value: String,
     subtitle: String,
-    color: androidx.compose.ui.graphics.Color,
+    icon: ImageVector,
+    accentColor: Color,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    GlassmorphicCard(modifier = modifier) {
+    GlassmorphicCard(
+        modifier = modifier.clickable(
+            interactionSource = remember { MutableInteractionSource() },
+            indication = null,
+            onClick = onClick
+        ),
+        borderColor = accentColor.copy(alpha = 0.35f),
+        contentPadding = PaddingValues(16.dp)
+    ) {
         Column {
+            // Icon squircle and chevron
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(34.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(accentColor.copy(alpha = 0.15f))
+                        .border(
+                            width = 1.dp,
+                            color = accentColor.copy(alpha = 0.40f),
+                            shape = RoundedCornerShape(10.dp)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = title,
+                        tint = accentColor,
+                        modifier = Modifier.size(19.dp)
+                    )
+                }
+
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = "View Details",
+                    tint = TextMuted,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
             Text(
                 text = title,
-                style = MaterialTheme.typography.labelSmall.copy(color = TextMuted)
+                style = MaterialTheme.typography.labelMedium.copy(
+                    color = TextSecondary,
+                    fontSize = 12.5.sp
+                )
             )
-            Spacer(modifier = Modifier.height(6.dp))
+
+            Spacer(modifier = Modifier.height(2.dp))
+
             Text(
                 text = value,
-                style = MaterialTheme.typography.headlineMedium.copy(color = color)
+                style = MaterialTheme.typography.headlineLarge.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = accentColor,
+                    fontSize = 30.sp
+                )
             )
-            Spacer(modifier = Modifier.height(4.dp))
+
+            Spacer(modifier = Modifier.height(2.dp))
+
             Text(
                 text = subtitle,
-                style = MaterialTheme.typography.bodyMedium.copy(color = TextMuted)
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = TextMuted,
+                    fontSize = 11.sp
+                )
             )
         }
     }
 }
 
+/**
+ * Banner card displaying Reels & Shorts daily usage with a neon purple progress bar.
+ */
+@Composable
+private fun FocusUsageBanner(
+    minutesUsed: Int,
+    minutesLimit: Int,
+    percentage: Float,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    GlassmorphicCard(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onClick
+            ),
+        borderColor = NeonPurple.copy(alpha = 0.35f),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Purple Video Icon Squircle
+            Box(
+                modifier = Modifier
+                    .size(42.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color(0xFF241539))
+                    .border(
+                        width = 1.dp,
+                        color = NeonPurple.copy(alpha = 0.50f),
+                        shape = RoundedCornerShape(12.dp)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.VideoLibrary,
+                    contentDescription = "Reels & Shorts Usage",
+                    tint = NeonPurple,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(14.dp))
+
+            // Center details: Title, limits, and progress bar
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = "Reels & Shorts Usage:",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        color = TextSecondary,
+                        fontSize = 11.5.sp
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(2.dp))
+
+                Text(
+                    text = "$minutesUsed / $minutesLimit mins used today",
+                    style = MaterialTheme.typography.titleSmall.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        color = TextPrimary,
+                        fontSize = 13.5.sp
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(7.dp))
+
+                // Custom Sleek Neon Progress Bar
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(6.dp)
+                        .clip(RoundedCornerShape(3.dp))
+                        .background(Color(0xFF1E1630))
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(percentage)
+                            .height(6.dp)
+                            .clip(RoundedCornerShape(3.dp))
+                            .background(
+                                Brush.horizontalGradient(
+                                    listOf(
+                                        NeonPurple,
+                                        Color(0xFFC084FC)
+                                    )
+                                )
+                            )
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(14.dp))
+
+            // Percentage value on the far right
+            Text(
+                text = "${(percentage * 100).toInt()}%",
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary,
+                    fontSize = 15.sp
+                )
+            )
+        }
+    }
+}
+
+/**
+ * Compact feature toggle card with icon, title, and smooth custom neon switch.
+ */
+@Composable
+private fun QuickFeatureToggleCard(
+    title: String,
+    icon: ImageVector,
+    iconTint: Color,
+    isEnabled: Boolean,
+    activeSwitchColor: Color,
+    onToggle: (Boolean) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    GlassmorphicCard(
+        modifier = modifier.clickable(
+            interactionSource = remember { MutableInteractionSource() },
+            indication = null,
+            onClick = { onToggle(!isEnabled) }
+        ),
+        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 12.dp)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Icon
+            Icon(
+                imageVector = icon,
+                contentDescription = title,
+                tint = iconTint,
+                modifier = Modifier.size(23.dp)
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Title
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelMedium.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    color = TextPrimary,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 15.sp,
+                    fontSize = 12.sp
+                )
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Neon Switch
+            NeonSwitch(
+                checked = isEnabled,
+                onCheckedChange = onToggle,
+                activeColor = activeSwitchColor
+            )
+        }
+    }
+}
+
+/**
+ * Floating glassmorphic bottom navigation pill.
+ */
+@Composable
+private fun FloatingBottomNavigationBar(
+    activeDestination: BottomNavDestination,
+    onDestinationSelected: (BottomNavDestination) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(64.dp)
+            .shadow(
+                elevation = 20.dp,
+                shape = RoundedCornerShape(32.dp),
+                ambientColor = NeonCyan.copy(alpha = 0.25f),
+                spotColor = Color.Black
+            )
+            .clip(RoundedCornerShape(32.dp))
+            .background(
+                Brush.verticalGradient(
+                    listOf(
+                        Color(0xF00D1624),
+                        Color(0xF5080E18)
+                    )
+                )
+            )
+            .border(
+                width = 1.dp,
+                brush = Brush.linearGradient(
+                    listOf(
+                        Color.White.copy(alpha = 0.24f),
+                        NeonCyan.copy(alpha = 0.20f),
+                        Color.White.copy(alpha = 0.05f)
+                    )
+                ),
+                shape = RoundedCornerShape(32.dp)
+            )
+            .padding(horizontal = 14.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceAround,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            BottomNavItem(
+                icon = Icons.Default.Home,
+                label = "Home",
+                isSelected = activeDestination == BottomNavDestination.Home,
+                onClick = { onDestinationSelected(BottomNavDestination.Home) }
+            )
+
+            BottomNavItem(
+                icon = Icons.Default.BarChart,
+                label = "Stats",
+                isSelected = activeDestination == BottomNavDestination.Stats,
+                onClick = { onDestinationSelected(BottomNavDestination.Stats) }
+            )
+
+            BottomNavItem(
+                icon = Icons.Default.CenterFocusStrong,
+                label = "Focus",
+                isSelected = activeDestination == BottomNavDestination.Focus,
+                onClick = { onDestinationSelected(BottomNavDestination.Focus) }
+            )
+
+            BottomNavItem(
+                icon = Icons.Default.Settings,
+                label = "Settings",
+                isSelected = activeDestination == BottomNavDestination.Settings,
+                onClick = { onDestinationSelected(BottomNavDestination.Settings) }
+            )
+        }
+    }
+}
+
+/**
+ * Individual navigation item inside the floating bottom bar.
+ */
+@Composable
+private fun BottomNavItem(
+    icon: ImageVector,
+    label: String,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+        modifier = Modifier
+            .clip(RoundedCornerShape(16.dp))
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onClick
+            )
+            .padding(horizontal = 12.dp, vertical = 6.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = label,
+            tint = if (isSelected) NeonCyan else TextMuted,
+            modifier = Modifier.size(22.dp)
+        )
+
+        Spacer(modifier = Modifier.height(3.dp))
+
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall.copy(
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                fontSize = 11.sp,
+                color = if (isSelected) NeonCyan else TextMuted
+            )
+        )
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF07090E)
+@Composable
+private fun HomeScreenActivePreview() {
+    HomeScreenContent(
+        uiState = HomeUiState(isShieldActive = true),
+        onEvent = {}
+    )
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF07090E)
+@Composable
+private fun HomeScreenDisarmedPreview() {
+    HomeScreenContent(
+        uiState = HomeUiState(isShieldActive = false),
+        onEvent = {}
+    )
+}
