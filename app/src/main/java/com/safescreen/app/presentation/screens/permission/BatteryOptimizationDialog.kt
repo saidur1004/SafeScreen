@@ -195,84 +195,94 @@ fun BatteryOptimizationContent(
                 )
 
                 sparkles.forEachIndexed { i, pos ->
-                    val r = if (i % 2 == 0) 3.dp.toPx() else 2.dp.toPx()
-                    drawCircle(
-                        color = Color(0xFFFFE082),
-                        radius = r,
-                        center = pos
-                    )
+                    val r = if (i % 2 == 0) 3.5.dp.toPx() else 2.2.dp.toPx()
+                    // Draw 4-point twinkle star
+                    val starPath = Path().apply {
+                        moveTo(pos.x, pos.y - r * 1.6f)
+                        lineTo(pos.x + r * 0.35f, pos.y - r * 0.35f)
+                        lineTo(pos.x + r * 1.6f, pos.y)
+                        lineTo(pos.x + r * 0.35f, pos.y + r * 0.35f)
+                        lineTo(pos.x, pos.y + r * 1.6f)
+                        lineTo(pos.x - r * 0.35f, pos.y + r * 0.35f)
+                        lineTo(pos.x - r * 1.6f, pos.y)
+                        lineTo(pos.x - r * 0.35f, pos.y - r * 0.35f)
+                        close()
+                    }
+                    drawPath(starPath, Color(0xFFFFF9C4))
                 }
 
                 // 5. 3D Battery Body Graphic
-                val battW = 68.dp.toPx()
-                val battH = 96.dp.toPx()
+                val battW = 72.dp.toPx()
+                val battH = 104.dp.toPx()
                 val battLeft = centerOffset.x - battW / 2f
                 val battTop = centerOffset.y - battH / 2f + 4.dp.toPx()
 
                 // Battery Terminal Nub (Top)
-                val nubW = 24.dp.toPx()
-                val nubH = 8.dp.toPx()
+                val nubW = 26.dp.toPx()
+                val nubH = 9.dp.toPx()
                 val nubLeft = centerOffset.x - nubW / 2f
                 val nubTop = battTop - nubH + 1.dp.toPx()
 
                 drawRoundRect(
                     brush = Brush.verticalGradient(
-                        listOf(Color(0xFFFFD54F), Color(0xFFFFA000))
+                        listOf(Color(0xFFFFFAEB), Color(0xFFFFD54F), Color(0xFFFFA000))
                     ),
                     topLeft = Offset(nubLeft, nubTop),
                     size = Size(nubW, nubH),
-                    cornerRadius = CornerRadius(4.dp.toPx(), 4.dp.toPx())
+                    cornerRadius = CornerRadius(4.5.dp.toPx(), 4.5.dp.toPx())
                 )
 
-                // Battery Body Fill
+                // Battery Body Fill (Warm Golden Translucent)
                 drawRoundRect(
                     brush = Brush.verticalGradient(
                         listOf(
-                            Color(0xFF2E2008),
-                            Color(0xFF1F1404)
+                            Color(0xFF5C3C00).copy(alpha = 0.55f),
+                            Color(0xFF2E1C00).copy(alpha = 0.40f)
                         )
                     ),
                     topLeft = Offset(battLeft, battTop),
                     size = Size(battW, battH),
-                    cornerRadius = CornerRadius(18.dp.toPx(), 18.dp.toPx())
+                    cornerRadius = CornerRadius(20.dp.toPx(), 20.dp.toPx())
                 )
 
                 // Battery Ambient Core Glow
                 drawCircle(
                     brush = Brush.radialGradient(
                         listOf(
-                            Color(0xFFFFB300).copy(alpha = 0.45f),
+                            Color(0xFFFFB300).copy(alpha = 0.60f),
+                            Color(0xFFFF8F00).copy(alpha = 0.25f),
                             Color.Transparent
                         ),
                         center = Offset(centerOffset.x, battTop + battH / 2f),
-                        radius = battW * 0.48f
+                        radius = battW * 0.52f
                     )
                 )
 
-                // Battery Thick 3D Golden Border
+                // Battery Thick 3D Golden Beveled Rim
                 drawRoundRect(
                     brush = Brush.verticalGradient(
                         listOf(
-                            Color(0xFFFFE082),
+                            Color(0xFFFFF9C4),
+                            Color(0xFFFFD54F),
                             Color(0xFFFFB300),
                             Color(0xFFFF8F00)
                         )
                     ),
                     topLeft = Offset(battLeft, battTop),
                     size = Size(battW, battH),
-                    cornerRadius = CornerRadius(18.dp.toPx(), 18.dp.toPx()),
-                    style = Stroke(width = 4.dp.toPx())
+                    cornerRadius = CornerRadius(20.dp.toPx(), 20.dp.toPx()),
+                    style = Stroke(width = 5.dp.toPx())
                 )
 
                 // 6. Intense Neon Yellow Lightning Bolt inside Battery
                 val boltPath = Path().apply {
                     val cx = centerOffset.x
                     val cy = battTop + battH / 2f
-                    moveTo(cx + 4.dp.toPx(), cy - 26.dp.toPx())
-                    lineTo(cx - 14.dp.toPx(), cy + 2.dp.toPx())
+                    moveTo(cx + 5.dp.toPx(), cy - 28.dp.toPx())
+                    lineTo(cx - 15.dp.toPx(), cy + 2.dp.toPx())
                     lineTo(cx - 1.dp.toPx(), cy + 2.dp.toPx())
-                    lineTo(cx - 6.dp.toPx(), cy + 26.dp.toPx())
-                    lineTo(cx + 14.dp.toPx(), cy - 2.dp.toPx())
+                    lineTo(cx - 7.dp.toPx(), cy + 28.dp.toPx())
+                    lineTo(cx + 15.dp.toPx(), cy - 2.dp.toPx())
                     lineTo(cx + 1.dp.toPx(), cy - 2.dp.toPx())
                     close()
                 }
@@ -283,8 +293,9 @@ fun BatteryOptimizationContent(
                     brush = Brush.verticalGradient(
                         listOf(
                             Color.White,
-                            Color(0xFFFFEB3B),
-                            Color(0xFFFFC107)
+                            Color(0xFFFFF59D),
+                            Color(0xFFFFD54F),
+                            Color(0xFFFFB300)
                         )
                     ),
                     style = Fill

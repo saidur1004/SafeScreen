@@ -6,6 +6,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.safescreen.app.presentation.screens.focus.FocusScheduleScreen
 import com.safescreen.app.presentation.screens.focus.ReelsControlScreen
 import com.safescreen.app.presentation.screens.home.HomeScreen
 import com.safescreen.app.presentation.screens.onboarding.OnboardingScreen
@@ -72,6 +73,17 @@ fun AppNavHost(
 
         composable(Screen.ReelsControl.route) {
             ReelsControlScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onNavigateToSchedule = {
+                    navController.navigate(Screen.FocusSchedule.route)
+                }
+            )
+        }
+
+        composable(Screen.FocusSchedule.route) {
+            FocusScheduleScreen(
                 onNavigateBack = {
                     navController.popBackStack()
                 }

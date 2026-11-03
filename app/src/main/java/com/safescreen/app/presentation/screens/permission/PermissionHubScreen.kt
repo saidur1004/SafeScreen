@@ -253,14 +253,14 @@ fun PermissionHubContent(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 8.dp, bottom = 4.dp),
+                    .padding(top = 4.dp, bottom = 2.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Circular Frosted Back Button
                 Box(
                     modifier = Modifier
-                        .size(42.dp)
+                        .size(38.dp)
                         .clip(CircleShape)
                         .background(Color.White.copy(alpha = 0.08f))
                         .border(1.dp, Color.White.copy(alpha = 0.18f), CircleShape)
@@ -271,7 +271,7 @@ fun PermissionHubContent(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back",
                         tint = Color.White,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(19.dp)
                     )
                 }
 
@@ -280,7 +280,7 @@ fun PermissionHubContent(
                     text = "System Permissions",
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp,
+                        fontSize = 19.sp,
                         color = Color.White
                     )
                 )
@@ -288,7 +288,7 @@ fun PermissionHubContent(
                 // Right Circular Shield Button (Triggers Battery Dialog)
                 Box(
                     modifier = Modifier
-                        .size(42.dp)
+                        .size(38.dp)
                         .clip(CircleShape)
                         .background(NeonCyan.copy(alpha = 0.12f))
                         .border(1.dp, NeonCyan.copy(alpha = 0.45f), CircleShape)
@@ -299,7 +299,7 @@ fun PermissionHubContent(
                         imageVector = Icons.Default.Shield,
                         contentDescription = "Security Shield / Battery Access",
                         tint = NeonCyan,
-                        modifier = Modifier.size(22.dp)
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
@@ -309,8 +309,8 @@ fun PermissionHubContent(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth(),
-                contentPadding = PaddingValues(top = 2.dp, bottom = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                contentPadding = PaddingValues(top = 0.dp, bottom = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 // Header Hero Emblem & Explanation Notice
                 item {
@@ -318,23 +318,23 @@ fun PermissionHubContent(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 2.dp, bottom = 4.dp)
+                            .padding(top = 0.dp, bottom = 2.dp)
                     ) {
-                        // Hyper-Luminous 3D Shield Hero with Horizontal Light Streak
+                        // Hyper-Luminous Angular Heraldic 3D Shield Hero with Horizontal Light Streak
                         Box(
                             contentAlignment = Alignment.Center,
-                            modifier = Modifier.size(105.dp)
+                            modifier = Modifier.size(76.dp)
                         ) {
                             // Radial background aura
                             Box(
                                 modifier = Modifier
-                                    .size(105.dp)
+                                    .size(76.dp)
                                     .clip(CircleShape)
                                     .background(
                                         Brush.radialGradient(
                                             listOf(
-                                                NeonCyan.copy(alpha = 0.45f),
-                                                NeonGreen.copy(alpha = 0.16f),
+                                                NeonCyan.copy(alpha = 0.50f),
+                                                NeonGreen.copy(alpha = 0.18f),
                                                 Color.Transparent
                                             )
                                         )
@@ -342,16 +342,17 @@ fun PermissionHubContent(
                             )
 
                             // 3D Beveled Shield Graphic + Light Streak
-                            Canvas(modifier = Modifier.size(width = 76.dp, height = 88.dp)) {
+                            Canvas(modifier = Modifier.size(width = 54.dp, height = 64.dp)) {
                                 val w = size.width
                                 val h = size.height
 
                                 val shieldPath = Path().apply {
                                     moveTo(w * 0.5f, 0f)
-                                    cubicTo(w * 0.78f, 0f, w * 0.98f, h * 0.08f, w, h * 0.20f)
+                                    lineTo(w * 0.82f, 0f)
+                                    lineTo(w, h * 0.18f)
                                     cubicTo(w, h * 0.65f, w * 0.78f, h * 0.88f, w * 0.5f, h)
-                                    cubicTo(w * 0.22f, h * 0.88f, 0f, h * 0.65f, 0f, h * 0.20f)
-                                    cubicTo(w * 0.02f, h * 0.08f, w * 0.22f, 0f, w * 0.5f, 0f)
+                                    cubicTo(w * 0.22f, h * 0.88f, 0f, h * 0.65f, 0f, h * 0.18f)
+                                    lineTo(w * 0.18f, 0f)
                                     close()
                                 }
 
@@ -367,13 +368,13 @@ fun PermissionHubContent(
                                 // 2. Central Ambient Turquoise Glow
                                 drawCircle(
                                     brush = Brush.radialGradient(
-                                        colors = listOf(NeonCyan.copy(alpha = 0.50f), Color.Transparent),
+                                        colors = listOf(NeonCyan.copy(alpha = 0.55f), Color.Transparent),
                                         center = Offset(w * 0.5f, h * 0.52f),
                                         radius = w * 0.45f
                                     )
                                 )
 
-                                // 3. Thick 3D Beveled Outer Luminous Rim
+                                // 3. Thick 3D Beveled Outer Luminous Rim (Cyan to Bio-Green)
                                 drawPath(
                                     path = shieldPath,
                                     brush = Brush.horizontalGradient(
@@ -384,7 +385,7 @@ fun PermissionHubContent(
                                             Color(0xFF00E676)
                                         )
                                     ),
-                                    style = Stroke(width = 3.8.dp.toPx())
+                                    style = Stroke(width = 3.5.dp.toPx())
                                 )
 
                                 // 4. Luminous Horizontal Light Streak / Flare
@@ -398,19 +399,19 @@ fun PermissionHubContent(
                                             Color.Transparent
                                         )
                                     ),
-                                    start = Offset(-14.dp.toPx(), h * 0.48f),
-                                    end = Offset(w + 14.dp.toPx(), h * 0.48f),
-                                    strokeWidth = 1.8.dp.toPx()
+                                    start = Offset(-18.dp.toPx(), h * 0.46f),
+                                    end = Offset(w + 18.dp.toPx(), h * 0.46f),
+                                    strokeWidth = 2.0.dp.toPx()
                                 )
 
                                 // 5. Glossy Padlock
                                 val lockCenterX = w * 0.5f
                                 val lockCenterY = h * 0.53f
 
-                                val shackleR = 7.dp.toPx()
-                                val shackleTop = lockCenterY - 14.dp.toPx()
+                                val shackleR = 5.5.dp.toPx()
+                                val shackleTop = lockCenterY - 11.dp.toPx()
                                 val shPath = Path().apply {
-                                    moveTo(lockCenterX - shackleR, lockCenterY - 3.dp.toPx())
+                                    moveTo(lockCenterX - shackleR, lockCenterY - 2.dp.toPx())
                                     lineTo(lockCenterX - shackleR, shackleTop + shackleR)
                                     arcTo(
                                         rect = androidx.compose.ui.geometry.Rect(
@@ -423,35 +424,35 @@ fun PermissionHubContent(
                                         sweepAngleDegrees = 180f,
                                         forceMoveTo = false
                                     )
-                                    lineTo(lockCenterX + shackleR, lockCenterY - 3.dp.toPx())
+                                    lineTo(lockCenterX + shackleR, lockCenterY - 2.dp.toPx())
                                 }
                                 drawPath(
                                     path = shPath,
                                     brush = Brush.verticalGradient(listOf(Color.White, Color(0xFF00E5FF))),
-                                    style = Stroke(width = 2.4.dp.toPx(), cap = StrokeCap.Round)
+                                    style = Stroke(width = 2.0.dp.toPx(), cap = StrokeCap.Round)
                                 )
 
-                                val bWidth = 20.dp.toPx()
-                                val bHeight = 16.dp.toPx()
+                                val bWidth = 16.dp.toPx()
+                                val bHeight = 13.dp.toPx()
                                 val bLeft = lockCenterX - bWidth / 2f
-                                val bTop = lockCenterY - 3.dp.toPx()
+                                val bTop = lockCenterY - 2.dp.toPx()
                                 drawRoundRect(
                                     brush = Brush.verticalGradient(
                                         listOf(Color(0xFF00F2FE), Color(0xFF0077B6))
                                     ),
                                     topLeft = Offset(bLeft, bTop),
                                     size = Size(bWidth, bHeight),
-                                    cornerRadius = CornerRadius(4.dp.toPx(), 4.dp.toPx())
+                                    cornerRadius = CornerRadius(3.5.dp.toPx(), 3.5.dp.toPx())
                                 )
                                 drawCircle(
                                     color = Color(0xFF0A192F),
-                                    radius = 2.dp.toPx(),
-                                    center = Offset(lockCenterX, bTop + 6.dp.toPx())
+                                    radius = 1.6.dp.toPx(),
+                                    center = Offset(lockCenterX, bTop + 5.dp.toPx())
                                 )
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(6.dp))
+                        Spacer(modifier = Modifier.height(4.dp))
 
                         // Explanatory Subtitle
                         Text(
@@ -459,20 +460,20 @@ fun PermissionHubContent(
                             style = MaterialTheme.typography.bodyMedium.copy(
                                 color = TextSecondary,
                                 textAlign = TextAlign.Center,
-                                fontSize = 12.sp,
-                                lineHeight = 17.sp
+                                fontSize = 11.5.sp,
+                                lineHeight = 15.sp
                             ),
-                            modifier = Modifier.padding(horizontal = 12.dp)
+                            modifier = Modifier.padding(horizontal = 8.dp)
                         )
 
-                        Spacer(modifier = Modifier.height(2.dp))
+                        Spacer(modifier = Modifier.height(1.dp))
 
                         Text(
                             text = "Your data is strictly private.",
                             style = MaterialTheme.typography.titleMedium.copy(
                                 color = NeonCyan,
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 13.sp,
+                                fontSize = 12.5.sp,
                                 textAlign = TextAlign.Center
                             )
                         )
@@ -497,13 +498,13 @@ fun PermissionHubContent(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 12.dp)
+                    .padding(vertical = 8.dp)
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(52.dp)
-                        .clip(RoundedCornerShape(26.dp))
+                        .height(48.dp)
+                        .clip(RoundedCornerShape(24.dp))
                         .background(
                             if (uiState.areAllGranted) {
                                 Brush.horizontalGradient(listOf(NeonCyan, NeonGreen))
@@ -519,7 +520,7 @@ fun PermissionHubContent(
                         .border(
                             1.dp,
                             if (uiState.areAllGranted) NeonCyan else Color.White.copy(alpha = 0.18f),
-                            RoundedCornerShape(26.dp)
+                            RoundedCornerShape(24.dp)
                         )
                         .clickable {
                             onEvent(PermissionHubUiEvent.EnterShieldHub)
@@ -531,13 +532,13 @@ fun PermissionHubContent(
                         imageVector = Icons.Default.Shield,
                         contentDescription = null,
                         tint = if (uiState.areAllGranted) DeepBlack else TextSecondary,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(19.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "Enter Shield Hub",
                         style = MaterialTheme.typography.labelLarge.copy(
-                            fontSize = 15.5.sp,
+                            fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             color = if (uiState.areAllGranted) DeepBlack else TextSecondary
                         )

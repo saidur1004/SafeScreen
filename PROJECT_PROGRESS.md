@@ -94,27 +94,28 @@
 - সেন্ট্রালাইজড [**`DESIGN.md`**](./DESIGN.md) তৈরি।
 - [**`DEVELOPMENT_ROADMAP.md`**](./DEVELOPMENT_ROADMAP.md) আপডেট করে ১০টি সুস্পষ্ট ফেজে পুনর্বিন্যাস।
 
-### গ. ফেজ ২B বাস্তবায়ন প্রগ্রেস (Phase 2B - Modules 01, 02 & 03 Complete ✅)
+### গ. ফেজ ২B বাস্তবায়ন প্রগ্রেস (Phase 2B - Modules 01, 02, 03 & 04 Complete ✅)
 - `Screen.kt`-এ ১৬টি রুটের সম্পূর্ণ সংজ্ঞা।
 - `NeonPillBadge.kt`, `NeonSwitch.kt`, `CyberBackgroundWaves.kt` শেয়ার্ড কম্পোনেন্ট তৈরি।
-- `SplashScreen.kt` ও `OnboardingScreen.kt` পিক্সেল-পারফেক্ট ইমপ্লিমেন্টেশন।
-- `PermissionHubScreen.kt` (Module 02 Prompt 1) ফ্রস্টেড কার্ডস ও স্টেট হোস্টিং সম্পন্ন।
-- `BatteryOptimizationDialog.kt` (Module 02 Prompt 2) আনরেস্ট্রিক্টেড ব্যাটারি বটম শিট সম্পন্ন।
+- `SplashScreen.kt` ও `OnboardingScreen.kt` (Module 01) পিক্সেল-পারফেক্ট ৩ডি বেভেল্ড শিল্ড ও ৩-পিলার ফ্রস্টেড কার্ড ইমপ্লিমেন্টেশন।
+- `PermissionHubScreen.kt` ও `BatteryOptimizationDialog.kt` (Module 02) কম্প্যাক্ট ভিউপোর্ট, গোল্ডেন ব্যাটারি ও লেন্স ফ্লেয়ার সহ সম্পন্ন।
 - `HomeScreen.kt` ও `ShieldButton.kt` (Module 03 Prompt 1) ফ্ল্যাগশিপ ড্যাশবোর্ড, ৩ডি শিল্ড বাটন, লাইভ মেট্রিক্স ও ফ্লোটিং নেভ বার সম্পন্ন।
 - `BlurStylePreviewSheet.kt` (Module 03 Prompt 2) শিল্ড ব্লার কাস্টমাইজেশন বটম শিট ও ইন্টারেক্টিভ স্প্লিট স্লাইডার সম্পন্ন।
+- `ReelsControlScreen.kt` (Module 04 Prompt 1) রিলস ও শর্টস কন্ট্রোল, প্ল্যাটফর্ম টগল ও স্ক্রিন-টাইম ইন্টারভেনশন সম্পন্ন।
+- `FocusScheduleScreen.kt` (Module 04 Prompt 2) ফোকাস টাইম শিডিউল, ডে পিলস, ইন্সপিরেশন হিরো ও শিডিউল মডাল সম্পন্ন।
 
 ---
 
 ## ৩. পরবর্তী এজেন্টের জন্য সুস্পষ্ট কাজের নির্দেশনা ও সিকোয়েন্স (Next Agent Handoff)
 
 ### ১. পরবর্তী টাস্ক (Next Prompt):
-* **Phase 2B — Module 04: Prompt 1 (`ReelsControlScreen.kt` - Reels & Shorts Control Screen)**
-* **কখন শুরু করবেন:** ব্যবহারকারী চ্যাটে স্পষ্ট অনুমতি দেওয়ার পর।
+* **Phase 2B — Module 05: Prompt 1 (`StatsScreen.kt` - Security & Usage Analytics Dashboard)**
+* **কখন শুরু করবেন:** ব্যবহারকারী চ্যাটে স্পষ্ট "Go ahead" অনুমতি দেওয়ার পর।
 
 ### ২. রেফারেন্স ও গাইডলাইন:
-* **ভিজ্যুয়াল রেফারেন্স:** `Screen Workflow/04_Reels_And_Focus/Neon SafeScreen Focus Dashboard.png` (বাম পাশের স্ক্রিন)।
-* **প্রম্পট গাইড:** `Screen Workflow/MASTER_UI_PROMPTS.md`-এর **প্রম্পট ০৭-B**।
-* **টার্গেট ফাইল:** `app/src/main/java/com/safescreen/app/presentation/screens/focus/ReelsControlScreen.kt`।
+* **ভিজ্যুয়াল রেফারেন্স:** `Screen Workflow/05_Stats_And_Analytics/` ডিরেক্টরির রেফারেন্স মকআপ।
+* **প্রম্পট গাইড:** `Screen Workflow/MASTER_UI_PROMPTS.md`-এর **প্রম্পট ০৯-B**।
+* **টার্গেট ফাইল:** `app/src/main/java/com/safescreen/app/presentation/screens/stats/StatsScreen.kt`।
 
 ### ৩. কোডিংয়ের সময় আবশ্যিক নিয়ম:
 * প্রতিটি স্ক্রিনে **State Hoisting** বজায় রাখুন (`UiState` ডাটা ক্লাস ও `UiEvent` সিল্ড ইন্টারফেস)।

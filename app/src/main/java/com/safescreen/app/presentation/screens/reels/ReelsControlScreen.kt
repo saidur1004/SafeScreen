@@ -8,7 +8,11 @@ import com.safescreen.app.presentation.screens.focus.ReelsControlScreen as Focus
  */
 @Composable
 fun ReelsControlScreen(
-    onNavigateBack: () -> Unit = {}
+    onNavigateBack: () -> Unit = {},
+    onNavigateToSchedule: () -> Unit = {}
 ) {
-    FocusReelsControlScreen(onNavigateBack = onNavigateBack)
+    FocusReelsControlScreen(
+        onNavigateBack = onNavigateBack,
+        onNavigateToSchedule = onNavigateToSchedule
+    )
 }

@@ -105,12 +105,14 @@ import com.safescreen.app.presentation.theme.TextSecondary
  */
 @Composable
 fun ReelsControlScreen(
-    onNavigateBack: () -> Unit = {}
+    onNavigateBack: () -> Unit = {},
+    onNavigateToSchedule: () -> Unit = {}
 ) {
     var state by remember { mutableStateOf(ReelsUiState()) }
 
     ReelsControlContent(
         uiState = state,
+        onNavigateToSchedule = onNavigateToSchedule,
         onEvent = { event ->
             when (event) {
                 is ReelsUiEvent.ToggleStrictMode -> {
@@ -159,7 +161,8 @@ fun ReelsControlScreen(
 fun ReelsControlContent(
     uiState: ReelsUiState,
     onEvent: (ReelsUiEvent) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onNavigateToSchedule: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
 
@@ -184,7 +187,7 @@ fun ReelsControlContent(
         ) {
             Spacer(modifier = Modifier.height(14.dp))
 
-            // 1. Top Bar: Back Arrow + Info
+            // 1. Top Bar: Back Arrow + Focus Schedules Link
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -216,18 +219,20 @@ fun ReelsControlContent(
                     )
                 )
 
+                // Top-Right Schedules Button
                 Box(
                     modifier = Modifier
                         .size(40.dp)
                         .clip(CircleShape)
-                        .background(Color(0x990D1726))
-                        .border(1.dp, Color.White.copy(alpha = 0.12f), CircleShape),
+                        .background(NeonCyan.copy(alpha = 0.12f))
+                        .border(1.dp, NeonCyan.copy(alpha = 0.40f), CircleShape)
+                        .clickable { onNavigateToSchedule() },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Info,
-                        contentDescription = "Info",
-                        tint = TextSecondary,
+                        imageVector = Icons.Default.Schedule,
+                        contentDescription = "Focus Schedules",
+                        tint = NeonCyan,
                         modifier = Modifier.size(19.dp)
                     )
                 }
