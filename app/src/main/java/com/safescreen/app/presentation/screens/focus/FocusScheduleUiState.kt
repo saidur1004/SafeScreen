@@ -94,3 +94,4 @@ sealed interface FocusScheduleUiEvent {
     data object SaveNewSchedule : FocusScheduleUiEvent
     data object NavigateBack : FocusScheduleUiEvent
 }
+

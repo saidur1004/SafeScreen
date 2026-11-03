@@ -94,6 +94,10 @@ fun AppNavHost(
             StatsScreen(
                 onNavigateBack = {
                     navController.popBackStack()
+                },
+                onNavigateToDetailedLog = {
+                    // Ready for Module 05 Prompt 2: DetailedActivityLogScreen
+                    navController.navigate(Screen.DetailedActivityLog.route)
                 }
             )
         }

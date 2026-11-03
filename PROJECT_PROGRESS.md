@@ -94,7 +94,7 @@
 - সেন্ট্রালাইজড [**`DESIGN.md`**](./DESIGN.md) তৈরি।
 - [**`DEVELOPMENT_ROADMAP.md`**](./DEVELOPMENT_ROADMAP.md) আপডেট করে ১০টি সুস্পষ্ট ফেজে পুনর্বিন্যাস।
 
-### গ. ফেজ ২B বাস্তবায়ন প্রগ্রেস (Phase 2B - Modules 01, 02, 03 & 04 Complete ✅)
+### গ. ফেজ ২B বাস্তবায়ন প্রগ্রেস (Phase 2B - Modules 01 to 04 Complete, Module 05 Prompt 1 Complete ✅)
 - `Screen.kt`-এ ১৬টি রুটের সম্পূর্ণ সংজ্ঞা।
 - `NeonPillBadge.kt`, `NeonSwitch.kt`, `CyberBackgroundWaves.kt` শেয়ার্ড কম্পোনেন্ট তৈরি।
 - `SplashScreen.kt` ও `OnboardingScreen.kt` (Module 01) পিক্সেল-পারফেক্ট ৩ডি বেভেল্ড শিল্ড ও ৩-পিলার ফ্রস্টেড কার্ড ইমপ্লিমেন্টেশন।
@@ -103,19 +103,20 @@
 - `BlurStylePreviewSheet.kt` (Module 03 Prompt 2) শিল্ড ব্লার কাস্টমাইজেশন বটম শিট ও ইন্টারেক্টিভ স্প্লিট স্লাইডার সম্পন্ন।
 - `ReelsControlScreen.kt` (Module 04 Prompt 1) রিলস ও শর্টস কন্ট্রোল, প্ল্যাটফর্ম টগল ও স্ক্রিন-টাইম ইন্টারভেনশন সম্পন্ন।
 - `FocusScheduleScreen.kt` (Module 04 Prompt 2) ফোকাস টাইম শিডিউল, ডে পিলস, ইন্সপিরেশন হিরো ও শিডিউল মডাল সম্পন্ন।
+- `StatsScreen.kt` ও `StatsUiState.kt` (Module 05 Prompt 1) ডুয়াল-বার ক্যানভাস ট্রেন্ড চার্ট, ডোনাট ক্যাটাগরি ব্রেকডাউন, টপ ইন্টারসেপ্টেড অ্যাপস ও অফলাইন SQLite ব্যানার সম্পন্ন।
 
 ---
 
 ## ৩. পরবর্তী এজেন্টের জন্য সুস্পষ্ট কাজের নির্দেশনা ও সিকোয়েন্স (Next Agent Handoff)
 
 ### ১. পরবর্তী টাস্ক (Next Prompt):
-* **Phase 2B — Module 05: Prompt 1 (`StatsScreen.kt` - Security & Usage Analytics Dashboard)**
+* **Phase 2B — Module 05: Prompt 2 (`DetailedActivityLogScreen.kt` - Detailed Protection Event Timeline & Log)**
 * **কখন শুরু করবেন:** ব্যবহারকারী চ্যাটে স্পষ্ট "Go ahead" অনুমতি দেওয়ার পর।
 
 ### ২. রেফারেন্স ও গাইডলাইন:
-* **ভিজ্যুয়াল রেফারেন্স:** `Screen Workflow/05_Stats_And_Analytics/` ডিরেক্টরির রেফারেন্স মকআপ।
-* **প্রম্পট গাইড:** `Screen Workflow/MASTER_UI_PROMPTS.md`-এর **প্রম্পট ০৯-B**।
-* **টার্গেট ফাইল:** `app/src/main/java/com/safescreen/app/presentation/screens/stats/StatsScreen.kt`।
+* **ভিজ্যুয়াল রেফারেন্স:** `Screen Workflow/05_Stats_And_Analytics/SafeScreen Neon Protection Dashb.png` (ডান পাশের স্ক্রিন - `stats_right_ref.jpg`)।
+* **প্রম্পট গাইড:** `Screen Workflow/MASTER_UI_PROMPTS.md`-এর **প্রম্পট ১০-B**।
+* **টার্গেট ফাইল:** `app/src/main/java/com/safescreen/app/presentation/screens/stats/DetailedActivityLogScreen.kt`।
 
 ### ৩. কোডিংয়ের সময় আবশ্যিক নিয়ম:
 * প্রতিটি স্ক্রিনে **State Hoisting** বজায় রাখুন (`UiState` ডাটা ক্লাস ও `UiEvent` সিল্ড ইন্টারফেস)।
