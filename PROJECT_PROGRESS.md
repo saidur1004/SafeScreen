@@ -19,33 +19,25 @@
 
 ## 📅 সর্বশেষ আপডেট তথ্য
 * **সর্বশেষ আপডেটের তারিখ:** ০৩ নভেম্বর ২০২৬
-* **বর্তমান পর্যায়:** **Phase 2B — Module 03 Completed (HomeScreen & BlurStylePreviewSheet 100% Verified ✅)**
+* **বর্তমান পর্যায়:** **Phase 2B — Module 04: Prompt 1 Completed (ReelsControlScreen 100% Verified ✅)**
 * **কোডিং এজেন্টের সর্বশেষ সম্পাদিত কাজের সংক্ষিপ্ত সামারি:**
-  1. **Module 03, Prompt 2 (`BlurStylePreviewSheet.kt`) সম্পূর্ণ ইমপ্লিমেন্টেশন:**
-     - **Material 3 ModalBottomSheet:** ডার্ক এলিভেটেড ফ্রস্টেড সারফেস (`DarkSurfaceElevated` `#161D2D`), রাউন্ডেড টপ কর্নার্স (28dp), এবং টপ ফ্রস্টেড পিল ড্র্যাগ হ্যান্ডেল।
-     - **হেডার ও টাইটেল:** সাইবার নিয়ন সায়ান প্যালেট আইকন ফ্রেম (`palette`), বোল্ড টাইটেল ("Shield Blur Customization"), এবং সাবটাইটেল।
-     - **৩টি সিলেক্টেবল ব্লার স্টাইল কার্ডস (Interactive Style Grid):**
-       * *Frosted Glass:* স্মুথ গাউসিয়ান ব্লার প্রিভিউ থাম্বনেইল, অ্যাক্টিভ নিয়ন সায়ান বর্ডার ও টপ-রাইট চেকমার্ক ব্যাজ (`✓`)।
-       * *Pixelated Censor:* ৮-বিট ডিজিটাল ব্লকস মেকানিক্স ও লাইভ পিক্সেল প্যালেট প্রিভিউ।
-       * *Opaque Dark Mask:* টোটাল ব্ল্যাক শিল্ড মাস্ক ও প্রাইভেসি ব্লক।
-     - **ব্লার ইনটেনসিটি স্লাইডার:** লাইভ পার্সেন্টেজ রিডআউট ("85%") সহ কাস্টম নিয়ন সায়ান স্লাইডার (রিয়েল-টাইমে অ্যাডজাস্টেবল)।
-     - **ইন্টারেক্টিভ স্প্লিট প্রিভিউ ("Before / After" Mockup):**
-       * বাঁয়ে ক্রিস্প অরিজিনাল সিন (মাউন্টেন পিকস, পাইন ট্রি বেল্ট এবং ট্রাঙ্কুইল লেক ওয়াটার)।
-       * ডানে সিলেক্টেড স্টাইল ও ইনটেনসিটির ওপর ভিত্তি করে রিয়েল-টাইম ফিল্টারড ভিউ (গাউসিয়ান ওয়াশ, ডিজিটাল মোজাইক বা পিচ ব্ল্যাক মাস্ক)।
-       * মাঝে ভার্টিক্যাল ডিভাইডার ও ড্র্যাগেবল হ্যান্ডেল (`< >`), যা ব্যবহারকারী ৮% থেকে ৯২% পর্যন্ত স্লাইড করে প্রিভিউ যাচাই করতে পারেন।
-     - **প্রাইমারি বাটন:** ফুল-উইডথ সলিড নিয়ন সায়ান ক্যাপসুল বাটন ("✔ Apply Changes"), ট্যাপে কাস্টমাইজেশন সেভ হয়ে শিট মসৃণভাবে ডিসমিস হয়।
-  2. **HomeScreen-এর সাথে পূর্ণাঙ্গ সংযোগ:**
-     - টপ বারে প্যালেট আইকন বাটন এবং "Visual Shield" কার্ডে ট্যাপ করলে শিট ওপেন হয়।
-     - `HomeUiState`-এ `currentBlurStyle` এবং `currentBlurIntensity` যুক্ত করা হয়েছে।
-  3. **বিল্ড ও এমুলেটর লাইভ ভেরিফিকেশন:**
-     - `./gradlew assembleDebug` সফল (`BUILD SUCCESSFUL in 4s`, 0 errors)।
-     - অ্যান্ড্রয়েড এমুলেটর `emulator-5554` এ লাইভ টেস্ট সম্পন্ন:
-       * বটম শিট ওপেন ও ফ্রস্টেড গ্লাস ভেরিফাইড (`blur_sheet_verified.png`)।
-       * "Pixelated Censor" নির্বাচন ও লাইভ ৮-বিট মোজাইক রেন্ডারিং ভেরিফাইড (`blur_sheet_pixelated.png`)।
-       * স্প্লিট স্লাইডার ড্র্যাগ করে লেফটে মুভ ভেরিফাইড (`blur_sheet_dragged.png`)।
-       * "Opaque Dark Mask" নির্বাচন ভেরিফাইড (`blur_sheet_opaque.png`)।
-       * "Apply Changes" চেপে মসৃণভাবে শিট ক্লোজ হওয়া ভেরিফাইড (`home_after_sheet_applied.png`)।
-* **পরবর্তী কোডিং পর্যায়:** **Phase 2B — Module 04: Prompt 1 (`ReelsControlScreen.kt` - রিলস প্ল্যাটফর্ম মনিটরিং ও ডেইলি লিমিট)**
+  1. **Module 04, Prompt 1 (`ReelsControlScreen.kt`) সম্পূর্ণ ইমপ্লিমেন্টেশন:**
+     - **3D Hero Canvas Illustration:** কাত হয়ে থাকা ৩ডি ফোন, ভেতর থেকে প্রজেক্ট হওয়া ব্লু আওয়ারগ্লাস শিল্ড, টিকিং ক্লক, অরবিটাল রিংস ও সাইবার স্পার্কলস।
+     - **"Strict Mode" গ্লোয়িং কার্ড:** ইনট্যান্স লকআউট ওয়ার্নিং ও `NeonSwitch` কন্ট্রোল।
+     - **"Manage Apps" ব্র্যান্ডেড ফিড:**
+       * TikTok, Instagram, YouTube ব্র্যান্ডেড স্কুইরকল লোগো।
+       * প্রতি অ্যাপের জন্য ইন্ডিভিজুয়াল টাইম লিমিট স্লাইডার (`TimeLimitSlider` - 0m to 120m, 15m steps) ও লাইভ মিনিট কাউন্ট।
+     - **"+ Add Custom App" গ্লোয়িং ড্যাশড ক্যাপসুল বাটন ও রেভোলিউশনারি বটম শিট:**
+       * ল্যাটারাল সাইবার রেজ ও গ্লোয়িং ড্যাশড বর্ডার।
+       * ট্যাপে খোলে `AddCustomAppBottomSheet` উইথ লাইভ সার্চ বার ও প্রি-ইনস্টল্ড অ্যাপ ক্যাটালগ (Facebook, Reddit, Twitter/X, Snapchat, Netflix)।
+       * "+ Add" চাপলে ইনস্ট্যান্টলি রিয়েল-টাইমে অ্যাপ তালিকায় যুক্ত হয় এবং স্লাইডার সক্রিয় হয়।
+     - **Intervention Strategy সিলেকশন কার্ডস:** "Soft Warning", "Hard Lockout", "Friction Delay" রেডিও-স্টাইল সাইবার কার্ডস।
+     - **MVI State Hoisting:** `ReelsControlUiState` ও `ReelsUiEvent` এর মাধ্যমে ফুললি ডিকাপল্ড স্টেট ম্যানেজমেন্ট।
+  2. **বিল্ড ও এমুলেটর লাইভ ভেরিফিকেশন:**
+     - `./gradlew assembleDebug` সফল (`BUILD SUCCESSFUL in 5s`, 0 errors)।
+     - এমুলেটরে রিলস কন্ট্রোল স্ক্রিন ভেরিফাইড (`reels_control_screen_main.png`, `reels_control_screen_scrolled.png`)।
+     - বটম শিট ওপেন ও Facebook যুক্ত করা লাইভ ভেরিফাইড (`add_app_sheet_open.png`, `reels_facebook_added.png`)।
+* **পরবর্তী কোডিং পর্যায়:** **Phase 2B — Module 04: Prompt 2 (`FocusScheduleScreen.kt` - ফোকাস শিডিউল ও রুটিন কার্ডস)**
 * **গিট রিপোজিটরি স্ট্যাটাস:** `https://github.com/saidur1004/SafeScreen.git` (Branch: `main`)।
 
 ---
@@ -68,8 +60,8 @@
 | **Module 02 - Prompt 2** | `BatteryOptimizationDialog` আনরেস্ট্রিক্টেড ব্যাটারি বটম শিট ও অরবিটাল রিংস | ✅ Fully Polished & Verified | `presentation/screens/permission/BatteryOptimizationDialog.kt` |
 | **Module 03 - Prompt 1** | `HomeScreen` ফ্ল্যাগশিপ ড্যাশবোর্ড, ৩ডি শিল্ড বাটন, লাইভ মেট্রিক্স ও ফ্লোটিং নেভ পিল | ✅ Fully Completed & Verified | `presentation/screens/home/HomeScreen.kt` |
 | **Module 03 - Prompt 2** | `BlurStylePreviewSheet` শিল্ড ব্লার কাস্টমাইজেশন বটম শিট ও ইন্টারেক্টিভ স্প্লিট স্লাইডার | ✅ Fully Completed & Verified | `presentation/screens/home/BlurStylePreviewSheet.kt` |
-| **Module 04 Screens** | `ReelsControlScreen` ও `FocusScheduleScreen` | ⏳ Next Up (Phase 2B) | `presentation/screens/focus/` |
-| **Module 04 Screens** | `ReelsControlScreen` ও `FocusScheduleScreen` | ⏳ Planned (Phase 2B) | `presentation/screens/focus/` |
+| **Module 04 - Prompt 1** | `ReelsControlScreen` রিলস মনিটরিং, ৩ডি হিরো, ডাইনামিক স্লাইডার্স ও কাস্টম অ্যাপ বটম শিট | ✅ Fully Completed & Verified | `presentation/screens/focus/ReelsControlScreen.kt` |
+| **Module 04 - Prompt 2** | `FocusScheduleScreen` ফোকাস শিডিউল, রুটিন কার্ডস ও ডে পিলস | ⏳ Next Up (Phase 2B) | `presentation/screens/focus/FocusScheduleScreen.kt` |
 | **Module 05 Screens** | `StatsScreen` ও `DetailedActivityLogScreen` | ⏳ Planned (Phase 2B) | `presentation/screens/stats/` |
 | **Module 06 Screens** | `SettingsScreen`, `AppWhitelistScreen` ও `SecurityLockScreen` | ⏳ Planned (Phase 2B) | `presentation/screens/settings/` |
 | **Module 07 Overlays**| `LiveBlurOverlayView` ও `FocusInterventionOverlay` | ⏳ Planned (Phase 2B) | `services/overlay/` |
