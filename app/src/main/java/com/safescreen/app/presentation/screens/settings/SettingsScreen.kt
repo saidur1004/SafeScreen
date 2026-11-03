@@ -87,6 +87,7 @@ import com.safescreen.app.presentation.theme.TextPrimary
 fun SettingsScreen(
     onNavigateBack: () -> Unit = {},
     onNavigateToWhitelist: () -> Unit = {},
+    onNavigateToSecurityLock: () -> Unit = {},
     state: SettingsUiState = SettingsUiState(),
     onEvent: (SettingsUiEvent) -> Unit = {}
 ) {
@@ -105,6 +106,7 @@ fun SettingsScreen(
             }
             is SettingsUiEvent.SetBiometricLock -> {
                 localState = localState.copy(isBiometricLockEnabled = event.enabled)
+                onNavigateToSecurityLock()
                 onEvent(event)
             }
             is SettingsUiEvent.SetPreventUninstall -> {
@@ -126,6 +128,10 @@ fun SettingsScreen(
             }
             is SettingsUiEvent.NavigateToWhitelist -> {
                 onNavigateToWhitelist()
+                onEvent(event)
+            }
+            is SettingsUiEvent.NavigateToSecurityLock -> {
+                onNavigateToSecurityLock()
                 onEvent(event)
             }
             is SettingsUiEvent.NavigateBack -> {
@@ -577,7 +583,16 @@ private fun SecurityProtectionCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = 12.dp)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = { onBiometricLockChange(!isBiometricLock) }
+                        )
+                ) {
                     Text(
                         text = "PIN & Biometric Lock",
                         style = MaterialTheme.typography.bodyMedium.copy(
@@ -614,7 +629,16 @@ private fun SecurityProtectionCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = 12.dp)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = { onBiometricLockChange(!isBiometricLock) }
+                        )
+                ) {
                     Text(
                         text = "Prevent Uninstallation",
                         style = MaterialTheme.typography.bodyMedium.copy(

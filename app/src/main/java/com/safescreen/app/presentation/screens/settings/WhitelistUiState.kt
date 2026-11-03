@@ -202,3 +202,4 @@ fun defaultAppsList(): List<WhitelistAppItem> = listOf(
         iconLetters = "SL"
     )
 )
+

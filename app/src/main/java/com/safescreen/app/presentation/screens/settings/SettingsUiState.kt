@@ -47,6 +47,7 @@ sealed interface SettingsUiEvent {
     data object ConfirmClearCache : SettingsUiEvent
     data object DismissClearCacheDialog : SettingsUiEvent
     data object NavigateToWhitelist : SettingsUiEvent
+    data object NavigateToSecurityLock : SettingsUiEvent
     data object NavigateBack : SettingsUiEvent
     data object OpenPrivacyPolicy : SettingsUiEvent
     data object OpenLicenses : SettingsUiEvent

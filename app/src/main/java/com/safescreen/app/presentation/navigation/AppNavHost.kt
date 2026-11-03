@@ -21,6 +21,7 @@ import com.safescreen.app.presentation.screens.home.HomeScreen
 import com.safescreen.app.presentation.screens.onboarding.OnboardingScreen
 import com.safescreen.app.presentation.screens.permission.PermissionHubScreen
 import com.safescreen.app.presentation.screens.settings.AppWhitelistScreen
+import com.safescreen.app.presentation.screens.settings.SecurityLockScreen
 import com.safescreen.app.presentation.screens.settings.SettingsScreen
 import com.safescreen.app.presentation.screens.splash.SplashScreen
 import com.safescreen.app.presentation.screens.stats.DetailedActivityLogScreen
@@ -170,12 +171,26 @@ fun AppNavHost(
                     },
                     onNavigateToWhitelist = {
                         navController.navigate(Screen.AppWhitelist.route)
+                    },
+                    onNavigateToSecurityLock = {
+                        navController.navigate(Screen.SecurityLock.route)
                     }
                 )
             }
 
             composable(Screen.AppWhitelist.route) {
                 AppWhitelistScreen(
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+
+            composable(Screen.SecurityLock.route) {
+                SecurityLockScreen(
+                    onUnlockSuccess = {
+                        navController.popBackStack()
+                    },
                     onNavigateBack = {
                         navController.popBackStack()
                     }
