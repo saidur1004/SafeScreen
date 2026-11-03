@@ -51,3 +51,4 @@ sealed interface SettingsUiEvent {
     data object OpenPrivacyPolicy : SettingsUiEvent
     data object OpenLicenses : SettingsUiEvent
 }
+

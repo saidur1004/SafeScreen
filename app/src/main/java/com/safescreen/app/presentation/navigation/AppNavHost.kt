@@ -20,6 +20,7 @@ import com.safescreen.app.presentation.screens.focus.ReelsControlScreen
 import com.safescreen.app.presentation.screens.home.HomeScreen
 import com.safescreen.app.presentation.screens.onboarding.OnboardingScreen
 import com.safescreen.app.presentation.screens.permission.PermissionHubScreen
+import com.safescreen.app.presentation.screens.settings.AppWhitelistScreen
 import com.safescreen.app.presentation.screens.settings.SettingsScreen
 import com.safescreen.app.presentation.screens.splash.SplashScreen
 import com.safescreen.app.presentation.screens.stats.DetailedActivityLogScreen
@@ -168,8 +169,15 @@ fun AppNavHost(
                         navController.popBackStack()
                     },
                     onNavigateToWhitelist = {
-                        // Will navigate to AppWhitelistScreen when implemented in Prompt 2
-                        // navController.navigate(Screen.AppWhitelist.route)
+                        navController.navigate(Screen.AppWhitelist.route)
+                    }
+                )
+            }
+
+            composable(Screen.AppWhitelist.route) {
+                AppWhitelistScreen(
+                    onNavigateBack = {
+                        navController.popBackStack()
                     }
                 )
             }

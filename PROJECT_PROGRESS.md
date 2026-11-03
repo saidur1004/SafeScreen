@@ -19,22 +19,20 @@
 
 ## 📅 সর্বশেষ আপডেট তথ্য
 * **সর্বশেষ আপডেটের তারিখ:** ০৩ নভেম্বর ২০২৬
-* **বর্তমান পর্যায়:** **Phase 2B — Module 06: Prompt 1 (`SettingsScreen.kt`) এবং Global Floating Bottom Navigation Bar সফলভাবে সম্পন্ন ও ১০০% পিক্সেল-পারফেক্ট ভেরিফাইড! ✅**
+* **বর্তমান পর্যায়:** **Phase 2B — Module 06: Prompt 2 (`AppWhitelistScreen.kt` - Manage App Whitelist Screen) সফলভাবে সম্পন্ন ও ১০০% পিক্সেল-পারফেক্ট ভেরিফাইড! ✅**
 * **কোডিং এজেন্টের সর্বশেষ সম্পাদিত কাজের সংক্ষিপ্ত সামারি:**
-  1. **Global Floating Bottom Navigation Bar আর্কিটেকচার:**
-     - `FloatingBottomNavigationBar.kt` কম্পোনেন্ট তৈরি করা হয়েছে যা নিয়ন গ্লো, মাল্টি-স্টপ গ্লাস বর্ডার এবং সিলেক্টেড নিয়ন হ্যালো ইফেক্ট ধারণ করে।
-     - `AppNavHost.kt`-এ গ্লোবাল বটম বারকে সংযুক্ত করা হয়েছে যাতে ৪টি প্রধান ট্যাবে (`Home`, `Stats`, `Focus`, `Settings`) এটি স্থায়ীভাবে দেখা যায় এবং যেকোনো ইনার স্ক্রিনে (`DetailedActivityLog`, `ReelsControl`, `Splash`, `Onboarding`, `PermissionHub`) স্বয়ংক্রিয়ভাবে মসৃণ অ্যানিমেশনে হাইড হয়ে যায়।
-  2. **Module 06 Prompt 1 (`SettingsScreen.kt`):**
-     - **Header:** টপ ব্র্যান্ড ব্যাজ, বোল্ড "Settings" হেডলাইন, সাবটাইটেল এবং ৩ডি গ্লোয়িং শিল্ড উইথ টিউন/গিয়ার ব্যাজ।
-     - **Section 1: AI Detection Engine:** মাইক্রোচিপ আইকন, সেনসিটিভিটি লেভেল ৩-সেগমেন্টেড পিল (`[Strict] [Balanced] [Relaxed]`), এবং পারফরম্যান্স প্রোফাইল ৩-সেগমেন্টেড পিল (`[Battery Saver (3 FPS)] [Balanced (5 FPS)] [High Precision (8 FPS)]`)।
-     - **Section 2: Security & Protection:** "PIN & Biometric Lock" এবং "Prevent Uninstallation" দুটিই ট্যাকটাইল `NeonSwitch` টগল দিয়ে সজ্জিত।
-     - **Section 3: App Exclusions:** "Manage App Whitelist (5 apps excluded)" গ্লাস কার্ড উইথ শেভরন।
-     - **Section 4: Data & Storage:** "Clear Offline Database Cache" ক্যাপসুল বাটন এবং সাইবার-ডার্ক গ্লাস কনফার্মেশন অ্যালার্ট ডায়ালগ।
-     - **Section 5: About SafeScreen:** v1.0.0 সংস্করণ, বায়ো/নিয়ন গ্রিন একটিভ স্ট্যাটাস, প্রাইভেসি পলিসি ও ওপেন সোর্স লাইসেন্স লিংকস।
-  3. **বিল্ড ও এমুলেটর লাইভ ভেরিফিকেশন:**
+  1. **Module 06 Prompt 2 (`AppWhitelistScreen.kt`):**
+     - **Top Bar:** ফ্রস্টেড সার্কুলার ব্যাক বাটন, বোল্ড ২২sp "Exempted Apps" হেডলাইন, সাবটাইটেল এবং টপ-রাইট ৩ডি গ্লোয়িং শিল্ড ব্যাজ।
+     - **Live Search & Clear:** ম্যাগনিফাইং গ্লাস আইকন সহ রাউন্ডেড সাইবার সার্চ বার এবং ক্লিয়ার X বাটন সহ মসৃণ ফিল্টারিং।
+     - **Category Chips:** `[All Apps] [Banking & Finance] [Communication] [Entertainment] [Productivity]` হরাইজন্টাল স্ক্রোল পিলস।
+     - **Info Banner:** ফ্রস্টেড গ্লাস কার্ডে ভেরিফাইড শিল্ড আইকন সহ ইনফো ব্যানার।
+     - **App List Items:** কাস্টম অ্যাকসেন্ট কালার ও মনোগ্রাম আইকন, অ্যাপ নেম, `FLAG_SECURE` / `BANKING` গোল্ডেন ব্যাজ, প্যাকেজ নেম, স্ট্যাটাস পিল এবং ট্যাকটাইল `NeonSwitch` টগল। ব্যাংকিং অ্যাপসমূহ (PayPal, Bank of America, Google Pay ইত্যাদি) ডিফল্টভাবে এক্সিম্পটেড থাকে।
+     - **Sticky Bottom Summary Bar:** স্ক্রিনের নিচে পিন করা গ্লোয়িং সাইবার পিল যেখানে কতটি অ্যাপ এক্সিম্পটেড রয়েছে তা লাইভ কাউন্ট ("X of 13 Apps Exempted", "ACTIVE" ব্যাজ) প্রদর্শন করে।
+     - **Bottom Navigation Hiding:** হোয়াইটলিস্ট স্ক্রিনে গ্লোবাল বটম বার স্বয়ংক্রিয়ভাবে লুকিয়ে যায় এবং ব্যাক বাটন চাপলে সেটিংস স্ক্রিনে আবার পুনরুদ্ধার হয়।
+  2. **বিল্ড ও এমুলেটর লাইভ ভেরিফিকেশন:**
      - `./gradlew assembleDebug` সফল (`BUILD SUCCESSFUL in 4s`, 0 errors, 0 warnings)।
-     - এমুলেটরে ৪টি প্রধান ট্যাবের ন্যাভিগেশন, ইনার স্ক্রিনে বটম বার হাইড/শো এবং সেটিংসের সমস্ত ইন্টারেকশন লাইভ টেস্ট ও ভেরিফাই করা হয়েছে।
-* **পরবর্তী কোডিং পর্যায়:** **Phase 2B — Module 06: Prompt 2 (`AppWhitelistScreen.kt` - Manage App Whitelist)**
+     - এমুলেটরে সার্চ, ক্যাটাগরি ফিল্টার, অ্যাপ টগল এবং ব্যাক ন্যাভিগেশন লাইভ টেস্ট ও ভেরিফাই করা হয়েছে।
+* **পরবর্তী কোডিং পর্যায়:** **Phase 2B — Module 06: Prompt 3 (`SecurityLockScreen.kt` - PIN & Biometric Authentication Flow)**
 * **গিট রিপোজিটরি স্ট্যাটাস:** `https://github.com/saidur1004/SafeScreen.git` (Branch: `main`)।
 ---
 
@@ -61,7 +59,8 @@
 | **Module 05 - Prompt 1** | `StatsScreen` ডুয়াল-বার ক্যানভাস ট্রেন্ড চার্ট, ডোনাট ক্যাটাগরি ব্রেকডাউন ও টপ অ্যাপস | ✅ Fully Completed & Verified | `presentation/screens/stats/StatsScreen.kt` |
 | **Module 05 - Prompt 2** | `DetailedActivityLogScreen` ক্রোনোলজিক্যাল টাইমলাইন, ফিল্টার্স ও ক্লিয়ার হিস্ট্রি মডাল | ✅ Fully Completed & Verified | `presentation/screens/stats/DetailedActivityLogScreen.kt` |
 | **Module 06 - Prompt 1** | `SettingsScreen` এআই সেনসিটিভিটি, এফপিএস প্রোফাইলস, সিকিউরিটি লক ও ডাটা হাইজিন | ✅ Fully Completed & Verified | `presentation/screens/settings/SettingsScreen.kt` |
-| **Module 06 - Prompt 2** | `AppWhitelistScreen` ও `SecurityLockScreen` | ⏳ Next Up (Phase 2B) | `presentation/screens/settings/` |
+| **Module 06 - Prompt 2** | `AppWhitelistScreen` অ্যাপ এক্সিম্পশন, সার্চ, ক্যাটাগরি ফিল্টার্স ও স্টিকি সামারি | ✅ Fully Completed & Verified | `presentation/screens/settings/AppWhitelistScreen.kt` |
+| **Module 06 - Prompt 3** | `SecurityLockScreen` সিকিউরিটি পিন প্যাড ও বায়োমেট্রিক অথেন্টিকেশন শিট | ⏳ Next Up (Phase 2B) | `presentation/screens/settings/SecurityLockScreen.kt` |
 | **Module 07 Overlays**| `LiveBlurOverlayView` ও `FocusInterventionOverlay` | ⏳ Planned (Phase 2B) | `services/overlay/` |
 | **Module 08 States** | `SafeScreenStates` (Clean, Paused, AI Core Error) | ⏳ Planned (Phase 2B) | `presentation/components/states/` |
 | **Local Persistence** | DataStore Preferences & Room Database Entity/DAO | ⏳ Planned (Phase 3) | `AppDatabase.kt`, `StatDao.kt` |
