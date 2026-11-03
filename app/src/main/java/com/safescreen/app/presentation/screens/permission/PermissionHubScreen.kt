@@ -2,6 +2,7 @@ package com.safescreen.app.presentation.screens.permission
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -26,14 +27,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ScreenShare
 import androidx.compose.material.icons.filled.AccessibilityNew
 import androidx.compose.material.icons.filled.Bolt
-import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Screenshot
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -49,18 +50,22 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Fill
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.safescreen.app.presentation.components.CyberBackgroundWaves
 import com.safescreen.app.presentation.components.GlassmorphicCard
 import com.safescreen.app.presentation.theme.DarkSurface
 import com.safescreen.app.presentation.theme.DarkSurfaceElevated
-import com.safescreen.app.presentation.theme.DarkSurfaceHighlight
 import com.safescreen.app.presentation.theme.DeepBlack
 import com.safescreen.app.presentation.theme.GlassBorder
 import com.safescreen.app.presentation.theme.NeonCyan
@@ -111,9 +116,11 @@ data class PermissionHubUiState(
 }
 
 /**
- * Default dummy initial permissions:
- * - "Overlay" and "Screen Capture" are Granted (as requested)
- * - "Audio" and "Accessibility" are Pending (Action Required)
+ * Default initial permissions matching Image 2 reference:
+ * - "Overlay" is Granted
+ * - "Screen Capture" is Action Required
+ * - "Audio" is Action Required
+ * - "Accessibility" is Action Required
  * - "Foreground Notification" is Granted
  */
 val defaultPermissions = listOf(
@@ -132,8 +139,8 @@ val defaultPermissions = listOf(
         title = "Screen Capture",
         systemCodeName = "MediaProjection",
         description = "Enables local AI frame inspection. No screenshots are ever saved.",
-        isGranted = true,
-        icon = Icons.AutoMirrored.Filled.ScreenShare,
+        isGranted = false,
+        icon = Icons.Default.Screenshot,
         iconTint = NeonPurple,
         actionLabel = "Grant Access"
     ),
@@ -196,7 +203,6 @@ fun PermissionHubScreen(
         onEvent = { event ->
             when (event) {
                 is PermissionHubUiEvent.RequestPermission -> {
-                    // Toggle permission to granted for interactive UI testing
                     state = state.copy(
                         permissions = state.permissions.map { item ->
                             if (item.type == event.type) item.copy(isGranted = true) else item
@@ -244,6 +250,13 @@ fun PermissionHubContent(
             .background(DeepBlack)
             .windowInsetsPadding(WindowInsets.systemBars)
     ) {
+        // Bottom Ambient Waves
+        CyberBackgroundWaves(
+            modifier = Modifier.align(Alignment.BottomCenter),
+            height = 180.dp,
+            intensity = 0.9f
+        )
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -253,24 +266,24 @@ fun PermissionHubContent(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 12.dp, bottom = 8.dp),
+                    .padding(top = 10.dp, bottom = 6.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Circular Back Button
+                // Circular Frosted Back Button
                 Box(
                     modifier = Modifier
                         .size(42.dp)
                         .clip(CircleShape)
-                        .background(DarkSurfaceElevated)
-                        .border(1.dp, GlassBorder, CircleShape)
+                        .background(Color.White.copy(alpha = 0.06f))
+                        .border(1.dp, Color.White.copy(alpha = 0.15f), CircleShape)
                         .clickable { onEvent(PermissionHubUiEvent.NavigateBack) },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back",
-                        tint = TextPrimary,
+                        tint = Color.White,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -280,17 +293,18 @@ fun PermissionHubContent(
                     text = "System Permissions",
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Bold,
-                        color = TextPrimary
+                        fontSize = 20.sp,
+                        color = Color.White
                     )
                 )
 
-                // Right Shield Badge Indicator (Clickable to trigger Battery Dialog)
+                // Right Circular Shield Button (Triggers Battery Dialog)
                 Box(
                     modifier = Modifier
                         .size(42.dp)
                         .clip(CircleShape)
                         .background(NeonCyan.copy(alpha = 0.12f))
-                        .border(1.dp, NeonCyan.copy(alpha = 0.4f), CircleShape)
+                        .border(1.dp, NeonCyan.copy(alpha = 0.45f), CircleShape)
                         .clickable { onEvent(PermissionHubUiEvent.OpenBatteryDialog) },
                     contentAlignment = Alignment.Center
                 ) {
@@ -308,8 +322,8 @@ fun PermissionHubContent(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth(),
-                contentPadding = PaddingValues(top = 8.dp, bottom = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+                contentPadding = PaddingValues(top = 6.dp, bottom = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 // Header Hero Badge & Explanation Notice
                 item {
@@ -317,48 +331,63 @@ fun PermissionHubContent(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 12.dp)
+                            .padding(vertical = 10.dp)
                     ) {
-                        // Central Glowing Shield Emblem with Lock
+                        // Glowing 3D Shield Emblem with Padlock
                         Box(
                             contentAlignment = Alignment.Center,
-                            modifier = Modifier
-                                .size(96.dp)
-                                .clip(CircleShape)
-                                .background(
-                                    Brush.radialGradient(
-                                        colors = listOf(
-                                            NeonCyan.copy(alpha = 0.28f),
-                                            NeonGreen.copy(alpha = 0.08f),
-                                            Color.Transparent
-                                        )
-                                    )
-                                )
+                            modifier = Modifier.size(110.dp)
                         ) {
+                            // Radial background aura
                             Box(
                                 modifier = Modifier
-                                    .size(72.dp)
+                                    .size(110.dp)
                                     .clip(CircleShape)
-                                    .background(DarkSurface)
-                                    .border(
-                                        width = 1.5.dp,
-                                        brush = Brush.linearGradient(
-                                            listOf(NeonCyan, NeonGreen)
-                                        ),
-                                        shape = CircleShape
-                                    ),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Lock,
-                                    contentDescription = "Privacy Shield",
-                                    tint = NeonCyan,
-                                    modifier = Modifier.size(32.dp)
+                                    .background(
+                                        Brush.radialGradient(
+                                            listOf(
+                                                NeonCyan.copy(alpha = 0.40f),
+                                                NeonGreen.copy(alpha = 0.12f),
+                                                Color.Transparent
+                                            )
+                                        )
+                                    )
+                            )
+
+                            // Beveled Shield Graphic
+                            Canvas(modifier = Modifier.size(width = 68.dp, height = 78.dp)) {
+                                val w = size.width
+                                val h = size.height
+                                val shieldPath = Path().apply {
+                                    moveTo(w * 0.5f, 0f)
+                                    cubicTo(w * 0.75f, 0f, w * 0.95f, h * 0.08f, w, h * 0.18f)
+                                    cubicTo(w, h * 0.65f, w * 0.75f, h * 0.88f, w * 0.5f, h)
+                                    cubicTo(w * 0.25f, h * 0.88f, 0f, h * 0.65f, 0f, h * 0.18f)
+                                    cubicTo(w * 0.05f, h * 0.08f, w * 0.25f, 0f, w * 0.5f, 0f)
+                                    close()
+                                }
+                                drawPath(
+                                    path = shieldPath,
+                                    brush = Brush.verticalGradient(listOf(Color(0xFF132238), Color(0xFF0A131F))),
+                                    style = Fill
+                                )
+                                drawPath(
+                                    path = shieldPath,
+                                    brush = Brush.horizontalGradient(listOf(NeonCyan, NeonGreen)),
+                                    style = Stroke(width = 2.5.dp.toPx())
                                 )
                             }
+
+                            // Center Padlock
+                            Icon(
+                                imageVector = Icons.Default.Lock,
+                                contentDescription = "Privacy Shield",
+                                tint = Color.White,
+                                modifier = Modifier.size(24.dp)
+                            )
                         }
 
-                        Spacer(modifier = Modifier.height(14.dp))
+                        Spacer(modifier = Modifier.height(10.dp))
 
                         // Explanatory Subtitle
                         Text(
@@ -366,23 +395,25 @@ fun PermissionHubContent(
                             style = MaterialTheme.typography.bodyMedium.copy(
                                 color = TextSecondary,
                                 textAlign = TextAlign.Center,
-                                lineHeight = 20.sp
+                                fontSize = 13.sp,
+                                lineHeight = 19.sp
                             ),
-                            modifier = Modifier.padding(horizontal = 16.dp)
+                            modifier = Modifier.padding(horizontal = 14.dp)
                         )
 
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(3.dp))
 
                         Text(
                             text = "Your data is strictly private.",
                             style = MaterialTheme.typography.titleMedium.copy(
                                 color = NeonCyan,
                                 fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp,
                                 textAlign = TextAlign.Center
                             )
                         )
 
-                        Spacer(modifier = Modifier.height(14.dp))
+                        Spacer(modifier = Modifier.height(10.dp))
 
                         // Interactive Battery Optimization Banner Chip
                         Row(
@@ -393,26 +424,26 @@ fun PermissionHubContent(
                                     if (uiState.isBatteryOptimizedExempted) {
                                         NeonGreen.copy(alpha = 0.12f)
                                     } else {
-                                        WarningYellow.copy(alpha = 0.12f)
+                                        WarningYellow.copy(alpha = 0.10f)
                                     }
                                 )
                                 .border(
                                     width = 1.dp,
                                     color = if (uiState.isBatteryOptimizedExempted) {
-                                        NeonGreen.copy(alpha = 0.4f)
+                                        NeonGreen.copy(alpha = 0.45f)
                                     } else {
-                                        WarningYellow.copy(alpha = 0.4f)
+                                        WarningYellow.copy(alpha = 0.40f)
                                     },
                                     shape = RoundedCornerShape(16.dp)
                                 )
                                 .clickable { onEvent(PermissionHubUiEvent.OpenBatteryDialog) }
-                                .padding(horizontal = 14.dp, vertical = 8.dp)
+                                .padding(horizontal = 14.dp, vertical = 7.dp)
                         ) {
                             Icon(
-                                imageVector = if (uiState.isBatteryOptimizedExempted) Icons.Default.CheckCircle else Icons.Default.Bolt,
+                                imageVector = if (uiState.isBatteryOptimizedExempted) Icons.Default.Check else Icons.Default.Bolt,
                                 contentDescription = null,
                                 tint = if (uiState.isBatteryOptimizedExempted) NeonGreen else WarningYellow,
-                                modifier = Modifier.size(16.dp)
+                                modifier = Modifier.size(15.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
@@ -423,6 +454,7 @@ fun PermissionHubContent(
                                 },
                                 style = MaterialTheme.typography.labelSmall.copy(
                                     fontWeight = FontWeight.SemiBold,
+                                    fontSize = 12.sp,
                                     color = if (uiState.isBatteryOptimizedExempted) NeonGreen else WarningYellow
                                 )
                             )
@@ -445,55 +477,54 @@ fun PermissionHubContent(
             }
 
             // Bottom Sticky Action Bar: "Enter Shield Hub"
-            val buttonColor by animateColorAsState(
-                targetValue = if (uiState.areAllGranted) NeonCyan else DarkSurfaceHighlight,
-                animationSpec = tween(durationMillis = 350),
-                label = "buttonColorAnim"
-            )
-            val textColor by animateColorAsState(
-                targetValue = if (uiState.areAllGranted) DeepBlack else TextMuted,
-                animationSpec = tween(durationMillis = 350),
-                label = "textColorAnim"
-            )
-
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 16.dp)
+                    .padding(vertical = 14.dp)
             ) {
-                Button(
-                    onClick = { onEvent(PermissionHubUiEvent.EnterShieldHub) },
-                    enabled = uiState.areAllGranted,
-                    shape = RoundedCornerShape(26.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = buttonColor,
-                        contentColor = textColor,
-                        disabledContainerColor = DarkSurfaceHighlight,
-                        disabledContentColor = TextMuted
-                    ),
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(54.dp)
+                        .clip(RoundedCornerShape(27.dp))
+                        .background(
+                            if (uiState.areAllGranted) {
+                                Brush.horizontalGradient(listOf(NeonCyan, NeonGreen))
+                            } else {
+                                Brush.verticalGradient(
+                                    listOf(
+                                        Color(0xFF131D2D).copy(alpha = 0.9f),
+                                        Color(0xFF0C1320).copy(alpha = 0.7f)
+                                    )
+                                )
+                            }
+                        )
+                        .border(
+                            1.dp,
+                            if (uiState.areAllGranted) NeonCyan else Color.White.copy(alpha = 0.15f),
+                            RoundedCornerShape(27.dp)
+                        )
+                        .clickable(enabled = uiState.areAllGranted) {
+                            onEvent(PermissionHubUiEvent.EnterShieldHub)
+                        },
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Shield,
-                            contentDescription = null,
-                            tint = textColor,
-                            modifier = Modifier.size(20.dp)
+                    Icon(
+                        imageVector = Icons.Default.Shield,
+                        contentDescription = null,
+                        tint = if (uiState.areAllGranted) DeepBlack else TextSecondary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Enter Shield Hub",
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (uiState.areAllGranted) DeepBlack else TextSecondary
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Enter Shield Hub",
-                            style = MaterialTheme.typography.labelLarge.copy(
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        )
-                    }
+                    )
                 }
             }
         }
@@ -518,25 +549,37 @@ private fun PermissionCard(
 ) {
     GlassmorphicCard(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp)
+        shape = RoundedCornerShape(20.dp)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
         ) {
-            // Glowing Icon Frame
+            // Glowing Icon Frame with Neon Aura
             Box(
                 modifier = Modifier
-                    .size(46.dp)
+                    .size(48.dp)
                     .clip(RoundedCornerShape(14.dp))
                     .background(item.iconTint.copy(alpha = 0.12f))
                     .border(
                         width = 1.dp,
-                        color = item.iconTint.copy(alpha = 0.35f),
+                        color = item.iconTint.copy(alpha = 0.40f),
                         shape = RoundedCornerShape(14.dp)
                     ),
                 contentAlignment = Alignment.Center
             ) {
+                // Radial glow backing
+                Canvas(modifier = Modifier.size(48.dp)) {
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            listOf(
+                                item.iconTint.copy(alpha = 0.35f),
+                                Color.Transparent
+                            )
+                        )
+                    )
+                }
+
                 Icon(
                     imageVector = item.icon,
                     contentDescription = item.title,
@@ -555,7 +598,8 @@ private fun PermissionCard(
                     text = item.title,
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Bold,
-                        color = TextPrimary
+                        fontSize = 14.5.sp,
+                        color = Color.White
                     )
                 )
 
@@ -564,7 +608,7 @@ private fun PermissionCard(
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontSize = 10.sp,
                         color = TextMuted,
-                        letterSpacing = 0.4.sp
+                        letterSpacing = 0.3.sp
                     )
                 )
 
@@ -586,25 +630,26 @@ private fun PermissionCard(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .clip(RoundedCornerShape(14.dp))
-                        .background(NeonGreen.copy(alpha = 0.10f))
+                        .background(Color(0xFF003822))
                         .border(
                             width = 1.dp,
-                            color = NeonGreen.copy(alpha = 0.35f),
+                            color = NeonGreen.copy(alpha = 0.45f),
                             shape = RoundedCornerShape(14.dp)
                         )
                         .padding(horizontal = 10.dp, vertical = 6.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.CheckCircle,
+                        imageVector = Icons.Default.Check,
                         contentDescription = "Granted",
                         tint = NeonGreen,
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(14.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = "Granted",
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontWeight = FontWeight.Bold,
+                            fontSize = 11.5.sp,
                             color = NeonGreen
                         )
                     )
@@ -624,6 +669,7 @@ private fun PermissionCard(
                         text = item.actionLabel,
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp,
                             color = DeepBlack
                         )
                     )

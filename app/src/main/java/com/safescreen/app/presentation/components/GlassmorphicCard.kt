@@ -14,16 +14,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.safescreen.app.presentation.theme.DarkSurface
-import com.safescreen.app.presentation.theme.GlassBorder
 
+/**
+ * GlassmorphicCard
+ *
+ * Implements high-end Cyber-Dark Glassmorphism with a semi-transparent
+ * multi-stop dark slate gradient, a luminous top-left 1dp highlight border,
+ * and elegant rounded corners.
+ */
 @Composable
 fun GlassmorphicCard(
     modifier: Modifier = Modifier,
-    shape: Shape = RoundedCornerShape(20.dp),
+    shape: Shape = RoundedCornerShape(22.dp),
     borderWidth: Dp = 1.dp,
-    borderColor: Color = GlassBorder,
-    backgroundColor: Color = DarkSurface.copy(alpha = 0.75f),
+    borderColor: Color = Color.White.copy(alpha = 0.22f),
+    backgroundColor: Color = Color(0xFF131D2D),
     content: @Composable BoxScope.() -> Unit
 ) {
     Box(
@@ -32,17 +37,19 @@ fun GlassmorphicCard(
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        backgroundColor.copy(alpha = 0.85f),
-                        backgroundColor.copy(alpha = 0.60f)
+                        backgroundColor.copy(alpha = 0.82f),
+                        backgroundColor.copy(alpha = 0.55f),
+                        Color(0xFF090E18).copy(alpha = 0.88f)
                     )
                 )
             )
             .border(
                 width = borderWidth,
-                brush = Brush.verticalGradient(
+                brush = Brush.linearGradient(
                     colors = listOf(
-                        borderColor.copy(alpha = 0.4f),
-                        borderColor.copy(alpha = 0.08f)
+                        borderColor.copy(alpha = 0.28f),
+                        borderColor.copy(alpha = 0.08f),
+                        Color.White.copy(alpha = 0.02f)
                     )
                 ),
                 shape = shape
@@ -51,4 +58,3 @@ fun GlassmorphicCard(
         content = content
     )
 }
-

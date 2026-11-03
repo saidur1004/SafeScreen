@@ -49,10 +49,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.safescreen.app.presentation.theme.DarkSurfaceElevated
 import com.safescreen.app.presentation.theme.DeepBlack
-import com.safescreen.app.presentation.theme.GlassBorder
 import com.safescreen.app.presentation.theme.NeonCyan
 import com.safescreen.app.presentation.theme.SafeScreenTheme
-import com.safescreen.app.presentation.theme.TextMuted
 import com.safescreen.app.presentation.theme.TextPrimary
 import com.safescreen.app.presentation.theme.TextSecondary
 import com.safescreen.app.presentation.theme.WarningYellow
@@ -74,7 +72,7 @@ fun BatteryOptimizationDialog(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-        containerColor = DarkSurfaceElevated,
+        containerColor = Color(0xFF101726),
         dragHandle = {
             // Sleek frosted glass top drag handle
             Box(
@@ -104,7 +102,7 @@ fun BatteryOptimizationContent(
     onAllowUnrestricted: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Ambient breathing pulse for orbital rings
+    // Ambient breathing pulse for orbital rings and sparkles
     val infiniteTransition = rememberInfiniteTransition(label = "batteryPulseTransition")
     val pulseScale by infiniteTransition.animateFloat(
         initialValue = 0.98f,
@@ -124,22 +122,22 @@ fun BatteryOptimizationContent(
     ) {
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Glowing Hero Battery Icon with Amber Orbital Rings
+        // Glowing Hero Battery Icon with Amber Orbital Rings and Sparkles
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
-                .size(150.dp)
+                .size(160.dp)
                 .scale(pulseScale)
         ) {
-            // Ambient Canvas Orbital Elliptical Rings
-            Canvas(modifier = Modifier.fillMaxWidth().height(150.dp)) {
+            // Ambient Canvas Orbital Elliptical Rings & Sparkles
+            Canvas(modifier = Modifier.fillMaxWidth().height(160.dp)) {
                 val centerOffset = Offset(size.width / 2f, size.height / 2f)
 
-                // Background Radial Glow
+                // Background Radial Amber Glow
                 drawCircle(
                     brush = Brush.radialGradient(
                         colors = listOf(
-                            WarningYellow.copy(alpha = 0.28f),
+                            WarningYellow.copy(alpha = 0.30f),
                             WarningYellow.copy(alpha = 0.08f),
                             Color.Transparent
                         ),
@@ -150,19 +148,35 @@ fun BatteryOptimizationContent(
 
                 // Orbital Ring 1 (Tilted Oval)
                 drawOval(
-                    color = WarningYellow.copy(alpha = 0.55f),
-                    topLeft = Offset(size.width * 0.12f, size.height * 0.28f),
-                    size = androidx.compose.ui.geometry.Size(size.width * 0.76f, size.height * 0.44f),
-                    style = Stroke(width = 1.5.dp.toPx())
+                    color = WarningYellow.copy(alpha = 0.60f),
+                    topLeft = Offset(size.width * 0.10f, size.height * 0.26f),
+                    size = androidx.compose.ui.geometry.Size(size.width * 0.80f, size.height * 0.46f),
+                    style = Stroke(width = 1.6.dp.toPx())
                 )
 
                 // Orbital Ring 2 (Counter-Tilted Oval)
                 drawOval(
-                    color = WarningYellow.copy(alpha = 0.35f),
-                    topLeft = Offset(size.width * 0.18f, size.height * 0.35f),
-                    size = androidx.compose.ui.geometry.Size(size.width * 0.64f, size.height * 0.30f),
-                    style = Stroke(width = 1.dp.toPx())
+                    color = WarningYellow.copy(alpha = 0.38f),
+                    topLeft = Offset(size.width * 0.16f, size.height * 0.33f),
+                    size = androidx.compose.ui.geometry.Size(size.width * 0.68f, size.height * 0.32f),
+                    style = Stroke(width = 1.1.dp.toPx())
                 )
+
+                // Four Golden Sparkle Stars (✦)
+                val starPositions = listOf(
+                    Offset(size.width * 0.18f, size.height * 0.22f), // Top Left
+                    Offset(size.width * 0.82f, size.height * 0.25f), // Top Right
+                    Offset(size.width * 0.15f, size.height * 0.68f), // Bottom Left
+                    Offset(size.width * 0.84f, size.height * 0.65f)  // Bottom Right
+                )
+
+                starPositions.forEach { pos ->
+                    drawCircle(
+                        color = WarningYellow.copy(alpha = 0.85f),
+                        radius = 2.5.dp.toPx(),
+                        center = pos
+                    )
+                }
             }
 
             // Central Glowing Battery Body
@@ -173,8 +187,8 @@ fun BatteryOptimizationContent(
                 // Battery Terminal Nub (Top)
                 Box(
                     modifier = Modifier
-                        .width(18.dp)
-                        .height(5.dp)
+                        .width(20.dp)
+                        .height(6.dp)
                         .clip(RoundedCornerShape(topStart = 3.dp, topEnd = 3.dp))
                         .background(WarningYellow)
                 )
@@ -182,12 +196,12 @@ fun BatteryOptimizationContent(
                 // Battery Main Body (Rounded Rect with Lightning Bolt)
                 Box(
                     modifier = Modifier
-                        .size(width = 54.dp, height = 76.dp)
-                        .clip(RoundedCornerShape(14.dp))
+                        .size(width = 56.dp, height = 78.dp)
+                        .clip(RoundedCornerShape(16.dp))
                         .background(
                             Brush.verticalGradient(
                                 colors = listOf(
-                                    WarningYellow.copy(alpha = 0.22f),
+                                    WarningYellow.copy(alpha = 0.24f),
                                     WarningYellow.copy(alpha = 0.08f)
                                 )
                             )
@@ -200,7 +214,7 @@ fun BatteryOptimizationContent(
                                     WarningYellow.copy(alpha = 0.6f)
                                 )
                             ),
-                            shape = RoundedCornerShape(14.dp)
+                            shape = RoundedCornerShape(16.dp)
                         ),
                     contentAlignment = Alignment.Center
                 ) {
@@ -208,7 +222,7 @@ fun BatteryOptimizationContent(
                         imageVector = Icons.Default.Bolt,
                         contentDescription = "Unrestricted Power",
                         tint = WarningYellow,
-                        modifier = Modifier.size(42.dp)
+                        modifier = Modifier.size(44.dp)
                     )
                 }
             }
@@ -222,7 +236,7 @@ fun BatteryOptimizationContent(
             style = MaterialTheme.typography.headlineSmall.copy(
                 fontWeight = FontWeight.Bold,
                 fontSize = 22.sp,
-                color = TextPrimary,
+                color = Color.White,
                 textAlign = TextAlign.Center
             )
         )
@@ -238,7 +252,7 @@ fun BatteryOptimizationContent(
                 color = TextSecondary,
                 textAlign = TextAlign.Center
             ),
-            modifier = Modifier.padding(horizontal = 8.dp)
+            modifier = Modifier.padding(horizontal = 12.dp)
         )
 
         Spacer(modifier = Modifier.height(28.dp))
@@ -246,20 +260,21 @@ fun BatteryOptimizationContent(
         // Primary Action: "Allow Unrestricted" (Solid Neon Cyan Pill Button)
         Button(
             onClick = onAllowUnrestricted,
-            shape = RoundedCornerShape(26.dp),
+            shape = RoundedCornerShape(28.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = NeonCyan,
                 contentColor = DeepBlack
             ),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(52.dp)
+                .height(54.dp)
         ) {
             Text(
                 text = "Allow Unrestricted",
                 style = MaterialTheme.typography.labelLarge.copy(
                     fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = DeepBlack
                 )
             )
         }
@@ -283,14 +298,14 @@ fun BatteryOptimizationContent(
     }
 }
 
-@Preview(name = "Battery Optimization Dialog - Dark", showBackground = true, backgroundColor = 0xFF161D2D)
+@Preview(name = "Battery Optimization Dialog - Dark", showBackground = true, backgroundColor = 0xFF101726)
 @Composable
 private fun BatteryOptimizationDialogPreview() {
     SafeScreenTheme {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(DarkSurfaceElevated)
+                .background(Color(0xFF101726))
                 .padding(16.dp)
         ) {
             BatteryOptimizationContent(
@@ -300,4 +315,3 @@ private fun BatteryOptimizationDialogPreview() {
         }
     }
 }
-

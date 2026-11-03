@@ -29,7 +29,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -45,32 +44,40 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Fill
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.safescreen.app.presentation.components.CyberBackgroundWaves
 import com.safescreen.app.presentation.theme.DeepBlack
 import com.safescreen.app.presentation.theme.NeonCyan
 import com.safescreen.app.presentation.theme.NeonGreen
 import com.safescreen.app.presentation.theme.SafeScreenTheme
-import com.safescreen.app.presentation.theme.TextMuted
 import com.safescreen.app.presentation.theme.TextPrimary
 import com.safescreen.app.presentation.theme.TextSecondary
 import kotlinx.coroutines.delay
 
+/**
+ * SplashScreen
+ *
+ * Implements the flagship cyber-dark splash screen from Module 01, perfectly
+ * matching the visual design in 'Screen Workflow/01_Onboarding/'.
+ */
 @Composable
 fun SplashScreen(
     onNavigateNext: () -> Unit = {}
 ) {
     // Initial entrance scale animation
-    val entranceScale = remember { Animatable(0.75f) }
+    val entranceScale = remember { Animatable(0.85f) }
     val entranceAlpha = remember { Animatable(0.0f) }
 
     // Continuous ambient breathing pulse for the shield aura
     val infiniteTransition = rememberInfiniteTransition(label = "shieldAuraTransition")
     val auraScale by infiniteTransition.animateFloat(
         initialValue = 1.0f,
-        targetValue = 1.08f,
+        targetValue = 1.10f,
         animationSpec = infiniteRepeatable(
             animation = tween(1600, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
@@ -80,10 +87,10 @@ fun SplashScreen(
 
     // Indeterminate progress bar sweep animation
     val progressSweep by infiniteTransition.animateFloat(
-        initialValue = 0.1f,
-        targetValue = 0.95f,
+        initialValue = 0.25f,
+        targetValue = 0.92f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1400, easing = LinearEasing),
+            animation = tween(1300, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "progressSweep"
@@ -98,8 +105,8 @@ fun SplashScreen(
             targetValue = 1.0f,
             animationSpec = tween(durationMillis = 400)
         )
-        // Maintain display for 1400ms to allow smooth visual feedback
-        delay(1400)
+        // Maintain display for 1500ms for smooth initial impression
+        delay(1500)
         onNavigateNext()
     }
 
@@ -109,53 +116,28 @@ fun SplashScreen(
             .background(DeepBlack)
             .windowInsetsPadding(WindowInsets.systemBars)
     ) {
-        // Subtle ambient radial background glow behind center
+        // Ambient Central Radial Glow
         Canvas(modifier = Modifier.fillMaxSize()) {
-            val centerOffset = Offset(size.width / 2f, size.height * 0.42f)
+            val centerOffset = Offset(size.width / 2f, size.height * 0.40f)
             drawCircle(
                 brush = Brush.radialGradient(
                     colors = listOf(
-                        NeonCyan.copy(alpha = 0.18f),
-                        NeonGreen.copy(alpha = 0.05f),
+                        NeonCyan.copy(alpha = 0.20f),
+                        NeonGreen.copy(alpha = 0.08f),
                         Color.Transparent
                     ),
                     center = centerOffset,
-                    radius = size.width * 0.7f
+                    radius = size.width * 0.65f
                 )
             )
         }
 
-        // Bottom Decorative Cyber Wave Gradient
-        Canvas(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(140.dp)
-                .align(Alignment.BottomCenter)
-        ) {
-            val path = Path().apply {
-                moveTo(0f, size.height * 0.6f)
-                cubicTo(
-                    size.width * 0.35f, size.height * 0.2f,
-                    size.width * 0.65f, size.height * 0.9f,
-                    size.width, size.height * 0.4f
-                )
-                lineTo(size.width, size.height)
-                lineTo(0f, size.height)
-                close()
-            }
-            drawPath(
-                path = path,
-                brush = Brush.linearGradient(
-                    colors = listOf(
-                        NeonCyan.copy(alpha = 0.12f),
-                        NeonGreen.copy(alpha = 0.06f),
-                        Color.Transparent
-                    ),
-                    start = Offset(0f, 0f),
-                    end = Offset(size.width, size.height)
-                )
-            )
-        }
+        // Bottom Decorative Cyber Silk Curves
+        CyberBackgroundWaves(
+            modifier = Modifier.align(Alignment.BottomCenter),
+            height = 180.dp,
+            intensity = 1.1f
+        )
 
         // Central Brand Content
         Column(
@@ -171,81 +153,151 @@ fun SplashScreen(
             // 3D-Stylized Shield Hero with Concentric Glowing Aura Rings
             Box(
                 contentAlignment = Alignment.Center,
-                modifier = Modifier.size(220.dp)
+                modifier = Modifier.size(240.dp)
             ) {
-                // Outer pulsing neon aura ring
+                // Outer pulsing neon aura
                 Box(
                     modifier = Modifier
-                        .size(200.dp)
+                        .size(220.dp)
                         .scale(auraScale)
                         .clip(CircleShape)
                         .background(
                             Brush.radialGradient(
                                 colors = listOf(
-                                    NeonCyan.copy(alpha = 0.35f),
-                                    NeonGreen.copy(alpha = 0.12f),
+                                    NeonCyan.copy(alpha = 0.40f),
+                                    NeonGreen.copy(alpha = 0.15f),
                                     Color.Transparent
                                 )
                             )
                         )
                 )
 
-                // Middle metallic neon boundary
+                // Middle concentric thin circular ring
                 Box(
                     modifier = Modifier
-                        .size(160.dp)
+                        .size(174.dp)
                         .clip(CircleShape)
                         .border(
-                            width = 2.dp,
+                            width = 1.2.dp,
                             brush = Brush.linearGradient(
-                                listOf(NeonCyan, NeonGreen.copy(alpha = 0.7f), Color.Transparent)
+                                listOf(
+                                    NeonCyan.copy(alpha = 0.65f),
+                                    NeonGreen.copy(alpha = 0.35f),
+                                    Color.Transparent
+                                )
                             ),
                             shape = CircleShape
+                        )
+                )
+
+                // High-End Custom Beveled 3D Shield Canvas
+                Canvas(modifier = Modifier.size(width = 120.dp, height = 138.dp)) {
+                    val w = size.width
+                    val h = size.height
+
+                    val shieldPath = Path().apply {
+                        moveTo(w * 0.5f, 0f)
+                        // Top edge to right shoulder
+                        cubicTo(w * 0.75f, 0f, w * 0.95f, h * 0.08f, w, h * 0.18f)
+                        // Right edge down to bottom vertex
+                        cubicTo(w, h * 0.65f, w * 0.75f, h * 0.88f, w * 0.5f, h)
+                        // Bottom vertex back up to left shoulder
+                        cubicTo(w * 0.25f, h * 0.88f, 0f, h * 0.65f, 0f, h * 0.18f)
+                        // Left shoulder to top center
+                        cubicTo(w * 0.05f, h * 0.08f, w * 0.25f, 0f, w * 0.5f, 0f)
+                        close()
+                    }
+
+                    // Shield Deep Glass Background
+                    drawPath(
+                        path = shieldPath,
+                        brush = Brush.verticalGradient(
+                            listOf(
+                                Color(0xFF16253B),
+                                Color(0xFF0C1420)
+                            )
+                        ),
+                        style = Fill
+                    )
+
+                    // Dual-Tone Luminous Beveled Stroke (Cyan on left, Bio-Green on right)
+                    drawPath(
+                        path = shieldPath,
+                        brush = Brush.horizontalGradient(
+                            listOf(
+                                NeonCyan,
+                                NeonCyan,
+                                NeonGreen
+                            )
+                        ),
+                        style = Stroke(width = 3.5.dp.toPx())
+                    )
+
+                    // Inner Crest Accent
+                    val innerCrest = Path().apply {
+                        moveTo(w * 0.5f, h * 0.08f)
+                        lineTo(w * 0.88f, h * 0.22f)
+                        cubicTo(w * 0.88f, h * 0.60f, w * 0.70f, h * 0.80f, w * 0.5f, h * 0.90f)
+                        cubicTo(w * 0.30f, h * 0.80f, w * 0.12f, h * 0.60f, w * 0.12f, h * 0.22f)
+                        close()
+                    }
+                    drawPath(
+                        path = innerCrest,
+                        brush = Brush.verticalGradient(
+                            listOf(
+                                NeonCyan.copy(alpha = 0.22f),
+                                Color.Transparent
+                            )
+                        ),
+                        style = Stroke(width = 1.dp.toPx())
+                    )
+                }
+
+                // Glowing Padlock in Shield Center
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(CircleShape)
+                        .background(
+                            Brush.radialGradient(
+                                listOf(
+                                    NeonCyan.copy(alpha = 0.45f),
+                                    Color.Transparent
+                                )
+                            )
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    // Inner Shield Core with Padlock
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.size(120.dp)
-                    ) {
-                        // Shield shape background
-                        Icon(
-                            imageVector = Icons.Filled.Shield,
-                            contentDescription = "SafeScreen Shield",
-                            tint = NeonCyan.copy(alpha = 0.9f),
-                            modifier = Modifier.size(115.dp)
-                        )
-
-                        // Central Padlock icon
-                        Icon(
-                            imageVector = Icons.Filled.Lock,
-                            contentDescription = "Privacy Lock",
-                            tint = DeepBlack,
-                            modifier = Modifier.size(38.dp)
-                        )
-                    }
+                    Icon(
+                        imageVector = Icons.Default.Lock,
+                        contentDescription = "SafeScreen Shield Core",
+                        tint = Color.White,
+                        modifier = Modifier.size(32.dp)
+                    )
                 }
             }
 
             Spacer(modifier = Modifier.height(28.dp))
 
-            // Brand Typography: "Safe" (White) + "Screen" (Neon Cyan)
+            // Two-Tone Brand Title: "Safe" (White) + "Screen" (Neon Cyan Gradient)
             Row(
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
             ) {
                 Text(
                     text = "Safe",
                     style = MaterialTheme.typography.headlineLarge.copy(
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 36.sp,
                         letterSpacing = (-0.5).sp,
-                        color = TextPrimary
+                        color = Color.White
                     )
                 )
                 Text(
                     text = "Screen",
                     style = MaterialTheme.typography.headlineLarge.copy(
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 36.sp,
                         letterSpacing = (-0.5).sp,
                         color = NeonCyan
                     )
@@ -254,58 +306,58 @@ fun SplashScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Subtitle
+            // Subtitle Tagline
             Text(
                 text = "Your Digital Purity & Focus Guard",
-                style = MaterialTheme.typography.bodyMedium.copy(
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 15.sp,
                     color = TextSecondary,
-                    letterSpacing = 0.3.sp
+                    letterSpacing = 0.2.sp
                 )
             )
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // Loading Indicator & Label Section
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(bottom = 36.dp)
+            // Glowing Indeterminate Capsule Progress Bar
+            Box(
+                modifier = Modifier
+                    .width(230.dp)
+                    .height(8.dp)
+                    .clip(RoundedCornerShape(50))
+                    .background(Color(0xFF141C2B))
+                    .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(50))
             ) {
-                // Sleek progress bar container
                 Box(
                     modifier = Modifier
-                        .width(220.dp)
-                        .height(6.dp)
-                        .clip(RoundedCornerShape(3.dp))
-                        .background(Color.White.copy(alpha = 0.08f))
-                ) {
-                    // Animated progress fill
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth(progressSweep)
-                            .height(6.dp)
-                            .clip(RoundedCornerShape(3.dp))
-                            .background(
-                                Brush.horizontalGradient(
-                                    colors = listOf(
-                                        NeonCyan.copy(alpha = 0.5f),
-                                        NeonCyan,
-                                        NeonGreen
-                                    )
+                        .fillMaxWidth(progressSweep)
+                        .height(8.dp)
+                        .clip(RoundedCornerShape(50))
+                        .background(
+                            Brush.horizontalGradient(
+                                listOf(
+                                    NeonCyan.copy(alpha = 0.6f),
+                                    NeonCyan,
+                                    NeonGreen
                                 )
                             )
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(14.dp))
-
-                Text(
-                    text = "Initializing Neural Core (100% On-Device)...",
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        color = TextMuted,
-                        letterSpacing = 0.4.sp
-                    )
+                        )
                 )
             }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Microcopy Label
+            Text(
+                text = "Initializing Neural Core (100% On-Device)...",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontSize = 12.sp,
+                    color = TextSecondary.copy(alpha = 0.85f),
+                    letterSpacing = 0.3.sp
+                )
+            )
+
+            Spacer(modifier = Modifier.height(48.dp))
         }
     }
 }
