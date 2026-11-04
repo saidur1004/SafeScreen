@@ -86,23 +86,45 @@ UI রিমুভ করার অবাস্তব চেষ্টার প�
 
 ---
 
-## ৬. প্রযুক্তিগত স্ট্যাক (Technology Stack)
+## ৬. এআই মডেল ও জিরো-ল্যাগ কনকারেন্সি মেকানিজম (Zero-Lag AI Strategy)
+
+### ৬.১ ভিজ্যুয়াল মডেল (TFLite NSFW Classifier)
+* **মডেল টাইপ:** কোয়ান্টাইজড INT8 MobileNetV3 / EfficientNet-Lite মডেল।
+* **মডেল সাইজ:** < ১৫ মেগাবাইট (মেমোরি ফুটপ্রিন্ট অত্যন্ত কম)।
+* **ইনপুট ফরম্যাট:** ২২৪x২২৪x৩ RGB ইমেজ টেন্সর।
+* **হার্ডওয়্যার এক্সিলারেশন:** জিপিইউ ডেলিগেট (`GpuDelegate`) অথবা এনএনএপিআই (`NnApiDelegate`)। ইনফারেন্স স্পিড ৮-১৫ মিলিসেকেন্ড।
+* **জিরো-ল্যাগ মেকানিজম:** `ImageReader.acquireLatestImage()` দিয়ে পুরনো ফ্রেম ড্রপ করা, প্রি-অ্যালোকেটেড ডিরেক্ট `ByteBuffer` ব্যবহার (জিরো গার্বেজ কালেকশন), এবং স্ট্যাটিক স্ক্রিনে (<২% ডেল্টা) এআই ইনফারেন্স সম্পূর্ণ স্কিপ করা।
+
+### ৬.২ অডিও মডেল (YAMNet Audio Classifier)
+* **মডেল টাইপ:** কোয়ান্টাইজড YAMNet নিউরাল নেটওয়ার্ক।
+* **স্যাম্পলিং রেট:** ১৬,০০০ Hz, 16-bit Mono PCM।
+* **ইনপুট বাফার:** ০.৯৭৫ সেকেন্ডের চাঙ্ক (~১৫,৬০০ স্যাম্পলস) উইথ ৫০% স্লাইডিং উইন্ডো।
+* **অ্যাকশন লেটেন্সি:** অ্যাডাল্ট/এক্সপ্লিসিট অডিও শনাক্ত হওয়া মাত্র ৩০ মিলিসেকেন্ডের মধ্যে ওএস লেভেলে অডিও মিউট।
+
+### ৬.৩ রিলস ও শর্টস ইন্টারভেনশন (Accessibility + WindowManager)
+* **শনাক্তকরণ:** Instagram, YouTube, TikTok, Facebook-এর উইন্ডো ও স্ক্রোল ইভেন্ট ৩০০ms ডেবউন্স সহ স্ক্যান করা।
+* **ইন্টারভেনশন:** দৈনিক সময়সীমা শেষ হলে `FocusInterventionOverlay` ফুলস্ক্রিনে চালু করা এবং ৫-মিনিট মাইন্ডফুল ওয়াক কিংবা অ্যাপ থেকে এক্সিট করানো।
+
+---
+
+## ৭. প্রযুক্তিগত স্ট্যাক (Technology Stack)
 
 ### Android Architecture
-* **Language & SDK:** Kotlin 2.0.21, Min SDK 29, Target SDK 35, Java 17
-* **UI:** Jetpack Compose, Material 3, Cyber-Dark Palette (`#07090E`, Neon Cyan `#00E5FF`, Neon Green `#00FF9D`)
-* **Architecture Pattern:** Clean Architecture + MVVM + MVI StateFlow
+* **Language & SDK:** Kotlin 2.0.21, Min SDK 29, Target SDK 35, Java 21/17, Gradle 8.14
+* **UI:** Jetpack Compose (BOM 2024.10.01), Material 3, Cyber-Dark Palette (`#07090E`, Neon Cyan `#00E5FF`, Neon Green `#00FF9D`, Neon Purple `#9D4EDD`, Cyber Pink `#FF2A6D`)
+* **Architecture Pattern:** Clean Architecture + MVI (Model-View-Intent) + StateFlow
 * **Dependency Injection:** Dagger Hilt 2.52 via KSP
-* **Local Storage:** Room Database 2.6.1 + DataStore Preferences
-* **Machine Learning:** TensorFlow Lite 2.16.1 & TFLite Support Library
-* **System Services:** Foreground Service (`mediaProjection`), AccessibilityService, WindowManager Overlay
+* **Local Storage:** Room Database 2.6.1 (KSP) + DataStore Preferences
+* **Machine Learning Engine:** TensorFlow Lite 2.16.1 (GPU Delegate, NNAPI, XNNPACK) & TFLite Support Library
+* **System Services:** Foreground Service (`mediaProjection`), AccessibilityService, System Alert Window Overlay (`TYPE_APPLICATION_OVERLAY`), AudioPlaybackCapture
 
 ### Chrome Extension (Phase 8)
 * Manifest V3, WebExtensions API, DOM MutationObserver, CSS Injection, Local Storage
 
 ---
 
-## ৭. ডেভেলপার ও এআই এজেন্টের জন্য নির্দেশনা (Guidelines for AI Agents)
+## ৮. ডেভেলপার ও এআই এজেন্টের জন্য নির্দেশনা (Guidelines for AI Agents)
 * কোড লেখার সময় সবসময় এই ফাইলটিকে কেন্দ্রীয় রেফারেন্স হিসেবে পড়তে হবে।
 * কোনো ফিচার অবাস্তবভাবে দাবি করা যাবে না (যেমন ৩য় পক্ষের অ্যাপের ভেতর গিয়ে বোতাম ডিলিট করা)।
-* প্রতিবার কাজ শেষে অবশ্যই `PROJECT_PROGRESS.md` আপডেট করতে হবে যাতে যেকোনো ডিভাইসে অন্য যেকোনো এজেন্ট পরবর্তী ধাপ সহজে শুরু করতে পারে।
+* কোনো কোড লেখার পূর্বে আর্কিটেকচারাল ব্লুপ্রিন্ট [**`ARCHITECTURE.md`**](./ARCHITECTURE.md) ও প্রগ্রেস ফাইল [**`PROJECT_PROGRESS.md`**](./PROJECT_PROGRESS.md) পড়ে নিতে হবে।
+* প্রতিবার কাজ শেষে অবশ্যই `PROJECT_PROGRESS.md` আপডেট করতে হবে এবং গিটহাবে পুশ করতে হবে যাতে যেকোনো ডিভাইসে অন্য যেকোনো এজেন্ট পরবর্তী ধাপ সহজে শুরু করতে পারে।

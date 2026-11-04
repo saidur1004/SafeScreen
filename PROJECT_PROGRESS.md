@@ -22,9 +22,9 @@
 
 ## 📌 ১. প্রজেক্টের বর্তমান ওভারভিউ ও লাইভ স্ট্যাটাস (Executive Snapshot)
 
-* **সর্বশেষ আপডেটের তারিখ ও সময়:** ০৪ নভেম্বর ২০২৬ (ডিপ স্ক্যান, হাই-এন্ড পলিশ ও মাস্টার স্ট্র্যাটেজিক রোডম্যাপ সহ আপডেটেড)
-* **বর্তমান পর্যায়:** **Phase 2B — UI Workflow Implementation (Module 01 থেকে Module 08 সম্পূর্ণ ফিনিশড, ডিপ স্ক্যান পলিশ সম্পন্ন, সিল্কি মোশন ও হ্যাপটিক্স ইন্টিগ্রেটেড, এমুলেটরে ১০০% লাইভ ভেরিফাইড 🎉)**
-* **পরবর্তী তাৎক্ষণিক কাজ (Immediate Next Task):** **Phase 3: Persistence Layer (Room Database & DataStore Preferences)** — *[ইউজারের স্পষ্ট "Go ahead" অনুমতির অপেক্ষায়]*
+* **সর্বশেষ আপডেটের তারিখ ও সময়:** ০৪ নভেম্বর ২০২৬ (ডিপ কনটেক্সচুয়াল রিভিশন, আর্কিটেকচার ব্লুপ্রিন্ট ও জিরো-ল্যাগ এআই মাস্টার প্ল্যান সম্পন্ন)
+* **বর্তমান পর্যায়:** **Phase 2B সম্পন্ন ✅ | Phase 3 (Room DB & DataStore) প্রস্তুতিকালীন ডিপ রিভিশন ও প্ল্যানিং সম্পন্ন (কোড শুরুর পূর্বে ইউজারের "Go ahead" অনুমতির অপেক্ষায়) ⏳**
+* **পরবর্তী তাৎক্ষণিক কাজ (Immediate Next Task):** **Phase 3: Persistence Layer (Prompt 1: Entities, DAOs, Database with Banking Prepopulation Seed & Hilt Module)** — *[ইউজারের স্পষ্ট "Go ahead" অনুমতির অপেক্ষায়]*
 * **গিট রিপোজিটরি:** `https://github.com/saidur1004/SafeScreen.git` (মেইন ব্রাঞ্চ: `main`)
 * **টেকনিক্যাল টুলচেইন:** Kotlin 2.0.21, Gradle 8.14, AGP 8.7.3, Jetpack Compose BOM 2024.10.01, Dagger-Hilt 2.52, Room 2.6.1, Java 21, Min SDK 29 (Android 10), Target SDK 35 (Android 15)
 * **টেস্ট ডিভাইস:** Android Emulator (`emulator-5554`, Google APIs ARM64/x86_64, Pixel 9, Android 15 API 35)
@@ -228,12 +228,12 @@
 
 ---
 
-## 🧠 ৬. কনটেক্সচুয়াল অ্যানালাইসিস ও মাস্টার স্ট্র্যাটেজিক রোডম্যাপ (Contextual Analysis & Strategic Roadmap)
+## 🧠 ৬. কনটেক্সচুয়াল অ্যানালাইসিস ও জিরো-ল্যাগ এআই আর্কিটেকচার ব্লুপ্রিন্ট (Contextual Analysis & Zero-Lag Strategy)
 
-### ক. সেফস্ক্রিনের ভিশন ও মূল আর্কিটেকচারাল সারমর্ম (The Core Vision & Architectural Philosophy)
+### ক. সেফস্ক্রিনের ভিশন ও মূল আর্কিটেকচারাল দর্শন (Vision & Privacy Promise)
 **SafeScreen** কোনো সাধারণ অ্যাপ নয় — এটি একটি **"100% On-Device Zero-Cloud AI Privacy Guardian"**। 
-- **মূল লক্ষ্য:** ব্যবহারকারীর স্ক্রিনের ভিজ্যুয়াল কন্টেন্ট (NSFW/Adult), অডিও স্ট্রিম (Explicit Sounds), এবং শর্ট ভিডিও আসক্তি (Reels/Shorts/TikTok Doomscrolling) প্রতিরোধ করা।
-- **জিরো ক্লাউড প্রতিশ্রুতি:** কোনো স্ক্রিনশট, ফ্রেম, অডিও বাফার বা ব্যবহারকারী ডেটা কখনোই কোনো রিমোট সার্ভার বা ক্লাউডে পাঠানো হবে না। সমস্ত প্রসেসিং সম্পূর্ণ লোকালভাবে অন-ডিভাইসে এনপিইউ/সিপিইউ-তে ঘটবে।
+- **মূল লক্ষ্য:** ব্যবহারকারীর স্ক্রিনের ভিজ্যুয়াল কন্টেন্ট (NSFW/Adult), অডিও স্ট্রিম (Explicit Sounds), এবং শর্ট ভিডিও আসক্তি (Reels/Shorts/TikTok Doomscrolling) ওএস লেভেলে রিয়েল-টাইমে প্রতিরোধ করা।
+- **জিরো ক্লাউড প্রতিশ্রুতি:** কোনো স্ক্রিনশট, ফ্রেম, অডিও বাফার বা ব্যবহারকারী ডেটা কখনোই কোনো রিমোট সার্ভার বা ক্লাউডে পাঠানো হবে না। সমস্ত প্রসেসিং সম্পূর্ণ অফলাইনে অন-ডিভাইসে এনপিইউ/সিপিইউ-তে ঘটবে।
 - **আর্কিটেকচারাল ব্রিজ (UI to OS Services):**
   - **প্রেজেন্টেশন লেয়ার (Compose + MVI):** ব্যবহারকারী যা দেখে এবং নিয়ন্ত্রণ করে। এটি ডেটার উৎস নয়, বরং **DataStore ও Room DB**-র রিয়েক্টিভ স্টেটকে লাইভ অবজার্ভ করে।
   - **পারসিস্টেন্স লেয়ার (Room DB + DataStore):** একক সত্যের উৎস (Single Source of Truth - SSOT)।
@@ -241,13 +241,33 @@
 
 ---
 
-### খ. নতুন টেকনিক্যাল রোডম্যাপ (New Technical Master Roadmap: Phase 3 to Phase 8)
+### খ. জিরো-ল্যাগ ও হাই-পারফরম্যান্স এআই ইঞ্জিনিয়ারিং স্ট্র্যাটেজি (Zero-Lag AI Strategy)
 
-পরবর্তী কাজের প্রতিটি ধাপকে নিখুঁত ও ঝুঁকিমুক্ত রাখতে নিচের অপ্টিমাইজড সিকোয়েন্স তৈরি করা হয়েছে:
+রিয়েল-টাইম স্ক্রিন ও অডিও প্রসেসিং চালানোর সময় ডিভাইসে যেন বিন্দুমাত্র ল্যাগ (Lag), ফ্রেম-ড্রপ বা অতিরিক্ত ব্যাটারি ড্রেন না হয়, তার জন্য ৫টি সুনির্দিষ্ট আর্কিটেকচারাল মেকানিজম নির্ধারণ করা হয়েছে:
+
+1. **ডাউনস্কেলিং ও `acquireLatestImage()` ফ্রেম ড্রপ মেকানিজম:**
+   - `MediaProjection` সরাসরি ফুল স্ক্রিন রেজোলিউশনে ফ্রেম প্রসেস করবে না। `VirtualDisplay` তৈরি করার সময় ডাউনস্কেলড সাইজ (৩৬০x৮০০ বা সরাসরি ২২৪x২২৪) নেওয়া হবে।
+   - `ImageReader`-এ কোনো ফ্রেম কিউতে জমিয়ে রাখা হবে না। নতুন ফ্রেম আসার সাথে সাথে `acquireLatestImage()` কল করে শুধুমাত্র লেটেস্ট ফ্রেমটি রিড করা হবে এবং মাঝের পুরনো ফ্রেম স্বয়ংক্রিয়ভাবে ড্রপ করা হবে। এর ফলে বাফার ল্যাগ শূন্যে নেমে আসে।
+2. **প্রি-অ্যালোকেটেড ডিরেক্ট বাইট-বাফার (Zero Garbage Collection Pressure):**
+   - প্রতি ফ্রেমে নতুন `Bitmap` তৈরি বন্ধ করতে প্রি-অ্যালোকেটেড `ByteBuffer.allocateDirect(224 * 224 * 3)` ও বিটম্যাপ রি-ইউজ পুলিং ব্যবহার করা হবে। ফলে অ্যান্ড্রয়েডের গার্বেজ কালেক্টর (GC) বারবার ট্রিগার হয়ে কোনো স্টাটার বা ল্যাগ তৈরি করতে পারবে না।
+3. **অ্যাডাপ্টিভ ডেসিমেশন ও স্ট্যাটিক স্ক্রিন ডেল্টা ডিটেক্টর:**
+   - স্ক্রিন স্থির থাকলে (<২% পিক্সেল ডেল্টা) এআই ইনফারেন্স সম্পূর্ণ স্কিপ করা হবে (ব্যাটারি ও জিপিইউ সেভিং)।
+   - হাই-রিস্ক অ্যাপে (Instagram, TikTok, Twitter, Chrome) এফপিএস স্বয়ংক্রিয়ভাবে ৫–৮ এ বৃদ্ধি পাবে, আর নরমাল ইউসেজে ৩ এফপিএস-এ সীমাবদ্ধ থাকবে।
+4. **হার্ডওয়্যার এক্সিলারেশন (GPU Delegate / NNAPI / XNNPACK):**
+   - TFLite Interpreter চালুর সময় অগ্রাধিকার ভিত্তিতে `GpuDelegate` অথবা `NnApiDelegate` ব্যবহার করা হবে।
+   - GPU-তে ইনফারেন্স লেটেন্সি হবে মাত্র **৮ থেকে ১৫ মিলিসেকেন্ড**। ফলব্যাক হিসেবে ৪-থ্রেডযুক্ত `XNNPACK` CPU অপটিমাইজেশন কাজ করবে (লেটেন্সি < ২৮ মিলিসেকেন্ড)।
+5. **অডিও মনিটরিং ও রিং-বাফার পাইপলাইন:**
+   - ১৬,০০০ Hz, 16-bit Mono PCM ফরম্যাটে অডিও ডাবল-বাফারযুক্ত `RingBuffer<Short>`-এ ক্যাপচার হবে।
+   - YAMNet মডেলটি ০.৯৭৫ সেকেন্ডের অডিও চাঙ্ক নিয়ে ৫০% ওভারল্যাপিং স্লাইডিং উইন্ডোতে প্রতি ৫০০ms অন্তর ইনফারেন্স চালাবে।
+   - এক্সপ্লিসিট সাউন্ড শনাক্ত হওয়া মাত্র <৩০ মিলিসেকেন্ডে `AudioManager.requestAudioFocus` কল করে সাউন্ড মিউট করা হবে।
+
+---
+
+### গ. নতুন টেকনিক্যাল মাস্টার রোডম্যাপ (Phase 3 to Phase 8 Overview)
 
 ```mermaid
 flowchart TD
-    UI[Phase 2B: 100% Polished UI] --> P3[Phase 3: Persistence Layer\nRoom DB & DataStore]
+    UI[Phase 2B: 100% Polished UI ✅] --> P3[Phase 3: Persistence Layer\nRoom DB & DataStore SSOT ⏳]
     P3 --> P4[Phase 4: OS Services\nMediaProjection, Audio, Accessibility]
     P4 --> P5[Phase 5: On-Device AI Engine\nTFLite NSFW & YAMNet Audio]
     P5 --> P6[Phase 6: Real-Time Protection Loop\nEnd-to-End Reactive Shield]
@@ -255,74 +275,73 @@ flowchart TD
     P7 --> P8[Phase 8: Security Audit & Production Release]
 ```
 
-#### 📌 Phase 3: Persistence Layer (Room Database & DataStore Preferences)
-*লক্ষ্য: অ্যাপের সমস্ত স্টেট, কনফিগারেশন, থ্রেট হিস্ট্রি ও হোয়াইটলিস্ট লোকাল স্টোরেজে স্থায়ী করা।*
-- **Prompt 1: Room DB Infrastructure (`AppDatabase.kt`, Entities & DAOs)**
-  - `ThreatLogEntity.kt` ও `ThreatLogDao.kt` (ইভেন্ট লগিং, ডেট-গ্রুপড কোয়েরিজ, টুডে কাউন্টস ফ্লো, ক্লিয়ার লগ)।
-  - `WhitelistEntity.kt` ও `WhitelistDao.kt` (প্যাকেজ নেম, ক্যাটাগরি, এক্সেম্পশন ফ্ল্যাগ)।
-  - ডিফল্ট ব্যাংকিং অ্যাপ প্রিপপুলেশন রুম কলব্যাক (`PayPal`, `Bank of America`, `Google Pay`, `Chase`, `Revolut` ডিফল্ট এক্সিম্পশন সিড)।
-  - Hilt `DatabaseModule.kt` প্রোভাইডার্স।
-- **Prompt 2: Jetpack DataStore Repository (`UserPreferencesRepository.kt`)**
-  - শিল্ড টগলস (`isProtectionEnabled`, `isVisualActive`, `isAudioActive`, `isReelsActive`)।
-  - টিউনিং কনফিগ (`aiSensitivity`, `fpsProfile`, `blurStyle`, `blurIntensity`)।
-  - সিকিউরিটি স্টেট (`isPinLockEnabled`, `pinHashSha256`, `isBiometricEnabled`)।
-- **Prompt 3: Presentation ViewModels Integration**
-  - `HomeViewModel`, `StatsViewModel`, `SettingsViewModel`, `AppWhitelistViewModel`, `DetailedActivityLogViewModel` কে মক ডেটা থেকে মুক্ত করে রিয়েল রুম ডিবি ও ডেটাস্টোর ফ্লো-এর সাথে বাইন্ড করা।
+---
 
-#### 📌 Phase 4: Android OS System Services & System Overlays
-*লক্ষ্য: অ্যান্ড্রয়েড অপারেটিং সিস্টেমের হার্ডওয়্যার ও কার্নেল সার্ভিসসমূহের সাথে অ্যাপকে সরাসরি সংযুক্ত করা।*
-- **Prompt 1: Foreground Service & Sticky Notification**
-  - `ShieldProtectionService.kt` (ফোরগ্রাউন্ড সার্ভিস, নোটিফিকেশন চ্যানেল, কুইক অ্যাকশন টগলস: Pause 5m, Resume, Stop)।
-- **Prompt 2: MediaProjection & VirtualDisplay Pipeline**
-  - ইউজার পারমিশন টোকেন ক্যাপচার, `ImageReader` দিয়ে স্ক্রিন ফ্রেম বাফারিং (RGB/Bitmap Decimation at 5 FPS)।
-- **Prompt 3: AudioRecord & Real-Time Buffer Stream**
-  - মাইক্রোফোন ও ইন্টারনাল অডিও স্ট্রিম ক্যাপচারিং (16kHz PCM বাফার)।
-- **Prompt 4: Accessibility Service for Social Apps**
-  - `ReelsAccessibilityService.kt` (Instagram Reels, YouTube Shorts, TikTok, Facebook Reels উইন্ডো ইভেন্ট ডিটেকশন ও স্ক্রোল ট্র্যাকিং)।
-- **Prompt 5: System WindowManager Overlay Integration**
-  - পূর্বের তৈরি `LiveBlurOverlayManager` ও `FocusInterventionOverlayManager` কে ব্যাকগ্রাউন্ড সার্ভিসের সাথে হুক করা।
+## 🚀 ৭. পরবর্তী কার্যক্রমের সুনির্দিষ্ট ও কঠোর সিকোয়েন্স (Strict Step-by-Step Action Plan)
 
-#### 📌 Phase 5: On-Device AI Engine & High-Performance Inference Pipeline
-*লক্ষ্য: ১০০% অন-ডিভাইস প্রাইভেট এআই মডেল লোডিং ও রিয়েল-টাইম ক্লাসিফিকেশন।*
-- **Prompt 1: TFLite Visual NSFW Classifier**
-  - INT8 Quantized MobileNet/EfficientNet NSFW মডেল ইন্টিগ্রেশন (সাইজ <15MB, লেটেন্সি <30ms)।
-  - GPU Delegate / NNAPI অ্যাকসিলারেশন ফলব্যাক সহ।
-- **Prompt 2: YAMNet Audio Classifier**
-  - অডিও স্পেকট্রোগ্রাম এক্সট্র্যাকশন ও অ্যাডাল্ট/এক্সপ্লিসিট সাউন্ড ডিটেকশন পাইপলাইন।
-- **Prompt 3: Adaptive FPS & Smart Decimation Engine**
-  - স্ক্রিন স্ট্যাটিক থাকলে ৩ FPS, সোশ্যাল মিডিয়া চালু থাকলে ৮ FPS এআই স্ক্যানিং।
+যেহেতু **Phase 2B (UI Workflow Implementation) এর সকল মডিউল (Module 01 থেকে Module 08) ১০০% সফলভাবে সম্পন্ন হয়েছে, ডিপ স্ক্যান পলিশ সম্পন্ন হয়েছে এবং এআই আর্কিটেকচার ব্লুপ্রিন্ট চূড়ান্ত করা হয়েছে**, ব্যবহারকারীর কাছ থেকে **"Go ahead"** (অনুমতি) পাওয়ার পর নিচের কঠোর ফাইল-বাই-ফাইল সিকোয়েন্সে কোডিং করা হবে:
 
-#### 📌 Phase 6: End-to-End Real-Time Protection Loop (The Heartbeat)
-*লক্ষ্য: ওএস সার্ভিস, এআই মডেল, রুম ডিবি এবং ইউআই ওভারলে-কে একটি নিরবচ্ছিন্ন লুপে সিঙ্ক করা।*
-- স্ক্রিন ফ্রেমে NSFW শনাক্ত হলে (<50ms-এ) `LiveBlurOverlayView` অ্যাক্টিভ হবে।
-- অডিওতে এক্সপ্লিসিট সাউন্ড পেলে ওএস অডিও স্ট্রিম তাৎক্ষণিক মিউট হবে।
-- রিলস লিমিট অতিক্রম করলে `FocusInterventionOverlay` ফুলস্ক্রিনে ট্রিগার হবে।
-- প্রতিটি থ্রেট স্বয়ংক্রিয়ভাবে `ThreatLogDao`-তে ইনসার্ট হবে এবং `HomeScreen` ও `StatsScreen`-এ লাইভ কাউন্টার আপডেট হবে।
+> ⚠️ **কঠোর নীতি (Strict Policy):** ব্যবহারকারীর স্পষ্ট "Go ahead" ব্যতীত কোনো কোড ফাইলে হাত দেওয়া হবে না।
 
-#### 📌 Phase 7: Performance, Battery & Edge-Case Hardening
-- স্ক্রিন অফ হলে (`ACTION_SCREEN_OFF`) এআই ও ক্যাপচার স্লিপ মোডে যাওয়া (দৈনিক ব্যাটারি ড্রেন <৩-৫%)।
-- হোয়াইটলিস্টে থাকা ব্যাংকিং অ্যাপ চালু হলে এআই ক্যাপচার সম্পূর্ণ বাইপাস হওয়া।
-- মেমোরি লিক প্রটেকশন ও বিটম্যাপ রিসাইক্লিং।
+### 📌 ফেজ ৩: লোকাল পারসিস্টেন্স লেয়ার (Phase 3 Execution Steps)
 
-#### 📌 Phase 8: Security Audit & Production Release Packaging
-- ProGuard / R8 রুলস কনফিগারেশন।
-- রিলিজ সাইনড এপিকে ও ফাইনাল প্রোডাকশন ডকুমেন্টেশন।
+#### ধাপ ১ (Prompt 1): Room Database Infrastructure
+*টার্গেট ডিরেক্টরি:* `app/src/main/java/com/safescreen/app/data/local/room/` ও `.../di/`
+1. `ThreatLogEntity.kt`:
+   - ফিল্ডস: `id` (AutoGenerate), `timestamp` (Long), `threatType` (`VISUAL_NSFW`, `AUDIO_EXPLICIT`, `REELS_LIMIT`), `appPackageName`, `appName`, `severity` (Float), `actionTaken` (`BLURRED`, `MUTED`, `BLOCKED`).
+2. `ThreatLogDao.kt`:
+   - `insertThreatLog(entity)`
+   - `getAllThreatLogsFlow(): Flow<List<ThreatLogEntity>>`
+   - `getLogsGroupedByDateFlow(): Flow<Map<String, List<ThreatLogEntity>>>`
+   - `getTodayThreatCountFlow(): Flow<Int>`
+   - `clearAllLogs()`
+3. `WhitelistEntity.kt`:
+   - ফিল্ডস: `packageName` (PrimaryKey), `appName`, `category`, `isExempted`, `isBankingDefault`, `addedTimestamp`.
+4. `WhitelistDao.kt`:
+   - `insertOrUpdate(entity)`
+   - `getAllWhitelistFlow(): Flow<List<WhitelistEntity>>`
+   - `getExemptedPackagesFlow(): Flow<List<String>>`
+   - `toggleExemption(packageName, isExempted)`
+5. `FocusScheduleEntity.kt` & `FocusScheduleDao.kt`:
+   - শিডিউল ডেটা সংরক্ষণ ও কোয়েরি।
+6. `AppDatabase.kt`:
+   - RoomDatabase v1, exportSchema = true, Thread-safe singleton।
+   - **Banking Pre-population Callback:** ডিফল্ট সিড হিসেবে ৫টি ব্যাংকিং অ্যাপ (`PayPal`, `Bank of America`, `Google Pay`, `Chase`, `Revolut`) স্বয়ংক্রিয়ভাবে ইনসার্ট করা।
+7. `DatabaseModule.kt` (Hilt):
+   - Provide Database, ThreatLogDao, WhitelistDao, FocusScheduleDao।
+
+#### ধাপ ২ (Prompt 2): Jetpack DataStore Preferences Repository
+*টার্গেট ডিরেক্টরি:* `app/src/main/java/com/safescreen/app/data/local/datastore/`
+1. `PreferencesKeys.kt`: DataStore কী-সমূহ ডিফাইন করা।
+2. `UserPreferencesRepository.kt`:
+   - `shieldEnabled: Flow<Boolean>`
+   - `visualShieldActive: Flow<Boolean>`
+   - `audioShieldActive: Flow<Boolean>`
+   - `reelsBlockerActive: Flow<Boolean>`
+   - `aiSensitivity: Flow<AiSensitivity>` (`STRICT`, `BALANCED`, `RELAXED`)
+   - `fpsProfile: Flow<FpsProfile>` (`FPS_3`, `FPS_5`, `FPS_8`)
+   - `pinLockEnabled: Flow<Boolean>`, `pinHash: Flow<String>` (SHA-256)
+   - `blurStyle: Flow<BlurStyle>`, `blurIntensity: Flow<Float>`
+3. `DataStoreModule.kt` (Hilt):
+   - Provide `DataStore<Preferences>` ও `UserPreferencesRepository`।
+
+#### ধাপ ৩ (Prompt 3): ViewModels Integration with Room & DataStore
+*টার্গেট ডিরেক্টরি:* `app/src/main/java/com/safescreen/app/presentation/screens/`
+1. `HomeViewModel.kt`: মক স্টেট থেকে ডেটাস্টোর ও রুম লাইভ ফ্লো-তে সুইচ করা।
+2. `StatsViewModel.kt`: লাইভ ডুয়াল-বার চার্ট ও ডোনাট ক্যাটাগরি ফ্লো বাইন্ডিং।
+3. `DetailedActivityLogViewModel.kt`: রুম ডাটাবেস থেকে রিয়েল টাইমলাইন ফেচ ও ডাইনামিক ফিল্টারিং।
+4. `AppWhitelistViewModel.kt`: `WhitelistDao` থেকে সার্চ ও এক্সেম্পশন টগল বাইন্ডিং।
+5. `SettingsViewModel.kt`: এআই সেনসিটিভিটি ও এফপিএস ডেটাস্টোরে সেভ করা।
+6. `FocusScheduleViewModel.kt`: শিডিউল ডাটাবেসে সেভ ও রিড করা।
 
 ---
 
-## 🚀 ৭. পরবর্তী কার্যক্রম ও সিকোয়েন্স (Next Steps for the Next Agent / Device)
-
-যেহেতু **Phase 2B (UI Workflow Implementation) এর সকল মডিউল (Module 01 থেকে Module 08) ১০০% সফলভাবে সম্পন্ন হয়েছে, ডিপ স্ক্যানে সমস্ত বাগ ফিক্স ও মোশন পলিশ সম্পন্ন হয়েছে**, ব্যবহারকারীর কাছ থেকে **"Go ahead"** (অনুমতি) পাওয়ার পর আপনার **প্রথম ও সরাসরি কাজ হবে Phase 3 (Room DB & DataStore) শুরু করা**।
-
-> ⚠️ **মনে রাখবেন:** ব্যবহারকারী অনুমতি না দেওয়া পর্যন্ত Phase 3-এর কোনো কোড লিখবেন না।
-
-### ১. পরবর্তী টাস্কের বিস্তারিত বিবরণ (Next Task Details):
-* **পর্যায়:** **Phase 3 — Persistence Layer (Room Database & DataStore Preferences)**
-* **টাস্ক:** **Prompt 1 (`ThreatLogDao`, `WhitelistDao`, `AppDatabase.kt` & DatabaseModule)**
-* **টার্গেট ডিরেক্টরি:** 
-  - `app/src/main/java/com/safescreen/app/data/local/room/` (Entities, DAOs, Database, TypeConverters, PrepopulationCallback)
-  - `app/src/main/java/com/safescreen/app/di/DatabaseModule.kt` (Hilt Dependency Injection)
-* **রোডম্যাপ গাইড:** `DEVELOPMENT_ROADMAP.md` ফাইলের **Phase 3: Persistence Layer**
+### 📌 এর পরবর্তী ফেজসমূহের রোডম্যাপ (Subsequent Master Phases)
+* **Phase 4: Android OS System Services:** `ShieldProtectionService` ফোরগ্রাউন্ড সার্ভিস, `MediaProjection` ও `VirtualDisplay ImageReader` বাফার, `AudioPlaybackCapture` PCM স্ট্রিম, `ReelsAccessibilityService` নোড অবজারভার, `LiveBlurOverlayManager` সিস্টেম ওভারলে কানেকশন।
+* **Phase 5: On-Device AI Core Engine:** INT8 Quantized MobileNetV3 / EfficientNet-Lite NSFW মডেল, YAMNet অডিও ক্লাসিফায়ার, GPU Delegate / NNAPI ইন্টিগ্রেশন, অ্যাডাপ্টিভ এফপিএস ডেসিমেশন।
+* **Phase 6: End-to-End Real-Time Protection Loop:** ফ্রেম ক্যাপচার $\rightarrow$ এআই ইনফারেন্স $\rightarrow$ লাইভ ব্লার ওভারলে (<৫০ms), অডিও ক্যাপচার $\rightarrow$ মিউট (<৩০ms), থ্রেট স্বয়ংক্রিয়ভাবে রুম ডিবিতে লগ হওয়া ও ইউআই ড্যাশবোর্ডে লাইভ চার্ট আপডেট।
+* **Phase 7: Battery Optimization & Hardening:** স্ক্রিন অফ হলে স্লিপ মোড (দৈনিক ব্যাটারি ড্রেন <৩-৫%), মেমোরি লিক অডিট ও বিটম্যাপ রিসাইক্লিং।
+* **Phase 8: Security Audit & Release Packaging:** ProGuard / R8 রুলস, প্রোডাকশন সাইনড এপিকে।
 
 ### ২. কী কী তৈরি করতে হবে (Requirements for Phase 3):
 1. **Room Entities & DAOs:**
