@@ -22,9 +22,9 @@
 
 ## 📌 ১. প্রজেক্টের বর্তমান ওভারভিউ ও লাইভ স্ট্যাটাস (Executive Snapshot)
 
-* **সর্বশেষ আপডেটের তারিখ ও সময়:** ০৪ নভেম্বর ২০২৬ (Phase 3 Prompt 2: DataStore Preferences Repository ও ডাইনামিক মিউটেশন ভেরিফাইড)
-* **বর্তমান পর্যায়:** **Phase 3: Persistence Layer (Prompt 1 ও Prompt 2 সম্পন্ন ও এমুলেটরে ভেরিফাইড ✅ | Prompt 3: ViewModels Migration এর অপেক্ষায় ⏳)**
-* **পরবর্তী তাৎক্ষণিক কাজ (Immediate Next Task):** **Phase 3: Persistence Layer (Prompt 3: ViewModels Integration with Room DB & DataStore)** — *[ইউজারের স্পষ্ট "Go ahead" অনুমতির অপেক্ষায়]*
+* **সর্বশেষ আপডেটের তারিখ ও সময়:** ০৪ নভেম্বর ২০২৬ (Phase 3 Prompt 3: ViewModels Integration with Room DB & DataStore ১০০% সম্পন্ন ও এমুলেটরে ভেরিফাইড)
+* **বর্তমান পর্যায়:** **Phase 3: Persistence Layer (Room DB, DataStore, এবং ViewModels Migration সম্পূর্ণ ✅ | Phase 4: OS System Services এর অপেক্ষায় ⏳)**
+* **পরবর্তী তাৎক্ষণিক কাজ (Immediate Next Task):** **Phase 4: Android OS System Services (MediaProjection, AudioPlaybackCapture, AccessibilityService, WindowManager Overlay, Foreground Notification)** — *[ইউজারের স্পষ্ট "Go ahead" অনুমতির অপেক্ষায়]*
 * **গিট রিপোজিটরি:** `https://github.com/saidur1004/SafeScreen.git` (মেইন ব্রাঞ্চ: `main`)
 * **টেকনিক্যাল টুলচেইন:** Kotlin 2.0.21, Gradle 8.14, AGP 8.7.3, Jetpack Compose BOM 2024.10.01, Dagger-Hilt 2.52, Room 2.6.1, Java 21, Min SDK 29 (Android 10), Target SDK 35 (Android 15)
 * **টেস্ট ডিভাইস:** Android Emulator (`emulator-5554`, Google APIs ARM64/x86_64, Pixel 9, Android 15 API 35)
@@ -52,8 +52,8 @@
 | **Module 08: Fallbacks** | `SafeScreenStateView.kt` & `EmptyAndErrorStatesScreen.kt` (Clean, Paused, AI Error, Empty Log) | ✅ 100% Polished | `presentation/components/SafeScreenStateView.kt` |
 | **Phase 3: Room DB (P1)** | Room Database (ThreatLogEntity, WhitelistEntity, FocusScheduleEntity, Prepopulation Callback) | ✅ **100% Verified** | `AppDatabase.kt`, `ThreatLogDao.kt`, `WhitelistDao.kt`, `FocusScheduleDao.kt` |
 | **Phase 3: DataStore (P2)** | Jetpack DataStore Preferences Repository (Shield, AI Config, PIN Hash, Hilt Module) | ✅ **100% Verified** | `UserPreferencesRepository.kt`, `PreferencesKeys.kt`, `DataStoreModule.kt` |
-| **Phase 3: ViewModels (P3)** | ViewModels Integration (Home, Stats, Settings, Whitelist, Log Flow Binding) | ⏳ **Next Up (P3)** | `HomeViewModel.kt`, `SettingsViewModel.kt`, etc. |
-| **Phase 4: OS Services** | MediaProjection, AudioRecord, AccessibilityService, Foreground Notification | ⏳ Planned (Phase 4) | `services/ShieldProtectionService.kt` |
+| **Phase 3: ViewModels (P3)** | ViewModels Integration (Home, Settings, Whitelist, Stats, Log, Focus, Security) | ✅ **100% Verified** | `HomeViewModel.kt`, `SettingsViewModel.kt`, `AppWhitelistViewModel.kt`, `DetailedActivityLogViewModel.kt`, `StatsViewModel.kt`, `FocusScheduleViewModel.kt`, `SecurityLockViewModel.kt` |
+| **Phase 4: OS Services** | MediaProjection, AudioRecord, AccessibilityService, Foreground Notification | ⏳ **Next Up (Phase 4)** | `services/ShieldProtectionService.kt` |
 | **Phase 5: On-Device AI** | INT8 Quantized TFLite NSFW Filter & YAMNet Audio Classifier Integration | ⏳ Planned (Phase 5) | `domain/ml/TFLiteClassifier.kt` |
 
 ---
@@ -174,6 +174,39 @@
 - **লাইভ এমুলেটর ও ইউনিট টেস্ট ভেরিফিকেশন:**
   - `UserPreferencesRepositoryTest` দ্বারা SHA-256 হ্যাশিং অ্যালগরিদম সফলভাবে টেস্টেড।
   - এমুলেটরে লাইভ মিউটেশন টেস্ট সম্পন্ন: `SafeScreenDataStore: Active UserPreferences: ShieldActive=true, Visual=true, Audio=true, Reels=false, Sensitivity=BALANCED, FPS=BALANCED, BlurStyle=FROSTED_GLASS` এবং ডাইনামিকালি মিউটেট হয়ে `Reels=true, Sensitivity=STRICT` ইনস্ট্যান্টলি রিঅ্যাক্টিভ ফ্লো-তে আপডেট হয়েছে।
+
+### ১২. ফেজ ৩: ভিউমডেলস ইন্টিগ্রেশন উইথ রুম ডিবি ও ডেটাস্টোর (Phase 3 Prompt 3 Complete ✅)
+সমস্ত স্ক্রিনকে ইন-মেমোরি/মক স্টেট থেকে রুম ডাটাবেস (`Room DB`) ও জেটপ্যাক ডেটাস্টোর (`Jetpack DataStore`) এর সাথে ১০০% রিয়েল-টাইম রিঅ্যাক্টিভ ফ্লোতে যুক্ত করা হয়েছে:
+- **HomeViewModel.kt (`presentation/screens/home/`):**
+  - ইনজেক্টেড: `UserPreferencesRepository` ও `ThreatLogDao`।
+  - `combine(userPreferencesRepository.userPreferencesFlow, threatLogDao.getTodayThreatCountFlow(...))` দিয়ে রিয়েল-টাইম সেন্ট্রাল শিল্ড স্ট্যাটাস, ভিজ্যুয়াল শিল্ড, অডিও মিউট ও রিলস গার্ড টগলস এবং দৈনিক ইন্টারভেনশন কাউন্ট ডায়নামিকালি সিঙ্কড।
+  - লাইফসাইকেল-অ্যাওয়ার `stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ...)` নিশ্চিত করেছে ব্যাকগ্রাউন্ডে শূন্য সিপিইউ ওভারহেড।
+- **SettingsViewModel.kt (`presentation/screens/settings/`):**
+  - ইনজেক্টেড: `UserPreferencesRepository`।
+  - এআই সেনসিটিভিটি (`STRICT`, `BALANCED`, `RELAXED`), পারফরম্যান্স এফপিএস প্রোফাইল (`BATTERY_SAVER`, `BALANCED`, `HIGH_PRECISION`), পিন লক, বায়োমেট্রিক ও আনইনস্টল প্রিভেনশন সরাসরি ডেটাস্টোরের টাইপ-সেফ কিজের সাথে বাইন্ডেড।
+- **AppWhitelistViewModel.kt (`presentation/screens/settings/`):**
+  - ইনজেক্টেড: `WhitelistDao`।
+  - সার্চ কিউরি ৩০০ms ডিবাউন্সড (`debounce(300)` + `distinctUntilChanged()`) যাতে প্রতি ক্যারেক্টার টাইপিংয়ে অপ্রয়োজনীয় ডাটাবেস কোয়েরি না হয়।
+  - ব্যাংকিং অ্যাপস (`Bank of America`, `Chase`, `PayPal`, `Google Pay`, `Revolut`) এবং ইনস্টলড অ্যাপস ক্যাটাগরি ফিল্টারিং (`All`, `Banking`, `Communication`, `Entertainment`) ও এক্সেম্পশন টগল রুম ডিবিতে রিয়েল-টাইমে মিউটেট হয়।
+- **DetailedActivityLogViewModel.kt (`presentation/screens/stats/`):**
+  - ইনজেক্টেড: `ThreatLogDao`।
+  - প্রতিটি থ্রেট ইভেন্ট স্বয়ংক্রিয়ভাবে ক্যালেন্ডার ডে অনুযায়ী গ্রুপড (`Today`, `Yesterday`, অথবা ডেট ফরম্যাট)।
+  - ক্যাটাগরি ফিল্টার (`ALL`, `VISUAL_NSFW`, `AUDIO_EXPLICIT`, `REELS_LIMIT`) ও ইনস্ট্যান্ট `Clear Log` সাপোর্ট।
+- **StatsViewModel.kt (`presentation/screens/stats/`):**
+  - ইনজেক্টেড: `ThreatLogDao`।
+  - রুম ডিবি থ্রেট লগ থেকে সাপ্তাহিক ডুয়াল-বার চার্ট মেট্রিক্স (`Blocked Frames` vs `Muted Audio`) এবং ক্যাটাগরি পার্সেন্টেজ ব্রেকডাউন ক্যালকুলেশন।
+  - টপ ইন্টারসেপ্টেড অ্যাপ লিস্ট ডাইনামিকালি এগ্রিগেটেড।
+- **FocusScheduleViewModel.kt (`presentation/screens/focus/`):**
+  - ইনজেক্টেড: `FocusScheduleDao`।
+  - ৭-বিট বিটমাস্ক (`activeDaysBitmask`) দিয়ে Mon-Sun অ্যাক্টিভ ডেস কনভার্সন।
+  - রুটিন শিডিউল টগল ও নতুন শিডিউল যোগ করার সাথে সাথে রুম ডিবিতে ইনস্ট্যান্ট ইনসার্ট ও লাইভ রি-রেন্ডারিং।
+- **SecurityLockViewModel.kt (`presentation/screens/settings/`):**
+  - ইনজেক্টেড: `UserPreferencesRepository`।
+  - ৪-ডিজিট পিন এন্ট্রি সিকিউর SHA-256 হ্যাশের বিরুদ্ধে ভেরিফাইড (ডিফল্ট টেস্ট পিন: `1234`)।
+  - ভুল পিনে অ্যানিমেটেড শেক ও ভাইব্রেশন ফিডব্যাক, সঠিক পিন বা বায়োমেট্রিক অথেন্টিকেশনে তাৎক্ষণিক আনলক ও নেভিগেশন।
+- **লাইভ এমুলেটর ভেরিফিকেশন (Pixel 9, Android 15 API 35):**
+  - এমুলেটরে প্রতিটি স্ক্রিনে নেভিগেশন, প্রি-পপুলেটেড ব্যাংকিং এক্সেম্পশন চেক, পিন ১২৩৪ এন্ট্রি করে সিকিউরিটি আনলক এবং হোম ও ফোকাস শিডিউল ডাইনামিক ডেটা লোডিং সফলভাবে ভেরিফাই ও স্ক্রিনশট ডকুমেন্টেড।
+  - ইউনিট টেস্ট: `./gradlew testDebugUnitTest` ১০০% পাস (০ এরর, ০ ওয়ার্নিং)।
 
 ---
 
@@ -358,23 +391,36 @@ flowchart TD
 - [x] ইউনিট টেস্ট: `UserPreferencesRepositoryTest` সফল (SHA-256 হ্যাশিং নির্ভুল)।
 - [x] লাইভ এমুলেটর ভেরিফিকেশন: প্রেফারেন্স রিড ও ডায়নামিক মিউটেশন সফলভাবে টেস্টেড (`SafeScreenDataStore: Verified Preference Mutation: Reels=true, Sensitivity=STRICT`)।
 
-#### ধাপ ৩ (Prompt 3): ViewModels Integration with Room & DataStore (পরবর্তী কাজ — ইউজারের "Go ahead" অনুমতির অপেক্ষায় ⏳)
+#### ধাপ ৩ (Prompt 3): ViewModels Integration with Room & DataStore (সম্পন্ন ও এমুলেটরে ভেরিফাইড ✅)
 *টার্গেট ডিরেক্টরি:* `app/src/main/java/com/safescreen/app/presentation/screens/`
-1. `HomeViewModel.kt`: মক স্টেট থেকে ডেটাস্টোর ও রুম লাইভ ফ্লো-তে সুইচ করা (`isShieldActive`, `blurredTodayCount`, `mutedTodayCount`, `reelsMinutesUsed`)।
-2. `StatsViewModel.kt`: রুম ডাটাবেস থেকে লাইভ ডুয়াল-বার চার্ট ও ডোনাট ক্যাটাগরি ফ্লো বাইন্ডিং।
-3. `DetailedActivityLogViewModel.kt`: রুম ডাটাবেস থেকে রিয়েল টাইমলাইন ফেচ ও ডাইনামিক ফিল্টারিং।
-4. `AppWhitelistViewModel.kt`: `WhitelistDao` থেকে সার্চ ও এক্সেম্পশন টগল বাইন্ডিং।
-5. `SettingsViewModel.kt`: এআই সেনসিটিভিটি, এফপিএস ও সিকিউরিটি ডেটাস্টোরে সেভ ও রিড করা।
-6. `FocusScheduleViewModel.kt`: শিডিউল ডাটাবেসে সেভ ও রিড করা।
+- [x] `HomeViewModel.kt`: মক স্টেট থেকে ডেটাস্টোর ও রুম লাইভ ফ্লো-তে মাইগ্রেশন (`isShieldActive`, `blurredTodayCount`, `mutedTodayCount`, `reelsMinutesUsed`)।
+- [x] `SettingsViewModel.kt`: এআই সেনসিটিভিটি, এফপিএস ও সিকিউরিটি অপশনস ডেটাস্টোরে সেভ ও রিয়েল-টাইম রিড।
+- [x] `AppWhitelistViewModel.kt`: `WhitelistDao` থেকে ৩০০ms ডিবাউন্সড সার্চ ও এক্সেম্পশন টগল বাইন্ডিং।
+- [x] `DetailedActivityLogViewModel.kt`: রুম ডাটাবেস থেকে রিয়েল টাইমলাইন ফেচ, ক্যালেন্ডার গ্রুপিং ও ডাইনামিক ফিল্টারিং।
+- [x] `StatsViewModel.kt`: রুম ডাটাবেস থেকে লাইভ ডুয়াল-বার চার্ট ও ক্যাটাগরি ব্রেকডাউন ফ্লো বাইন্ডিং।
+- [x] `FocusScheduleViewModel.kt`: শিডিউল ডাটাবেসে সেভ ও রিয়েল-টাইম রিড (বিটমাস্ক কনভার্সন সহ)।
+- [x] `SecurityLockViewModel.kt`: ৪-ডিজিট পিন সিকিউর SHA-256 ভেরিফিকেশন ও বায়োমেট্রিক আনলক বাইন্ডিং।
+- [x] Compose স্ক্রিনসমূহ (`HomeScreen`, `SettingsScreen`, `AppWhitelistScreen`, `DetailedActivityLogScreen`, `StatsScreen`, `FocusScheduleScreen`, `SecurityLockScreen`) Hilt ViewModel দিয়ে ইন্টিগ্রেটেড।
+- [x] ইউনিট টেস্ট ও অ্যান্ড্রয়েড ১৫ এমুলেটরে লাইভ নেভিগেশন ও ডেটা পারসিস্টেন্স সফলভাবে ভেরিফাইড।
 
 ---
 
-### 📌 এর পরবর্তী ফেজসমূহের রোডম্যাপ (Subsequent Master Phases)
-* **Phase 4: Android OS System Services:** `ShieldProtectionService` ফোরগ্রাউন্ড সার্ভিস, `MediaProjection` ও `VirtualDisplay ImageReader` বাফার, `AudioPlaybackCapture` PCM স্ট্রিম, `ReelsAccessibilityService` নোড অবজারভার, `LiveBlurOverlayManager` সিস্টেম ওভারলে কানেকশন।
-* **Phase 5: On-Device AI Core Engine:** INT8 Quantized MobileNetV3 / EfficientNet-Lite NSFW মডেল, YAMNet অডিও ক্লাসিফায়ার, GPU Delegate / NNAPI ইন্টিগ্রেশন, অ্যাডাপ্টিভ এফপিএস ডেসিমেশন।
-* **Phase 6: End-to-End Real-Time Protection Loop:** ফ্রেম ক্যাপচার $\rightarrow$ এআই ইনফারেন্স $\rightarrow$ লাইভ ব্লার ওভারলে (<৫০ms), অডিও ক্যাপচার $\rightarrow$ মিউট (<৩০ms), থ্রেট স্বয়ংক্রিয়ভাবে রুম ডিবিতে লগ হওয়া ও ইউআই ড্যাশবোর্ডে লাইভ চার্ট আপডেট।
-* **Phase 7: Battery Optimization & Hardening:** স্ক্রিন অফ হলে স্লিপ মোড (দৈনিক ব্যাটারি ড্রেন <৩-৫%), মেমোরি লিক অডিট ও বিটম্যাপ রিসাইক্লিং।
-* **Phase 8: Security Audit & Release Packaging:** ProGuard / R8 রুলস, প্রোডাকশন সাইনড এপিকে।
+### 📌 এর পরবর্তী ফেজ (Phase 4: Android OS System Services — ইউজারের "Go ahead" অনুমতির অপেক্ষায় ⏳)
+*টার্গেট ডিরেক্টরি:* `app/src/main/java/com/safescreen/app/services/`
+* **লক্ষ্য:** অ্যান্ড্রয়েড ওএস-লেভেল সার্ভিসেস সেটআপ করা যা রিয়েল-টাইমে ফ্রেম ও অডিও ক্যাপচার করে ব্যাকগ্রাউন্ডে সুরক্ষিত রাখবে।
+1. **`ShieldProtectionService.kt` (Foreground Service):**
+   - স্থায়ী ফোরগ্রাউন্ড নোটিফিকেশন (`FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION | FOREGROUND_SERVICE_TYPE_MICROPHONE`)
+   - ওএস কিল থেকে সুরক্ষা এবং `START_STICKY` রিস্টার্ট পলিসি।
+2. **`MediaProjectionCaptureEngine.kt`:**
+   - `MediaProjection` ও `VirtualDisplay` হ্যান্ডলিং।
+   - জিরো-জিসি (`HardwareBuffer` / `ImageReader`) ফ্রেম ডেসিমেশন পাইপলাইন (৩/৫/৮ এফপিএস)।
+3. **`AudioPlaybackCaptureEngine.kt`:**
+   - `AudioRecord` উইথ `AudioPlaybackCaptureConfiguration` (অ্যান্ড্রয়েড ১০+ রুলস)।
+   - ১৬-বিট মনো ১৬kHz PCM অডিও চাঙ্ক বাফার।
+4. **`ReelsAccessibilityService.kt`:**
+   - টিকটক, ইনস্টাগ্রাম ও ইউটিউব শর্টস উইন্ডো নোড এবং ভিউ আইডি ডিটেকশন ও টাইমার কাউন্টার।
+5. **`WindowManagerOverlayController.kt`:**
+   - এআই ডিটেকশনের সাথে সাথে <৫০ms-এ `LiveBlurOverlayView` এবং টাইম আউটে `FocusInterventionOverlay` প্রদর্শন।
 
 ### ২. কী কী তৈরি করতে হবে (Requirements for Phase 3):
 1. **Room Entities & DAOs:**

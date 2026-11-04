@@ -64,6 +64,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.safescreen.app.presentation.components.CyberBackgroundWaves
 import com.safescreen.app.presentation.components.GlassmorphicCard
 import com.safescreen.app.presentation.components.NeonSwitch
@@ -85,73 +87,73 @@ import com.safescreen.app.presentation.theme.TextPrimary
  */
 @Composable
 fun SettingsScreen(
+    viewModel: SettingsViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit = {},
     onNavigateToWhitelist: () -> Unit = {},
-    onNavigateToSecurityLock: () -> Unit = {},
-    state: SettingsUiState = SettingsUiState(),
-    onEvent: (SettingsUiEvent) -> Unit = {}
+    onNavigateToSecurityLock: () -> Unit = {}
 ) {
     val context = LocalContext.current
-    var localState by remember { mutableStateOf(state) }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     val handleEvent: (SettingsUiEvent) -> Unit = { event ->
         when (event) {
-            is SettingsUiEvent.SetSensitivity -> {
-                localState = localState.copy(sensitivityLevel = event.level)
-                onEvent(event)
-            }
-            is SettingsUiEvent.SetPerformanceProfile -> {
-                localState = localState.copy(performanceProfile = event.profile)
-                onEvent(event)
-            }
             is SettingsUiEvent.SetBiometricLock -> {
-                localState = localState.copy(isBiometricLockEnabled = event.enabled)
+                viewModel.onEvent(event)
                 onNavigateToSecurityLock()
-                onEvent(event)
-            }
-            is SettingsUiEvent.SetPreventUninstall -> {
-                localState = localState.copy(isPreventUninstallEnabled = event.enabled)
-                onEvent(event)
-            }
-            is SettingsUiEvent.RequestClearCache -> {
-                localState = localState.copy(showClearCacheDialog = true)
-                onEvent(event)
-            }
-            is SettingsUiEvent.DismissClearCacheDialog -> {
-                localState = localState.copy(showClearCacheDialog = false)
-                onEvent(event)
             }
             is SettingsUiEvent.ConfirmClearCache -> {
-                localState = localState.copy(showClearCacheDialog = false, isCacheCleared = true)
+                viewModel.onEvent(event)
                 Toast.makeText(context, "Offline ML cache cleared successfully", Toast.LENGTH_SHORT).show()
-                onEvent(event)
             }
             is SettingsUiEvent.NavigateToWhitelist -> {
                 onNavigateToWhitelist()
-                onEvent(event)
             }
             is SettingsUiEvent.NavigateToSecurityLock -> {
                 onNavigateToSecurityLock()
-                onEvent(event)
             }
             is SettingsUiEvent.NavigateBack -> {
                 onNavigateBack()
-                onEvent(event)
             }
             is SettingsUiEvent.OpenPrivacyPolicy -> {
                 Toast.makeText(context, "Opening Privacy Policy...", Toast.LENGTH_SHORT).show()
-                onEvent(event)
             }
             is SettingsUiEvent.OpenLicenses -> {
                 Toast.makeText(context, "SafeScreen Open-Source Licenses", Toast.LENGTH_SHORT).show()
-                onEvent(event)
             }
+            else -> viewModel.onEvent(event)
         }
     }
 
     SettingsContent(
-        state = localState,
+        state = uiState,
         onEvent = handleEvent
+    )
+}
+
+/**
+ * Pure stateless content composable for SettingsScreen (useful for Previews and Testing).
+ */
+@Composable
+fun SettingsScreen(
+    state: SettingsUiState,
+    onEvent: (SettingsUiEvent) -> Unit = {},
+    onNavigateBack: () -> Unit = {},
+    onNavigateToWhitelist: () -> Unit = {},
+    onNavigateToSecurityLock: () -> Unit = {}
+) {
+    val context = LocalContext.current
+    SettingsContent(
+        state = state,
+        onEvent = { event ->
+            when (event) {
+                is SettingsUiEvent.NavigateToWhitelist -> onNavigateToWhitelist()
+                is SettingsUiEvent.NavigateToSecurityLock -> onNavigateToSecurityLock()
+                is SettingsUiEvent.NavigateBack -> onNavigateBack()
+                is SettingsUiEvent.OpenPrivacyPolicy -> Toast.makeText(context, "Opening Privacy Policy...", Toast.LENGTH_SHORT).show()
+                is SettingsUiEvent.OpenLicenses -> Toast.makeText(context, "SafeScreen Open-Source Licenses", Toast.LENGTH_SHORT).show()
+                else -> onEvent(event)
+            }
+        }
     )
 }
 

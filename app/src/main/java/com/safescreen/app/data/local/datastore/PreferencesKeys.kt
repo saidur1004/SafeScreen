@@ -39,3 +39,4 @@ object PreferencesKeys {
     val HAS_COMPLETED_ONBOARDING = booleanPreferencesKey("has_completed_onboarding")
     val HAS_ACCEPTED_BATTERY_OPTIMIZATION = booleanPreferencesKey("has_accepted_battery_optimization")
 }
+

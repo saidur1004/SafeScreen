@@ -57,6 +57,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.safescreen.app.presentation.components.CyberBackgroundWaves
 import com.safescreen.app.presentation.components.GlassmorphicCard
 import com.safescreen.app.presentation.components.NeonSwitch
@@ -77,52 +79,44 @@ import com.safescreen.app.presentation.theme.TextPrimary
  */
 @Composable
 fun AppWhitelistScreen(
-    onNavigateBack: () -> Unit = {},
-    state: WhitelistUiState = WhitelistUiState(),
-    onEvent: (WhitelistUiEvent) -> Unit = {}
+    viewModel: AppWhitelistViewModel = hiltViewModel(),
+    onNavigateBack: () -> Unit = {}
 ) {
-    var localState by remember { mutableStateOf(state) }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     val handleEvent: (WhitelistUiEvent) -> Unit = { event ->
         when (event) {
-            is WhitelistUiEvent.UpdateSearchQuery -> {
-                localState = localState.copy(searchQuery = event.query)
-                onEvent(event)
-            }
-            is WhitelistUiEvent.SelectCategoryFilter -> {
-                localState = localState.copy(selectedCategoryFilter = event.category)
-                onEvent(event)
-            }
-            is WhitelistUiEvent.ToggleAppWhitelist -> {
-                localState = localState.copy(
-                    apps = localState.apps.map { app ->
-                        if (app.id == event.appId) app.copy(isWhitelisted = event.isWhitelisted) else app
-                    }
-                )
-                onEvent(event)
-            }
-            is WhitelistUiEvent.WhitelistAllBankingApps -> {
-                localState = localState.copy(
-                    apps = localState.apps.map { app ->
-                        if (app.category == AppCategory.BANKING) app.copy(isWhitelisted = true) else app
-                    }
-                )
-                onEvent(event)
-            }
-            is WhitelistUiEvent.ClearSearch -> {
-                localState = localState.copy(searchQuery = "")
-                onEvent(event)
-            }
             is WhitelistUiEvent.NavigateBack -> {
                 onNavigateBack()
-                onEvent(event)
             }
+            else -> viewModel.onEvent(event)
         }
     }
 
     WhitelistContent(
-        state = localState,
+        state = uiState,
         onEvent = handleEvent
+    )
+}
+
+/**
+ * Pure stateless content composable for AppWhitelistScreen (useful for Previews and Testing).
+ */
+@Composable
+fun AppWhitelistScreen(
+    state: WhitelistUiState,
+    onEvent: (WhitelistUiEvent) -> Unit = {},
+    onNavigateBack: () -> Unit = {}
+) {
+    WhitelistContent(
+        state = state,
+        onEvent = { event ->
+            if (event is WhitelistUiEvent.NavigateBack) {
+                onNavigateBack()
+            } else {
+                onEvent(event)
+            }
+        }
     )
 }
 

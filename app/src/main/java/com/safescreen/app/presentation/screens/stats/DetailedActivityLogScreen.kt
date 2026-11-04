@@ -69,6 +69,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.safescreen.app.presentation.theme.DeepBlack
 import com.safescreen.app.presentation.theme.NeonCyan
 import com.safescreen.app.presentation.theme.NeonGreen
@@ -89,57 +91,48 @@ import com.safescreen.app.presentation.theme.WarningYellow
 @Composable
 fun DetailedActivityLogScreen(
     onNavigateBack: () -> Unit,
+    viewModel: DetailedActivityLogViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
 ) {
-    var uiState by remember { mutableStateOf(ActivityLogUiState()) }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     DetailedActivityLogContent(
         state = uiState,
         onEvent = { event ->
-            when (event) {
-                ActivityLogUiEvent.NavigateBack -> {
-                    onNavigateBack()
-                }
-                is ActivityLogUiEvent.ToggleGroupExpansion -> {
-                    uiState = uiState.copy(
-                        groupedLogs = uiState.groupedLogs.map { group ->
-                            if (group.dateId == event.dateId) {
-                                group.copy(isExpanded = !group.isExpanded)
-                            } else group
-                        }
-                    )
-                }
-                is ActivityLogUiEvent.SelectFilter -> {
-                    uiState = uiState.copy(selectedFilter = event.filter)
-                }
-                ActivityLogUiEvent.ToggleFilterMenu -> {
-                    uiState = uiState.copy(isFilterMenuVisible = !uiState.isFilterMenuVisible)
-                }
-                ActivityLogUiEvent.RequestClearLogs -> {
-                    uiState = uiState.copy(isClearConfirmDialogVisible = true)
-                }
-                ActivityLogUiEvent.ConfirmClearLogs -> {
-                    uiState = uiState.copy(
-                        isClearConfirmDialogVisible = false,
-                        groupedLogs = emptyList(),
-                        isEmpty = true
-                    )
-                }
-                ActivityLogUiEvent.DismissClearDialog -> {
-                    uiState = uiState.copy(isClearConfirmDialogVisible = false)
-                }
-                is ActivityLogUiEvent.LogItemClicked -> {
-                    // Item inspection
-                }
+            if (event is ActivityLogUiEvent.NavigateBack) {
+                onNavigateBack()
+            } else {
+                viewModel.onEvent(event)
             }
         },
         onResetLogs = {
-            uiState = uiState.copy(
-                groupedLogs = defaultSampleLogs(),
-                isEmpty = false,
-                selectedFilter = LogCategory.ALL
-            )
+            viewModel.seedDemoLogsIfEmpty()
         },
+        modifier = modifier
+    )
+}
+
+/**
+ * Pure stateless content composable for DetailedActivityLogScreen (useful for Previews and Testing).
+ */
+@Composable
+fun DetailedActivityLogScreen(
+    onNavigateBack: () -> Unit,
+    state: ActivityLogUiState,
+    onEvent: (ActivityLogUiEvent) -> Unit = {},
+    onResetLogs: () -> Unit = {},
+    modifier: Modifier = Modifier
+) {
+    DetailedActivityLogContent(
+        state = state,
+        onEvent = { event ->
+            if (event is ActivityLogUiEvent.NavigateBack) {
+                onNavigateBack()
+            } else {
+                onEvent(event)
+            }
+        },
+        onResetLogs = onResetLogs,
         modifier = modifier
     )
 }

@@ -25,3 +25,4 @@ data class UserPreferences(
     val hasCompletedOnboarding: Boolean = false,
     val hasAcceptedBatteryOptimization: Boolean = false
 )
+

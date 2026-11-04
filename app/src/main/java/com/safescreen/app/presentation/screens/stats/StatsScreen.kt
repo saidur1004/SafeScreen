@@ -68,6 +68,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.safescreen.app.presentation.components.CyberBackgroundWaves
 import com.safescreen.app.presentation.components.GlassmorphicCard
 import com.safescreen.app.presentation.theme.DeepBlack
@@ -86,35 +88,45 @@ import com.safescreen.app.presentation.theme.WarningYellow
  */
 @Composable
 fun StatsScreen(
+    viewModel: StatsViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit = {},
     onNavigateToDetailedLog: () -> Unit = {}
 ) {
-    var uiState by remember { mutableStateOf(StatsUiState()) }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     StatsContent(
         uiState = uiState,
         onEvent = { event ->
             when (event) {
-                is StatsUiEvent.SelectTimeRange -> {
-                    uiState = uiState.copy(selectedTimeRange = event.range)
-                }
-                is StatsUiEvent.SelectDay -> {
-                    uiState = uiState.copy(
-                        selectedDayIndex = event.index,
-                        weeklyActivities = uiState.weeklyActivities.mapIndexed { i, item ->
-                            item.copy(isSelected = (i == event.index))
-                        }
-                    )
-                }
-                StatsUiEvent.ViewDetailedActivityLog -> {
-                    onNavigateToDetailedLog()
-                }
-                StatsUiEvent.SeeAllApps -> {
+                StatsUiEvent.ViewDetailedActivityLog, StatsUiEvent.SeeAllApps -> {
                     onNavigateToDetailedLog()
                 }
                 StatsUiEvent.NavigateBack -> {
                     onNavigateBack()
                 }
+                else -> viewModel.onEvent(event)
+            }
+        }
+    )
+}
+
+/**
+ * Pure stateless Composable for StatsScreen (useful for Previews and Testing).
+ */
+@Composable
+fun StatsScreen(
+    uiState: StatsUiState,
+    onNavigateBack: () -> Unit = {},
+    onNavigateToDetailedLog: () -> Unit = {},
+    onEvent: (StatsUiEvent) -> Unit = {}
+) {
+    StatsContent(
+        uiState = uiState,
+        onEvent = { event ->
+            when (event) {
+                StatsUiEvent.ViewDetailedActivityLog, StatsUiEvent.SeeAllApps -> onNavigateToDetailedLog()
+                StatsUiEvent.NavigateBack -> onNavigateBack()
+                else -> onEvent(event)
             }
         }
     )

@@ -54,6 +54,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -105,78 +107,18 @@ import com.safescreen.app.presentation.theme.TextSecondary
  */
 @Composable
 fun FocusScheduleScreen(
-    onNavigateBack: () -> Unit = {}
+    onNavigateBack: () -> Unit = {},
+    viewModel: FocusScheduleViewModel = hiltViewModel()
 ) {
-    var state by remember { mutableStateOf(FocusScheduleUiState()) }
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     FocusScheduleContent(
         uiState = state,
         onEvent = { event ->
-            when (event) {
-                is FocusScheduleUiEvent.ToggleSchedule -> {
-                    state = state.copy(
-                        schedules = state.schedules.map {
-                            if (it.id == event.id) it.copy(isEnabled = !it.isEnabled) else it
-                        }
-                    )
-                }
-                is FocusScheduleUiEvent.ToggleDayFilter -> {
-                    val updated = state.activeDayFilters.toMutableSet()
-                    if (updated.contains(event.dayIndex)) {
-                        updated.remove(event.dayIndex)
-                    } else {
-                        updated.add(event.dayIndex)
-                    }
-                    state = state.copy(activeDayFilters = updated)
-                }
-                FocusScheduleUiEvent.OpenAddScheduleSheet -> {
-                    state = state.copy(showAddScheduleSheet = true)
-                }
-                FocusScheduleUiEvent.DismissAddScheduleSheet -> {
-                    state = state.copy(showAddScheduleSheet = false)
-                }
-                is FocusScheduleUiEvent.UpdateNewTitle -> {
-                    state = state.copy(newScheduleTitle = event.title)
-                }
-                is FocusScheduleUiEvent.UpdateNewStartTime -> {
-                    state = state.copy(newStartTime = event.time)
-                }
-                is FocusScheduleUiEvent.UpdateNewEndTime -> {
-                    state = state.copy(newEndTime = event.time)
-                }
-                is FocusScheduleUiEvent.ToggleNewScheduleDay -> {
-                    val updated = state.newActiveDays.toMutableSet()
-                    if (updated.contains(event.dayIndex)) {
-                        updated.remove(event.dayIndex)
-                    } else {
-                        updated.add(event.dayIndex)
-                    }
-                    state = state.copy(newActiveDays = updated)
-                }
-                FocusScheduleUiEvent.SaveNewSchedule -> {
-                    val title = state.newScheduleTitle.ifBlank { "Custom Focus Block" }
-                    val newBlock = FocusScheduleItem(
-                        id = "custom_${System.currentTimeMillis()}",
-                        title = title,
-                        startTime = state.newStartTime,
-                        endTime = state.newEndTime,
-                        repeatSummary = if (state.newActiveDays.size == 7) "Daily" else "Custom Days",
-                        activeDays = state.newActiveDays,
-                        isEnabled = true,
-                        accentColor = NeonCyan,
-                        badgeLabel = "Active",
-                        badgeColor = NeonGreen,
-                        iconType = FocusIconType.CUSTOM_CLOCK
-                    )
-                    state = state.copy(
-                        schedules = state.schedules + newBlock,
-                        showAddScheduleSheet = false,
-                        newScheduleTitle = ""
-                    )
-                }
-                FocusScheduleUiEvent.NavigateBack -> {
-                    onNavigateBack()
-                }
+            if (event is FocusScheduleUiEvent.NavigateBack) {
+                onNavigateBack()
+            } else {
+                viewModel.onEvent(event)
             }
         }
     )

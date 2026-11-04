@@ -68,6 +68,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.safescreen.app.presentation.components.CyberBackgroundWaves
 import com.safescreen.app.presentation.components.GlassmorphicCard
 import com.safescreen.app.presentation.components.NeonSwitch
@@ -96,6 +98,7 @@ import com.safescreen.app.services.overlay.LiveBlurOverlayManager
  */
 @Composable
 fun HomeScreen(
+    viewModel: HomeViewModel = hiltViewModel(),
     onNavigateToStats: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
     onNavigateToFocus: () -> Unit = {},
@@ -103,42 +106,17 @@ fun HomeScreen(
     onNavigateToStates: () -> Unit = {}
 ) {
     val context = LocalContext.current
-    var state by remember { mutableStateOf(HomeUiState()) }
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     HomeScreenContent(
         uiState = state,
         onEvent = { event ->
             when (event) {
-                is HomeUiEvent.ToggleShield -> {
-                    state = state.copy(isShieldActive = !state.isShieldActive)
-                }
-                is HomeUiEvent.SetVisualShield -> {
-                    state = state.copy(isVisualShieldEnabled = event.enabled)
-                }
-                is HomeUiEvent.SetAudioMute -> {
-                    state = state.copy(isAudioMuteEnabled = event.enabled)
-                }
-                is HomeUiEvent.SetReelsBlocker -> {
-                    state = state.copy(isReelsBlockerEnabled = event.enabled)
-                }
-                is HomeUiEvent.OpenBlurStyleSheet -> {
-                    state = state.copy(showBlurPreviewSheet = true)
-                }
-                is HomeUiEvent.DismissBlurStyleSheet -> {
-                    state = state.copy(showBlurPreviewSheet = false)
-                }
-                is HomeUiEvent.ApplyBlurStyle -> {
-                    state = state.copy(
-                        showBlurPreviewSheet = false,
-                        currentBlurStyle = event.style,
-                        currentBlurIntensity = event.intensity
-                    )
-                }
                 is HomeUiEvent.NavigateToStats -> onNavigateToStats()
                 is HomeUiEvent.NavigateToSettings -> onNavigateToSettings()
                 is HomeUiEvent.NavigateToFocus -> onNavigateToFocus()
                 is HomeUiEvent.NavigateToBlurPreview -> {
-                    state = state.copy(showBlurPreviewSheet = true)
+                    viewModel.onEvent(event)
                     onNavigateToBlurPreview()
                 }
                 is HomeUiEvent.NavigateToStates -> onNavigateToStates()
@@ -156,6 +134,7 @@ fun HomeScreen(
                         limitMinutes = 30
                     )
                 }
+                else -> viewModel.onEvent(event)
             }
         }
     )

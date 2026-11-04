@@ -27,3 +27,4 @@ class UserPreferencesRepositoryTest {
         assertEquals(hash1, hash2)
     }
 }
+

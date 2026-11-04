@@ -41,6 +41,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -76,88 +78,61 @@ import kotlinx.coroutines.launch
 fun SecurityLockScreen(
     onUnlockSuccess: () -> Unit = {},
     onNavigateBack: () -> Unit = {},
-    state: SecurityUiState = SecurityUiState(),
-    onEvent: (SecurityUiEvent) -> Unit = {}
+    viewModel: SecurityLockViewModel = hiltViewModel()
 ) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
-    val coroutineScope = rememberCoroutineScope()
-    var localState by remember { mutableStateOf(state) }
 
-    val handleEvent: (SecurityUiEvent) -> Unit = { event ->
-        when (event) {
-            is SecurityUiEvent.EnterDigit -> {
-                if (localState.pinInput.length < localState.maxPinLength && !localState.isSuccess) {
-                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                    val newPin = localState.pinInput + event.digit
-                    localState = localState.copy(pinInput = newPin, isError = false)
-
-                    // Check if PIN has reached 4 digits
-                    if (newPin.length == localState.maxPinLength) {
-                        if (newPin == "1234") {
-                            // Correct PIN!
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            localState = localState.copy(isSuccess = true, isError = false)
-                            coroutineScope.launch {
-                                delay(350)
-                                onUnlockSuccess()
-                            }
-                        } else {
-                            // Incorrect PIN
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            localState = localState.copy(
-                                isError = true,
-                                errorMessage = "Incorrect PIN. Try again.",
-                                failedAttempts = localState.failedAttempts + 1
-                            )
-                            coroutineScope.launch {
-                                delay(650)
-                                localState = localState.copy(pinInput = "", isError = false)
-                            }
-                        }
-                    }
-                    onEvent(event)
-                }
-            }
-            is SecurityUiEvent.DeleteDigit -> {
-                if (localState.pinInput.isNotEmpty() && !localState.isSuccess) {
-                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                    localState = localState.copy(
-                        pinInput = localState.pinInput.dropLast(1),
-                        isError = false
-                    )
-                    onEvent(event)
-                }
-            }
-            is SecurityUiEvent.ClearPin -> {
-                localState = localState.copy(pinInput = "", isError = false)
-                onEvent(event)
-            }
-            is SecurityUiEvent.TriggerBiometric -> {
-                // Simulate successful biometric authentication
-                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                localState = localState.copy(isSuccess = true, isError = false)
-                Toast.makeText(context, "Biometric Authentication Verified", Toast.LENGTH_SHORT).show()
-                coroutineScope.launch {
-                    delay(300)
-                    onUnlockSuccess()
-                }
-                onEvent(event)
-            }
-            is SecurityUiEvent.ForgotPin -> {
-                Toast.makeText(context, "Default testing PIN is 1234", Toast.LENGTH_LONG).show()
-                onEvent(event)
-            }
-            is SecurityUiEvent.NavigateBack -> {
-                onNavigateBack()
-                onEvent(event)
-            }
+    LaunchedEffect(state.isSuccess) {
+        if (state.isSuccess) {
+            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+            delay(350)
+            onUnlockSuccess()
         }
     }
 
     SecurityLockContent(
-        state = localState,
-        onEvent = handleEvent
+        state = state,
+        onEvent = { event ->
+            when (event) {
+                is SecurityUiEvent.EnterDigit -> {
+                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    viewModel.onEvent(event)
+                }
+                is SecurityUiEvent.DeleteDigit -> {
+                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    viewModel.onEvent(event)
+                }
+                is SecurityUiEvent.ClearPin -> {
+                    viewModel.onEvent(event)
+                }
+                is SecurityUiEvent.TriggerBiometric -> {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    Toast.makeText(context, "Biometric Authentication Verified", Toast.LENGTH_SHORT).show()
+                    viewModel.onEvent(event)
+                }
+                is SecurityUiEvent.ForgotPin -> {
+                    Toast.makeText(context, "Default testing PIN is 1234", Toast.LENGTH_LONG).show()
+                }
+                is SecurityUiEvent.NavigateBack -> {
+                    onNavigateBack()
+                }
+            }
+        }
+    )
+}
+
+@Composable
+fun SecurityLockScreen(
+    onUnlockSuccess: () -> Unit = {},
+    onNavigateBack: () -> Unit = {},
+    state: SecurityUiState,
+    onEvent: (SecurityUiEvent) -> Unit
+) {
+    SecurityLockContent(
+        state = state,
+        onEvent = onEvent
     )
 }
 

@@ -10,6 +10,7 @@ import com.safescreen.app.presentation.screens.settings.SensitivityLevel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.io.IOException
 import java.security.MessageDigest
@@ -196,10 +197,7 @@ class UserPreferencesRepository @Inject constructor(
     suspend fun verifyPin(pinInput: String, storedPreferences: UserPreferences? = null): Boolean {
         val hashInput = hashSha256(pinInput)
         val expectedHash = storedPreferences?.pinHash
-            ?: dataStore.data.map { it[PreferencesKeys.PIN_HASH_SHA256] ?: "" }.let {
-                // If no hash set yet, fallback to default "1234"
-                ""
-            }
+            ?: dataStore.data.first()[PreferencesKeys.PIN_HASH_SHA256] ?: ""
 
         // If no custom pin set, default to 1234
         if (expectedHash.isBlank()) {
@@ -293,3 +291,4 @@ class UserPreferencesRepository @Inject constructor(
         }
     }
 }
+
