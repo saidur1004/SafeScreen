@@ -93,6 +93,12 @@ class PermissionManager @Inject constructor() {
             mediaProjectionResultData = data
             hasMediaProjectionConsent = (resultCode == android.app.Activity.RESULT_OK && data != null)
         }
+
+        fun clearMediaProjectionConsent() {
+            hasMediaProjectionConsent = false
+            mediaProjectionResultCode = 0
+            mediaProjectionResultData = null
+        }
     }
 }
 

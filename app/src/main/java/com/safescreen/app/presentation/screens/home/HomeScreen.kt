@@ -1,5 +1,12 @@
 package com.safescreen.app.presentation.screens.home
 
+import android.app.Activity
+import android.content.Context
+import android.media.projection.MediaProjectionManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import com.safescreen.app.services.permission.PermissionManager
+
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -108,10 +115,34 @@ fun HomeScreen(
     val context = LocalContext.current
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
+    val mediaProjectionManager = remember {
+        context.getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+    }
+
+    val screenCaptureLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK && result.data != null) {
+            PermissionManager.setMediaProjectionResult(result.resultCode, result.data)
+            viewModel.onEvent(HomeUiEvent.ToggleShield)
+        }
+    }
+
     HomeScreenContent(
         uiState = state,
         onEvent = { event ->
             when (event) {
+                is HomeUiEvent.ToggleShield -> {
+                    if (state.isShieldActive) {
+                        viewModel.onEvent(event)
+                    } else {
+                        if (PermissionManager.hasMediaProjectionConsent) {
+                            viewModel.onEvent(event)
+                        } else {
+                            screenCaptureLauncher.launch(mediaProjectionManager.createScreenCaptureIntent())
+                        }
+                    }
+                }
                 is HomeUiEvent.NavigateToStats -> onNavigateToStats()
                 is HomeUiEvent.NavigateToSettings -> onNavigateToSettings()
                 is HomeUiEvent.NavigateToFocus -> onNavigateToFocus()

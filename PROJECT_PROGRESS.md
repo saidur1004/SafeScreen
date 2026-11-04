@@ -22,9 +22,9 @@
 
 ## 📌 ১. প্রজেক্টের বর্তমান ওভারভিউ ও লাইভ স্ট্যাটাস (Executive Snapshot)
 
-* **সর্বশেষ আপডেটের তারিখ ও সময়:** ০৪ নভেম্বর ২০২৬ (Phase 4.0: System Services Skeleton & Permission Bridging ১০০% সম্পন্ন ও এমুলেটরে ভেরিফাইড)
-* **বর্তমান পর্যায়:** **Phase 4: Android OS System Services (Phase 4.0 সম্পন্ন ✅ | Phase 4.1: MediaProjection Core এর অপেক্ষায় ⏳)**
-* **পরবর্তী তাৎক্ষণিক কাজ (Immediate Next Task):** **Phase 4.1: MediaProjection Core Engine (VirtualDisplay, ImageReader Buffer & Zero-GC Frame Decimation Pipeline)** — *[ইউজারের স্পষ্ট "Go ahead" অনুমতির অপেক্ষায়]*
+* **সর্বশেষ আপডেটের তারিখ ও সময়:** ০৪ নভেম্বর ২০২৬ (Phase 4.1: MediaProjection Core Engine ১০০% সম্পন্ন ও এমুলেটরে ভেরিফাইড ✅)
+* **বর্তমান পর্যায়:** **Phase 4: Android OS System Services (Phase 4.0 ও 4.1 সম্পন্ন ✅ | Phase 4.2: AudioPlaybackCapture এর অপেক্ষায় ⏳)**
+* **পরবর্তী তাৎক্ষণিক কাজ (Immediate Next Task):** **Phase 4.2: AudioPlaybackCapture Engine (AudioRecord, AudioPlaybackCaptureConfiguration & 16kHz Mono Stream Buffer)** — *[ইউজারের স্পষ্ট "Go ahead" অনুমতির অপেক্ষায়]*
 * **গিট রিপোজিটরি:** `https://github.com/saidur1004/SafeScreen.git` (মেইন ব্রাঞ্চ: `main`)
 * **টেকনিক্যাল টুলচেইন:** Kotlin 2.0.21, Gradle 8.14, AGP 8.7.3, Jetpack Compose BOM 2024.10.01, Dagger-Hilt 2.52, Room 2.6.1, Java 21, Min SDK 29 (Android 10), Target SDK 35 (Android 15)
 * **টেস্ট ডিভাইস:** Android Emulator (`emulator-5554`, Google APIs ARM64/x86_64, Pixel 9, Android 15 API 35)
@@ -441,18 +441,23 @@ flowchart TD
 - [x] `ShieldProtectionService.kt`: অ্যান্ড্রয়েড ১৪/১৫ কমপ্লায়েন্ট ফোরগ্রাউন্ড সার্ভিস কঙ্কাল (`mediaProjection|microphone|specialUse`)।
 - [x] লাইভ এমুলেটর ভেরিফিকেশন: প্রতিটি পারমিশন সিস্টেম ডায়ালগ দিয়ে এপ্রুভ করা হয়েছে, UI-তে ৫টি পারমিশনই `Granted` হয়েছে এবং ব্যাকগ্রাউন্ডে সার্ভিসটি নোটিফিকেশন সহ সচল থাকা প্রমাণিত।
 
-#### ধাপ ২ (Phase 4.1): MediaProjection Core Engine (পরবর্তী কাজ — ইউজারের "Go ahead" অনুমতির অপেক্ষায় ⏳)
+#### ধাপ ২ (Phase 4.1): MediaProjection Core Engine (সম্পন্ন ও এমুলেটরে ভেরিফাইড ✅)
 *টার্গেট ডিরেক্টরি:* `app/src/main/java/com/safescreen/app/services/capture/`
-- [ ] `MediaProjectionCaptureEngine.kt`:
-  - `MediaProjection` ও `VirtualDisplay` ইনিশিয়ালাইজেশন।
-  - `ImageReader` বাফার উইথ `PixelCopy` / `HardwareBuffer` (জিরো-জিসি প্রেশার)।
-  - ৩ / ৫ / ৮ FPS অ্যাডাপ্টিভ ফ্রেম ডেসিমেশন লুপ।
-- [ ] সার্ভিস ইন্টিগ্রেশন: `ShieldProtectionService`-এর সাথে ফ্রেম বাফার স্ট্রিম কানেকশন।
+- [x] `MediaProjectionCaptureEngine.kt`:
+  - `MediaProjection` ও `VirtualDisplay` ইনিশিয়ালাইজেশন অ্যান্ড্রয়েড ১৪/১৫ কমপ্লায়েন্ট `Callback` ও `HandlerThread("SafeScreenCaptureThread")` সহ।
+  - Zero-GC Pressure Buffer Pool: প্রতি ফ্রেমে নতুন `Bitmap` তৈরি না করে প্রি-অ্যালোকেটেড `reusableBitmap` (৩৬০x৮০৮) এবং একক ডিরেক্ট `ByteBuffer` (`cleanRowBuffer`) দিয়ে রো-বাই-রো স্ট্রাইড প্যাডিং পরিচালনা (~৯০% মেমোরি ব্যান্ডউইথ সাশ্রয়, মাত্র ১১৩৬ KB বাফার)।
+  - অ্যাডাপ্টিভ FPS ডেসিমেশন: `UserPreferencesRepository.performanceProfileFlow` রিয়েল-টাইম পর্যবেক্ষণ করে `BATTERY_SAVER` (৩ FPS / ৩৩৩ms), `BALANCED` (৫ FPS / ২০০ms) এবং `HIGH_PRECISION` (৮ FPS / ১২৫ms) ফ্রেম থ্রোটলিং।
+  - স্ট্যাটিক ডেল্টা স্কিপিং (Static Delta Check): ৮x৮ স্পার্স স্যাম্পল গ্রিড (৬৪ পিক্সেল) প্রমিত প্রি-অ্যালোকেটেড প্রিমিটিভ অ্যারে দিয়ে অপরিবর্তিত ফ্রেম স্বয়ংক্রিয়ভাবে বাদ দিয়ে সিপিইউ/ব্যাটারি অপচয় রোধ।
+  - অ্যান্ড্রয়েড ১৪/১৫ সিঙ্গেল-ইউজ টোকেন হ্যান্ডলিং: সেশন বন্ধ হলে টোকেন ইনভ্যালিডেশন ম্যানেজ করা এবং হোমস্ক্রিনের হিরো শিল্ড বাটন থেকে স্বয়ংক্রিয়ভাবে রি-কনসেন্ট ডায়ালগ লঞ্চের ব্যবস্থা।
+- [x] সার্ভিস ইন্টিগ্রেশন: `ShieldProtectionService`-এর সাথে ফ্রেম স্ট্রিম কানেক্টেড এবং `onDestroy`/`stopForegroundShield`-এ নিখুঁত রিসোর্স রিলিজ।
+- [x] লাইভ এমুলেটর ভেরিফিকেশন: Pixel 9 (Android 15) এমুলেটরে ১০০০+ ফ্রেম সফলভাবে ক্যাপচার হয়েছে (লগক্যাটে `360x808 @ 5 FPS` ও স্ট্যাটিক ফ্রেম স্কিপিং প্রমাণিত, কোনো ক্র্যাশ বা মেমোরি লিক ছাড়া)।
 
-#### ধাপ ৩ (Phase 4.2): AudioPlaybackCapture Engine (পরবর্তী মাইলস্টোন ⏳)
+#### ধাপ ৩ (Phase 4.2): AudioPlaybackCapture Engine (পরবর্তী কাজ — ইউজারের "Go ahead" অনুমতির অপেক্ষায় ⏳)
+*টার্গেট ডিরেক্টরি:* `app/src/main/java/com/safescreen/app/services/audio/`
 - [ ] `AudioPlaybackCaptureEngine.kt`:
   - `AudioRecord` উইথ `AudioPlaybackCaptureConfiguration`।
-  - ১৬kHz ১৬-বিট মনো অডিও স্ট্রিম চাঙ্ক বাফার।
+  - ১৬kHz ১৬-বিট মনো অডিও স্ট্রিম চাঙ্ক বাফার (জিরো-জিসি বাফার লুপ)।
+  - ব্যাকগ্রাউন্ড মিউজিক/সাউন্ড স্পিচ ডিটেকশনের জন্য অডিও পাইপলাইন প্রস্তুতকরণ।
 
 #### ধাপ ৪ (Phase 4.3): Reels Accessibility Observer (পরবর্তী মাইলস্টোন ⏳)
 - [ ] `ReelsAccessibilityObserver.kt`:

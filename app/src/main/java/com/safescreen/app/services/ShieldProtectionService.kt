@@ -18,6 +18,7 @@ import androidx.lifecycle.LifecycleService
 import com.safescreen.app.MainActivity
 import com.safescreen.app.R
 import com.safescreen.app.data.local.datastore.UserPreferencesRepository
+import com.safescreen.app.services.capture.MediaProjectionCaptureEngine
 import com.safescreen.app.services.permission.PermissionManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,6 +35,9 @@ class ShieldProtectionService : LifecycleService() {
 
     @Inject
     lateinit var userPreferencesRepository: UserPreferencesRepository
+
+    @Inject
+    lateinit var captureEngine: MediaProjectionCaptureEngine
 
     override fun onCreate() {
         super.onCreate()
@@ -108,6 +112,15 @@ class ShieldProtectionService : LifecycleService() {
                 startForeground(NOTIFICATION_ID, notification)
             }
             Log.d(TAG, "ShieldProtectionService running in foreground")
+
+            // Start screen capture if MediaProjection consent has been granted
+            if (PermissionManager.hasMediaProjectionConsent) {
+                val resultCode = PermissionManager.mediaProjectionResultCode
+                val resultData = PermissionManager.mediaProjectionResultData
+                if (resultCode != 0 && resultData != null) {
+                    captureEngine.startCapture(resultCode, resultData)
+                }
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to start foreground service: ${e.message}", e)
         }
@@ -115,6 +128,7 @@ class ShieldProtectionService : LifecycleService() {
 
     private fun stopForegroundShield() {
         Log.d(TAG, "Stopping ShieldProtectionService")
+        captureEngine.stopCapture()
         _isServiceRunning.value = false
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
@@ -167,6 +181,7 @@ class ShieldProtectionService : LifecycleService() {
 
     override fun onDestroy() {
         super.onDestroy()
+        captureEngine.stopCapture()
         _isServiceRunning.value = false
         Log.d(TAG, "ShieldProtectionService destroyed")
     }

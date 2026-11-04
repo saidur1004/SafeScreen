@@ -39,7 +39,8 @@ import com.safescreen.app.presentation.theme.DeepBlack
 fun AppNavHost(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
-    startDestination: String = Screen.Splash.route
+    startDestination: String = Screen.Splash.route,
+    hasCompletedOnboarding: () -> Boolean = { false }
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -123,7 +124,8 @@ fun AppNavHost(
             composable(Screen.Splash.route) {
                 SplashScreen(
                     onNavigateNext = {
-                        navController.navigate(Screen.Onboarding.route) {
+                        val destination = if (hasCompletedOnboarding()) Screen.Home.route else Screen.Onboarding.route
+                        navController.navigate(destination) {
                             popUpTo(Screen.Splash.route) { inclusive = true }
                         }
                     }
@@ -145,7 +147,7 @@ fun AppNavHost(
                     },
                     onAllPermissionsGranted = {
                         navController.navigate(Screen.Home.route) {
-                            popUpTo(Screen.Onboarding.route) { inclusive = true }
+                            popUpTo(Screen.PermissionHub.route) { inclusive = true }
                         }
                     }
                 )

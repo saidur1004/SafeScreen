@@ -7,7 +7,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.safescreen.app.data.local.dao.FocusScheduleDao
 import com.safescreen.app.data.local.dao.ThreatLogDao
@@ -58,12 +60,18 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
+            val userPrefs by userPreferencesRepository.userPreferencesFlow.collectAsStateWithLifecycle(
+                initialValue = null
+            )
+
             SafeScreenTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = DeepBlack
                 ) {
-                    AppNavHost()
+                    AppNavHost(
+                        hasCompletedOnboarding = { userPrefs?.hasCompletedOnboarding ?: false }
+                    )
                 }
             }
         }
