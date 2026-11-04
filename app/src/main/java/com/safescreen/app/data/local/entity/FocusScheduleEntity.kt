@@ -21,3 +21,4 @@ data class FocusScheduleEntity(
     val iconType: String = "CUSTOM_CLOCK",
     val accentColorHex: Long = 0xFF00E5FFL
 )
+

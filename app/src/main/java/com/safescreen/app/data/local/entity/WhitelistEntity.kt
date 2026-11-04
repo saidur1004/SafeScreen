@@ -26,3 +26,4 @@ data class WhitelistEntity(
     val addedTimestamp: Long = System.currentTimeMillis(),
     val accentColorHex: Long = 0xFF00F0FFL
 )
+

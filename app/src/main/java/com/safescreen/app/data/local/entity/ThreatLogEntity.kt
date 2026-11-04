@@ -45,3 +45,4 @@ data class ThreatLogEntity(
     val actionTaken: ThreatAction,
     val details: String? = null
 )
+

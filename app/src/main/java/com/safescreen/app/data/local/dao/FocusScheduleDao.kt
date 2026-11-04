@@ -42,3 +42,4 @@ interface FocusScheduleDao {
     @Query("UPDATE focus_schedules SET isEnabled = :isEnabled WHERE id = :id")
     suspend fun updateScheduleEnabled(id: String, isEnabled: Boolean)
 }
+

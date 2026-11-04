@@ -25,3 +25,4 @@ class RoomConverters {
         runCatching { ThreatAction.valueOf(it) }.getOrDefault(ThreatAction.BLURRED)
     }
 }
+

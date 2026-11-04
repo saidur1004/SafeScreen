@@ -22,9 +22,9 @@
 
 ## 📌 ১. প্রজেক্টের বর্তমান ওভারভিউ ও লাইভ স্ট্যাটাস (Executive Snapshot)
 
-* **সর্বশেষ আপডেটের তারিখ ও সময়:** ০৪ নভেম্বর ২০২৬ (Phase 3 Prompt 1: Room DB ইনফ্রাস্ট্রাকচার ও ব্যাংকিং প্রি-পপুলেশন ১০০% সম্পন্ন)
-* **বর্তমান পর্যায়:** **Phase 3: Persistence Layer (Prompt 1: Room DB সম্পন্ন ও এমুলেটরে ভেরিফাইড ✅ | Prompt 2: DataStore Preferences এর অপেক্ষায় ⏳)**
-* **পরবর্তী তাৎক্ষণিক কাজ (Immediate Next Task):** **Phase 3: Persistence Layer (Prompt 2: Jetpack DataStore Preferences Repository & Hilt Setup)** — *[ইউজারের স্পষ্ট "Go ahead" অনুমতির অপেক্ষায়]*
+* **সর্বশেষ আপডেটের তারিখ ও সময়:** ০৪ নভেম্বর ২০২৬ (Phase 3 Prompt 2: DataStore Preferences Repository ও ডাইনামিক মিউটেশন ভেরিফাইড)
+* **বর্তমান পর্যায়:** **Phase 3: Persistence Layer (Prompt 1 ও Prompt 2 সম্পন্ন ও এমুলেটরে ভেরিফাইড ✅ | Prompt 3: ViewModels Migration এর অপেক্ষায় ⏳)**
+* **পরবর্তী তাৎক্ষণিক কাজ (Immediate Next Task):** **Phase 3: Persistence Layer (Prompt 3: ViewModels Integration with Room DB & DataStore)** — *[ইউজারের স্পষ্ট "Go ahead" অনুমতির অপেক্ষায়]*
 * **গিট রিপোজিটরি:** `https://github.com/saidur1004/SafeScreen.git` (মেইন ব্রাঞ্চ: `main`)
 * **টেকনিক্যাল টুলচেইন:** Kotlin 2.0.21, Gradle 8.14, AGP 8.7.3, Jetpack Compose BOM 2024.10.01, Dagger-Hilt 2.52, Room 2.6.1, Java 21, Min SDK 29 (Android 10), Target SDK 35 (Android 15)
 * **টেস্ট ডিভাইস:** Android Emulator (`emulator-5554`, Google APIs ARM64/x86_64, Pixel 9, Android 15 API 35)
@@ -51,7 +51,8 @@
 | **Module 07: Focus Overlay** | `FocusInterventionOverlay.kt` (3D Shield & Hourglass, 5m Walk, 2m Emergency Pass) | ✅ 100% Polished | `services/overlay/FocusInterventionOverlay.kt` |
 | **Module 08: Fallbacks** | `SafeScreenStateView.kt` & `EmptyAndErrorStatesScreen.kt` (Clean, Paused, AI Error, Empty Log) | ✅ 100% Polished | `presentation/components/SafeScreenStateView.kt` |
 | **Phase 3: Room DB (P1)** | Room Database (ThreatLogEntity, WhitelistEntity, FocusScheduleEntity, Prepopulation Callback) | ✅ **100% Verified** | `AppDatabase.kt`, `ThreatLogDao.kt`, `WhitelistDao.kt`, `FocusScheduleDao.kt` |
-| **Phase 3: DataStore (P2)** | Jetpack DataStore Preferences Repository (Shield, AI Config, PIN Hash, Hilt Module) | ⏳ **Next Up (P2)** | `UserPreferencesRepository.kt`, `PreferencesKeys.kt` |
+| **Phase 3: DataStore (P2)** | Jetpack DataStore Preferences Repository (Shield, AI Config, PIN Hash, Hilt Module) | ✅ **100% Verified** | `UserPreferencesRepository.kt`, `PreferencesKeys.kt`, `DataStoreModule.kt` |
+| **Phase 3: ViewModels (P3)** | ViewModels Integration (Home, Stats, Settings, Whitelist, Log Flow Binding) | ⏳ **Next Up (P3)** | `HomeViewModel.kt`, `SettingsViewModel.kt`, etc. |
 | **Phase 4: OS Services** | MediaProjection, AudioRecord, AccessibilityService, Foreground Notification | ⏳ Planned (Phase 4) | `services/ShieldProtectionService.kt` |
 | **Phase 5: On-Device AI** | INT8 Quantized TFLite NSFW Filter & YAMNet Audio Classifier Integration | ⏳ Planned (Phase 5) | `domain/ml/TFLiteClassifier.kt` |
 
@@ -152,6 +153,27 @@
   - `provideAppDatabase`, `provideThreatLogDao`, `provideWhitelistDao`, `provideFocusScheduleDao` এবং `provideStatDao` সিঙ্গলটন হিসেবে ইনজেকশন নিশ্চিত করা হয়েছে।
 - **লাইভ এমুলেটর ভেরিফিকেশন:**
   - এমুলেটরে রান করে `SafeScreenDB` ট্যাগ দিয়ে প্রি-পপুলেশন ভেরিফাই করা হয়েছে: ৫টি ব্যাংকিং অ্যাপ ও ২টি শিডিউল ডাটাবেসে সফলভাবে লোড হয়েছে (০ এরর, ০ ওয়ার্নিং)। Unit Test: `RoomConvertersTest` সফল।
+
+### ১১. ফেজ ৩: জেটপ্যাক ডেটাস্টোর প্রেফারেন্সেস রিপোজিটরি (Phase 3 Prompt 2 Complete ✅)
+- **PreferencesKeys.kt (`data/local/datastore/PreferencesKeys.kt`):**
+  - শিল্ড টগলস: `IS_SHIELD_ACTIVE`, `IS_VISUAL_SHIELD_ENABLED`, `IS_AUDIO_MUTE_ENABLED`, `IS_REELS_BLOCKER_ENABLED`।
+  - এআই ও পারফরম্যান্স: `AI_SENSITIVITY` (`STRICT`, `BALANCED`, `RELAXED`), `PERFORMANCE_PROFILE` (`BATTERY_SAVER`, `BALANCED`, `HIGH_PRECISION`)।
+  - ব্লার স্টাইল: `BLUR_STYLE` (`FROSTED_GLASS`, `PIXELATED`, `OPAQUE`), `BLUR_INTENSITY` (Float)।
+  - সিকিউরিটি: `IS_PIN_LOCK_ENABLED`, `PIN_HASH_SHA256`, `IS_BIOMETRIC_ENABLED`, `IS_PREVENT_UNINSTALL_ENABLED`।
+  - রিলস ও ওয়েলবিয়িং: `REELS_DAILY_LIMIT_MINUTES`, `REELS_MINUTES_USED_TODAY`।
+  - অনবোর্ডিং: `HAS_COMPLETED_ONBOARDING`, `HAS_ACCEPTED_BATTERY_OPTIMIZATION`।
+- **UserPreferences.kt (`data/local/datastore/UserPreferences.kt`):**
+  - প্রেফারেন্সের সম্পূর্ণ স্টেটকে একটি টাইপ-সেফ ইমিউটেবল ডেটা ক্লাসে এনক্যাপসুলেট করা হয়েছে।
+- **UserPreferencesRepository.kt (`data/local/datastore/UserPreferencesRepository.kt`):**
+  - সেন্ট্রাল কম্বাইন্ড ফ্লো: `val userPreferencesFlow: Flow<UserPreferences>`।
+  - গ্র্যানুলার অ্যাটমিক ফ্লোজ: `isShieldActiveFlow`, `aiSensitivityFlow`, `performanceProfileFlow`, `blurStyleFlow`, ইত্যাদি।
+  - মিউটেটর ও সেটার মেথডস: `setShieldActive`, `setVisualShieldEnabled`, `setAiSensitivity`, `setPerformanceProfile`, `setBlurStyle`, `setPin`, `verifyPin` (ডিফল্ট ১২৩৪ ও কাস্টম হ্যাশ সাপোর্ট সহ)।
+  - নিরাপদ ক্রিপ্টোগ্রাফিক হ্যাশিং: `MessageDigest.getInstance("SHA-256")` দ্বারা পিন হ্যাশ সংরক্ষণ।
+- **DataStoreModule.kt (`di/DataStoreModule.kt`):**
+  - Dagger-Hilt দ্বারা `DataStore<Preferences>` এবং `UserPreferencesRepository` এর সিঙ্গলটন প্রভিশন।
+- **লাইভ এমুলেটর ও ইউনিট টেস্ট ভেরিফিকেশন:**
+  - `UserPreferencesRepositoryTest` দ্বারা SHA-256 হ্যাশিং অ্যালগরিদম সফলভাবে টেস্টেড।
+  - এমুলেটরে লাইভ মিউটেশন টেস্ট সম্পন্ন: `SafeScreenDataStore: Active UserPreferences: ShieldActive=true, Visual=true, Audio=true, Reels=false, Sensitivity=BALANCED, FPS=BALANCED, BlurStyle=FROSTED_GLASS` এবং ডাইনামিকালি মিউটেট হয়ে `Reels=true, Sensitivity=STRICT` ইনস্ট্যান্টলি রিঅ্যাক্টিভ ফ্লো-তে আপডেট হয়েছে।
 
 ---
 
@@ -323,28 +345,26 @@ flowchart TD
 - [x] `DatabaseModule.kt` (Hilt): Provide Database, ThreatLogDao, WhitelistDao, FocusScheduleDao, StatDao।
 - [x] লাইভ টেস্ট: এমুলেটরে ৫টি ব্যাংকিং অ্যাপ ও ২টি শিডিউল ডাটাবেসে সফলভাবে লোড ও লগ ভেরিফাইড।
 
-#### ধাপ ২ (Prompt 2): Jetpack DataStore Preferences Repository (পরবর্তী কাজ — ইউজারের "Go ahead" অনুমতির অপেক্ষায় ⏳)
+#### ধাপ ২ (Prompt 2): Jetpack DataStore Preferences Repository (সম্পন্ন ও এমুলেটরে ভেরিফাইড ✅)
 *টার্গেট ডিরেক্টরি:* `app/src/main/java/com/safescreen/app/data/local/datastore/` ও `.../di/`
-1. `PreferencesKeys.kt`: DataStore কী-সমূহ ডিফাইন করা।
-2. `UserPreferencesRepository.kt`:
-   - `shieldEnabled: Flow<Boolean>`
-   - `visualShieldActive: Flow<Boolean>`
-   - `audioShieldActive: Flow<Boolean>`
-   - `reelsBlockerActive: Flow<Boolean>`
-   - `aiSensitivity: Flow<AiSensitivity>` (`STRICT`, `BALANCED`, `RELAXED`)
-   - `fpsProfile: Flow<FpsProfile>` (`FPS_3`, `FPS_5`, `FPS_8`)
-   - `pinLockEnabled: Flow<Boolean>`, `pinHash: Flow<String>` (SHA-256)
-   - `blurStyle: Flow<BlurStyle>`, `blurIntensity: Flow<Float>`
-3. `DataStoreModule.kt` (Hilt):
-   - Provide `DataStore<Preferences>` ও `UserPreferencesRepository`।
+- [x] `PreferencesKeys.kt`: DataStore টাইপ-সেফ কী-সমূহ ডিফাইন করা।
+- [x] `UserPreferences.kt`: ইউনিফাইড ইমিউটেবল প্রেফারেন্সেস স্টেট স্ন্যাপশট।
+- [x] `UserPreferencesRepository.kt`:
+  - `userPreferencesFlow: Flow<UserPreferences>` (ইউনিফাইড স্টেট ফ্লো)
+  - গ্র্যানুলার অ্যাটমিক ফ্লোজ: `isShieldActiveFlow`, `isVisualShieldEnabledFlow`, `isAudioMuteEnabledFlow`, `isReelsBlockerEnabledFlow`, `aiSensitivityFlow`, `performanceProfileFlow`, `blurStyleFlow`, `isPinLockEnabledFlow` ইত্যাদি।
+  - মিউটেটর ও সেটার মেথডস: `setShieldActive`, `setVisualShieldEnabled`, `setAiSensitivity`, `setPerformanceProfile`, `setBlurStyle`, `setPin`, `verifyPin` (ডিফল্ট ১২৩৪ ও কাস্টম হ্যাশ সাপোর্ট সহ)।
+  - ক্রিপ্টোগ্রাফিক SHA-256 পিন হ্যাশিং মেকানিজম।
+- [x] `DataStoreModule.kt` (Hilt): Provide `DataStore<Preferences>` ও `UserPreferencesRepository`।
+- [x] ইউনিট টেস্ট: `UserPreferencesRepositoryTest` সফল (SHA-256 হ্যাশিং নির্ভুল)।
+- [x] লাইভ এমুলেটর ভেরিফিকেশন: প্রেফারেন্স রিড ও ডায়নামিক মিউটেশন সফলভাবে টেস্টেড (`SafeScreenDataStore: Verified Preference Mutation: Reels=true, Sensitivity=STRICT`)।
 
-#### ধাপ ৩ (Prompt 3): ViewModels Integration with Room & DataStore
+#### ধাপ ৩ (Prompt 3): ViewModels Integration with Room & DataStore (পরবর্তী কাজ — ইউজারের "Go ahead" অনুমতির অপেক্ষায় ⏳)
 *টার্গেট ডিরেক্টরি:* `app/src/main/java/com/safescreen/app/presentation/screens/`
-1. `HomeViewModel.kt`: মক স্টেট থেকে ডেটাস্টোর ও রুম লাইভ ফ্লো-তে সুইচ করা।
-2. `StatsViewModel.kt`: লাইভ ডুয়াল-বার চার্ট ও ডোনাট ক্যাটাগরি ফ্লো বাইন্ডিং।
+1. `HomeViewModel.kt`: মক স্টেট থেকে ডেটাস্টোর ও রুম লাইভ ফ্লো-তে সুইচ করা (`isShieldActive`, `blurredTodayCount`, `mutedTodayCount`, `reelsMinutesUsed`)।
+2. `StatsViewModel.kt`: রুম ডাটাবেস থেকে লাইভ ডুয়াল-বার চার্ট ও ডোনাট ক্যাটাগরি ফ্লো বাইন্ডিং।
 3. `DetailedActivityLogViewModel.kt`: রুম ডাটাবেস থেকে রিয়েল টাইমলাইন ফেচ ও ডাইনামিক ফিল্টারিং।
 4. `AppWhitelistViewModel.kt`: `WhitelistDao` থেকে সার্চ ও এক্সেম্পশন টগল বাইন্ডিং।
-5. `SettingsViewModel.kt`: এআই সেনসিটিভিটি ও এফপিএস ডেটাস্টোরে সেভ করা।
+5. `SettingsViewModel.kt`: এআই সেনসিটিভিটি, এফপিএস ও সিকিউরিটি ডেটাস্টোরে সেভ ও রিড করা।
 6. `FocusScheduleViewModel.kt`: শিডিউল ডাটাবেসে সেভ ও রিড করা।
 
 ---

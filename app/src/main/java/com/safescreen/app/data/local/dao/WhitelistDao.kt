@@ -55,3 +55,4 @@ interface WhitelistDao {
     @Query("SELECT COUNT(*) FROM app_whitelist WHERE isExempted = 1")
     fun getExemptedCountFlow(): Flow<Int>
 }
+

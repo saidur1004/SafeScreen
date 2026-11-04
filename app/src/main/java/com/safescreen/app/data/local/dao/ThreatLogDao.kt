@@ -48,3 +48,4 @@ interface ThreatLogDao {
     @Query("DELETE FROM threat_logs WHERE id = :id")
     suspend fun deleteThreatLogById(id: Long)
 }
+

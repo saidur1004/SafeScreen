@@ -41,3 +41,4 @@ class RoomConvertersTest {
         assertEquals(ThreatAction.BLURRED, converters.toThreatAction("UNKNOWN_ACTION"))
     }
 }
+

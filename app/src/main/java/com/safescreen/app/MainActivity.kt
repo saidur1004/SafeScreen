@@ -12,6 +12,7 @@ import androidx.lifecycle.lifecycleScope
 import com.safescreen.app.data.local.dao.FocusScheduleDao
 import com.safescreen.app.data.local.dao.ThreatLogDao
 import com.safescreen.app.data.local.dao.WhitelistDao
+import com.safescreen.app.data.local.datastore.UserPreferencesRepository
 import com.safescreen.app.presentation.navigation.AppNavHost
 import com.safescreen.app.presentation.theme.DeepBlack
 import com.safescreen.app.presentation.theme.SafeScreenTheme
@@ -33,16 +34,22 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var focusScheduleDao: FocusScheduleDao
 
+    @Inject
+    lateinit var userPreferencesRepository: UserPreferencesRepository
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // Verify Room Database initialization and pre-population in background
+        // Verify Room Database & DataStore initialization in background
         lifecycleScope.launch(Dispatchers.IO) {
             val exempted = whitelistDao.getExemptedPackageNames()
             val schedules = focusScheduleDao.getAllSchedulesFlow().first()
+            val userPrefs = userPreferencesRepository.userPreferencesFlow.first()
+
             Log.d("SafeScreenDB", "Pre-populated Banking Apps (${exempted.size}): $exempted")
             Log.d("SafeScreenDB", "Pre-populated Focus Schedules (${schedules.size}): ${schedules.map { it.title }}")
+            Log.d("SafeScreenDataStore", "Active UserPreferences: ShieldActive=${userPrefs.isShieldActive}, Visual=${userPrefs.isVisualShieldEnabled}, Audio=${userPrefs.isAudioMuteEnabled}, Reels=${userPrefs.isReelsBlockerEnabled}, Sensitivity=${userPrefs.aiSensitivity}, FPS=${userPrefs.performanceProfile}, BlurStyle=${userPrefs.blurStyle}")
         }
 
         setContent {
