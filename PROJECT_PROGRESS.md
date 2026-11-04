@@ -22,9 +22,9 @@
 
 ## 📌 ১. প্রজেক্টের বর্তমান ওভারভিউ ও লাইভ স্ট্যাটাস (Executive Snapshot)
 
-* **সর্বশেষ আপডেটের তারিখ ও সময়:** ০৩ নভেম্বর ২০২৬
-* **বর্তমান পর্যায়:** **Phase 2B — UI Workflow Implementation (Module 01 থেকে Module 06 পর্যন্ত ১০০% সফলভাবে সম্পন্ন ও এমুলেটরে লাইভ ভেরিফাইড ✅)**
-* **পরবর্তী তাৎক্ষণিক কাজ (Immediate Next Task):** **Module 07: Prompt 1 (`LiveBlurOverlayView.kt` — Real-Time NSFW Blur WindowManager Overlay)**
+* **সর্বশেষ আপডেটের তারিখ ও সময়:** ০৪ নভেম্বর ২০২৬
+* **বর্তমান পর্যায়:** **Phase 2B — UI Workflow Implementation (Module 01 থেকে Module 07 Prompt 1 পর্যন্ত ১০০% সফলভাবে সম্পন্ন ও এমুলেটরে লাইভ ভেরিফাইড ✅)**
+* **পরবর্তী তাৎক্ষণিক কাজ (Immediate Next Task):** **Module 07: Prompt 2 (`FocusInterventionOverlay.kt` — Fullscreen Focus Intervention & Doomscroll Breaker Overlay)**
 * **গিট রিপোজিটরি:** `https://github.com/saidur1004/SafeScreen.git` (মেইন ব্রাঞ্চ: `main`)
 * **টেকনিক্যাল টুলচেইন:** Kotlin 2.0.21, Gradle 8.14, AGP 8.7.3, Jetpack Compose BOM 2024.10.01, Dagger-Hilt 2.52, Room 2.6.1, Java 21, Min SDK 29 (Android 10), Target SDK 35 (Android 15)
 * **টেস্ট ডিভাইস:** Android Emulator (`emulator-5554`, Google APIs ARM64/x86_64, API 34/35)
@@ -47,7 +47,8 @@
 | **Module 06: Settings** | `SettingsScreen.kt` (এআই সেনসিটিভিটি, এফপিএস পিলস, সিকিউরিটি টগলস, ক্যাশ ক্লিয়ার) | ✅ 100% Polished | `presentation/screens/settings/SettingsScreen.kt` |
 | **Module 06: Whitelist** | `AppWhitelistScreen.kt` (সার্চ, ক্যাটাগরি চিপস, ব্যাংকিং প্রি-এক্সিম্পশন, স্টিকি সামারি) | ✅ 100% Polished | `presentation/screens/settings/AppWhitelistScreen.kt` |
 | **Module 06: Security** | `SecurityLockScreen.kt` (৩ডি প্যাডলক, ৪-ডট পিন প্যাড, এরর শেক, বায়োমেট্রিক আনলক) | ✅ 100% Polished | `presentation/screens/settings/SecurityLockScreen.kt` |
-| **Module 07: Overlays** | `LiveBlurOverlayView` ও `FocusInterventionOverlay` (WindowManager Overlays) | ⏳ **Next Up (Phase 2B)** | `services/overlay/` |
+| **Module 07: Live Blur** | `LiveBlurOverlayView.kt` (`WindowManager` Overlay, 3D Emblem, Breathing Aura, 5s Peek) | ✅ 100% Polished | `services/overlay/LiveBlurOverlayView.kt` |
+| **Module 07: Focus Overlay** | `FocusInterventionOverlay.kt` (Screen 15 — Fullscreen Doomscroll Lockout Overlay) | ⏳ **Next Up (Prompt 2)** | `services/overlay/FocusInterventionOverlay.kt` |
 | **Module 08: Fallbacks** | `SafeScreenStates` (Clean, Paused, AI Core Error States) | ⏳ Planned (Phase 2B) | `presentation/components/states/` |
 | **Phase 3: Persistence** | Room Database (ThreatLogEntity, WhitelistEntity) & DataStore Preferences | ⏳ Planned (Phase 3) | `AppDatabase.kt`, `StatDao.kt` |
 | **Phase 4: OS Services** | MediaProjection, AudioRecord, AccessibilityService, Foreground Notification | ⏳ Planned (Phase 4) | `services/ShieldProtectionService.kt` |
@@ -137,30 +138,27 @@
 
 ## 🚀 ৫. পরবর্তী কার্যক্রম ও সিকোয়েন্স (Next Steps for the Next Agent / Device)
 
-বাসায় গিয়ে অন্য ডিভাইসে কাজ শুরু করলে আপনার **প্রথম ও সরাসরি কাজ হবে Module 07 শুরু করা**।
+বাসায় গিয়ে অন্য ডিভাইসে কাজ শুরু করলে আপনার **প্রথম ও সরাসরি কাজ হবে Module 07 Prompt 2 শুরু করা**।
 
 ### ১. পরবর্তী টাস্কের বিস্তারিত বিবরণ (Next Task Details):
-* **পর্যায়:** **Phase 2B — Module 07: System Overlays Flow**
-* **টাস্ক:** **Prompt 1 (`LiveBlurOverlayView.kt` — Real-Time NSFW Blur WindowManager Overlay)**
-* **টার্গেট ফাইল:** `app/src/main/java/com/safescreen/app/services/overlay/LiveBlurOverlayView.kt`
-* **ভিজ্যুয়াল রেফারেন্স:** `Screen Workflow/07_Overlays_And_Dialogs/SafeScreen Protection and Focus .png` (বাম পাশের স্ক্রিন)
-* **প্রম্পট গাইড:** `Screen Workflow/MASTER_UI_PROMPTS.md` ফাইলের **প্রম্পট ১৪-B** (Screen 14: Live Visual Blur Overlay View)
+* **পর্যায়:** **Phase 2B — Module 07: System Overlays Flow (Prompt 2)**
+* **টাস্ক:** **Prompt 2 (`FocusInterventionOverlay.kt` — Fullscreen Focus Intervention & Doomscroll Breaker Overlay)**
+* **টার্গেট ফাইল:** `app/src/main/java/com/safescreen/app/services/overlay/FocusInterventionOverlay.kt`
+* **ভিজ্যুয়াল রেফারেন্স:** `Screen Workflow/07_Overlays_And_Dialogs/SafeScreen Protection and Focus .png` (ডান পাশের স্ক্রিন — Cropped ref: `focus_overlay_right_ref.jpg`)
+* **প্রম্পট গাইড:** `Screen Workflow/MASTER_UI_PROMPTS.md` ফাইলের **প্রম্পট ১৫** (Screen 15: Fullscreen Focus Intervention Overlay)
 
-### ২. কী কী তৈরি করতে হবে (Requirements for Module 07 Prompt 1):
-1. **WindowManager Overlay ভিউ:**
+### ২. কী কী তৈরি করতে হবে (Requirements for Module 07 Prompt 2):
+1. **Fullscreen Lockout Scrim:**
    - অ্যান্ড্রয়েড ওএস উইন্ডো টাইপ: `WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY`
-   - ফ্ল্যাগস: `FLAG_NOT_FOCUSABLE or FLAG_LAYOUT_IN_SCREEN or FLAG_NOT_TOUCH_MODAL`
-   - ফরম্যাট: `PixelFormat.TRANSLUCENT`
-2. **ডাইনামিক ব্লার বক্স (Localized Blur Box):**
-   - স্ক্রিনের যে অংশে এক্সপ্লিসিট কন্টেন্ট শনাক্ত হবে, ঠিক সেই বাউন্ডিং বক্সে ফ্রস্টেড ব্লার ইফেক্ট ড্র করা।
-   - সেন্টারে ডার্ক গ্লাস ট্রাস্ট ব্যাজ: আইকন (Eye-slash) + "Protected by SafeScreen AI" উইথ গ্লোয়িং নিয়ন সায়ান বর্ডার।
-3. **নন-ইনট্রুসিভ পাস-থ্রু (Non-Intrusive Pass-Through):**
-   - ব্লার বক্সের বাইরের স্ক্রিনে ব্যবহারকারীর টাচ ও জেসচার সরাসরি পেছনের অ্যাপে স্বাভাবিকভাবে পাস হতে হবে।
-4. **ট্রিগার লজিক:**
-   - থ্রেট ডিটেকশন সিগন্যাল পাওয়ার ৫০ms এর মধ্যে ওভারলে রেন্ডার হবে এবং ইউজার স্ক্রোল করে সরে গেলে স্বয়ংক্রিয়ভাবে অদৃশ্য হবে।
+   - ফ্ল্যাগস: ফুলস্ক্রিন ইনপুট ইন্টারসেপশন যাতে লকআউটের সময় পেছনের রিলস/শর্টস অ্যাপে কোনো টাচ কাজ না করে।
+2. **ভায়োলেশন ও মোটিভেশনাল হেডার:**
+   - "Time to Breathe" / "Daily Limit Reached (30m)"
+   - বড় ৩ডি আওয়ারগ্লাস বা ব্রিদিং লোটাস/শিল্ড আইকন উইথ নিয়ন পার্পল অরা গ্লো।
+3. **ইন্টারভেনশন কন্ট্রোলস:**
+   - "Take a 5-Min Walk" / "Close App" প্রাইমারি অ্যাকশন বাটন।
+   - "Bypass with Emergency PIN" বা "Snooze (1m)" সেকেন্ডারি চয়েস।
 
 ### ৩. এর পরবর্তী ধাপসমূহ (Subsequent Roadmap):
-* **Module 07: Prompt 2:** `FocusInterventionOverlay.kt` (Screen 15 — রিলস ও শর্টসের ফুলস্ক্রিন ফোকাস ইন্টারভেনশন লকআউট ওভারলে)।
 * **Module 08:** `SafeScreenStates.kt` (Screen 16 — এম্পটি হিস্ট্রি স্টেট, শিল্ড পজড স্টেট ও এআই কোর এরর স্টেট)।
 * **Phase 3:** Room Database (`AppDatabase.kt`, `ThreatLogDao.kt`, `WhitelistDao.kt`) এবং DataStore Preferences ইন্টিগ্রেশন।
 * **Phase 4:** Android OS Permissions Wiring (MediaProjection, Audio, AccessibilityService, Battery Whitelist) ও ফোরগ্রাউন্ড সার্ভিস।

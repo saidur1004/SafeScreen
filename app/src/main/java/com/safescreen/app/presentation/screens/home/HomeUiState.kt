@@ -40,5 +40,6 @@ sealed interface HomeUiEvent {
     data object NavigateToSettings : HomeUiEvent
     data object NavigateToFocus : HomeUiEvent
     data object NavigateToBlurPreview : HomeUiEvent
+    data object TriggerLiveBlurDemo : HomeUiEvent
 }
 

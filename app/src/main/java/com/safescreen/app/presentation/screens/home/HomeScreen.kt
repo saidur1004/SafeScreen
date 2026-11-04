@@ -62,6 +62,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -79,6 +80,7 @@ import com.safescreen.app.presentation.theme.NeonPurple
 import com.safescreen.app.presentation.theme.TextMuted
 import com.safescreen.app.presentation.theme.TextPrimary
 import com.safescreen.app.presentation.theme.TextSecondary
+import com.safescreen.app.services.overlay.LiveBlurOverlayManager
 
 /**
  * Flagship Home Dashboard for SafeScreen (Screen 05 / Module 03).
@@ -98,6 +100,7 @@ fun HomeScreen(
     onNavigateToFocus: () -> Unit = {},
     onNavigateToBlurPreview: () -> Unit = {}
 ) {
+    val context = LocalContext.current
     var state by remember { mutableStateOf(HomeUiState()) }
 
     HomeScreenContent(
@@ -135,6 +138,13 @@ fun HomeScreen(
                 is HomeUiEvent.NavigateToBlurPreview -> {
                     state = state.copy(showBlurPreviewSheet = true)
                     onNavigateToBlurPreview()
+                }
+                is HomeUiEvent.TriggerLiveBlurDemo -> {
+                    LiveBlurOverlayManager.showOverlay(
+                        context = context,
+                        threatConfidence = 0.98f,
+                        threatType = "Harmful Content Blocked"
+                    )
                 }
             }
         }
@@ -283,6 +293,13 @@ fun HomeScreenContent(
                     modifier = Modifier.weight(1f)
                 )
             }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // F. System Overlay Simulator Card (Module 07 Demo Trigger)
+            LiveBlurOverlaySimulatorCard(
+                onTriggerClick = { onEvent(HomeUiEvent.TriggerLiveBlurDemo) }
+            )
 
             // Extra bottom spacing to ensure content is never obscured by the floating nav bar
             Spacer(modifier = Modifier.height(105.dp))
@@ -746,6 +763,99 @@ private fun QuickFeatureToggleCard(
                 onCheckedChange = onToggle,
                 activeColor = activeSwitchColor
             )
+        }
+    }
+}
+
+/**
+ * Demo trigger card for Module 07 Live Blur WindowManager System Overlay.
+ */
+@Composable
+private fun LiveBlurOverlaySimulatorCard(
+    onTriggerClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    GlassmorphicCard(
+        modifier = modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(16.dp),
+        borderColor = NeonCyan.copy(alpha = 0.35f),
+        backgroundColor = Color(0xFF0F1B2C)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(42.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(NeonCyan.copy(alpha = 0.15f))
+                        .border(1.dp, NeonCyan.copy(alpha = 0.45f), RoundedCornerShape(12.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.VisibilityOff,
+                        contentDescription = null,
+                        tint = NeonCyan,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Column {
+                    Text(
+                        text = "Live Blur Overlay",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary,
+                            fontSize = 15.sp
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = "Test WindowManager AI mask",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = TextMuted,
+                            fontSize = 11.sp
+                        )
+                    )
+                }
+            }
+
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(
+                                NeonCyan,
+                                Color(0xFF00E5FF)
+                            )
+                        )
+                    )
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = onTriggerClick
+                    )
+                    .padding(horizontal = 14.dp, vertical = 9.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Test Overlay",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black,
+                        fontSize = 12.sp
+                    )
+                )
+            }
         }
     }
 }
