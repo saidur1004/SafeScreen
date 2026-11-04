@@ -23,8 +23,8 @@
 ## 📌 ১. প্রজেক্টের বর্তমান ওভারভিউ ও লাইভ স্ট্যাটাস (Executive Snapshot)
 
 * **সর্বশেষ আপডেটের তারিখ ও সময়:** ০৪ নভেম্বর ২০২৬
-* **বর্তমান পর্যায়:** **Phase 2B — UI Workflow Implementation (Module 01 থেকে Module 07 পর্যন্ত ১০০% সফলভাবে সম্পন্ন ও এমুলেটরে লাইভ ভেরিফাইড ✅)**
-* **পরবর্তী তাৎক্ষণিক কাজ (Immediate Next Task):** **Module 08: Empty, Warning & Error States (`SafeScreenStates.kt` — Screen 16)**
+* **বর্তমান পর্যায়:** **Phase 2B — UI Workflow Implementation (Module 01 থেকে Module 08 পর্যন্ত ১০০% সম্পন্ন ও এমুলেটরে লাইভ ভেরিফাইড 🎉)**
+* **পরবর্তী তাৎক্ষণিক কাজ (Immediate Next Task):** **Phase 3: Persistence Layer (Room Database & DataStore Preferences)**
 * **গিট রিপোজিটরি:** `https://github.com/saidur1004/SafeScreen.git` (মেইন ব্রাঞ্চ: `main`)
 * **টেকনিক্যাল টুলচেইন:** Kotlin 2.0.21, Gradle 8.14, AGP 8.7.3, Jetpack Compose BOM 2024.10.01, Dagger-Hilt 2.52, Room 2.6.1, Java 21, Min SDK 29 (Android 10), Target SDK 35 (Android 15)
 * **টেস্ট ডিভাইস:** Android Emulator (`emulator-5554`, Google APIs ARM64/x86_64, API 34/35)
@@ -49,8 +49,8 @@
 | **Module 06: Security** | `SecurityLockScreen.kt` (৩ডি প্যাডলক, ৪-ডট পিন প্যাড, এরর শেক, বায়োমেট্রিক আনলক) | ✅ 100% Polished | `presentation/screens/settings/SecurityLockScreen.kt` |
 | **Module 07: Live Blur** | `LiveBlurOverlayView.kt` (`WindowManager` Overlay, 3D Emblem, Breathing Aura, 5s Peek) | ✅ 100% Polished | `services/overlay/LiveBlurOverlayView.kt` |
 | **Module 07: Focus Overlay** | `FocusInterventionOverlay.kt` (3D Shield & Hourglass, 5m Walk, 2m Emergency Pass) | ✅ 100% Polished | `services/overlay/FocusInterventionOverlay.kt` |
-| **Module 08: Fallbacks** | `SafeScreenStates.kt` (All Clean Empty, Shield Paused Warning, Model Missing Error) | ⏳ **Next Up (Module 08)** | `presentation/components/states/SafeScreenStates.kt` |
-| **Phase 3: Persistence** | Room Database (ThreatLogEntity, WhitelistEntity) & DataStore Preferences | ⏳ Planned (Phase 3) | `AppDatabase.kt`, `StatDao.kt` |
+| **Module 08: Fallbacks** | `SafeScreenStateView.kt` & `EmptyAndErrorStatesScreen.kt` (Clean, Paused, AI Error, Empty Log) | ✅ 100% Polished | `presentation/components/SafeScreenStateView.kt` |
+| **Phase 3: Persistence** | Room Database (ThreatLogEntity, WhitelistEntity) & DataStore Preferences | ⏳ **Next Up (Phase 3)** | `AppDatabase.kt`, `StatDao.kt` |
 | **Phase 4: OS Services** | MediaProjection, AudioRecord, AccessibilityService, Foreground Notification | ⏳ Planned (Phase 4) | `services/ShieldProtectionService.kt` |
 | **Phase 5: On-Device AI** | INT8 Quantized TFLite NSFW Filter & YAMNet Audio Classifier Integration | ⏳ Planned (Phase 5) | `domain/ml/TFLiteClassifier.kt` |
 
@@ -102,6 +102,31 @@
   - *Shake Error Animation:* ভুল পিন দিলে ডটগুলোর ওপর হরিজন্টাল শেক অ্যানিমেশন প্লে হয় এবং এরর মেসেজ প্রদর্শিত হয়।
   - *Custom 3x4 Dial Pad:* ৭২dp সার্কুলার গ্লাস কিপ্যাড বাটনস (লেটার সাবটাইটেলস সহ), বায়োমেট্রিক ফিঙ্গারপ্রিন্ট বাটন এবং ব্যাকস্পেস বাটন। ডিফল্ট টেস্টিং পিন হলো `1234`।
 
+### ৮. মডিউল ০৭: রিয়েল-টাইম ব্লার ও ফোকাস ওভারলে (Module 07 Complete)
+- **LiveBlurOverlayView.kt & LiveBlurOverlayManager.kt:**
+  - *WindowManager Architecture:* `TYPE_APPLICATION_OVERLAY` উইন্ডোতে ডিরেক্ট Jetpack Compose রেন্ডার করার জন্য কাস্টম `OverlayLifecycleOwner` ইমপ্লিমেন্টেশন।
+  - *Full Cyber Shield:* স্ক্রিনে কোনো আপত্তিকর (NSFW) দৃশ্য বা কন্টেন্ট ডিটেক্ট হলে তাৎক্ষণিক ফুলস্ক্রিন ফ্রস্টেড ব্লার ইন্টারভেনশন।
+  - *Breathing Aura & 3D Emblem:* সেন্ট্রাল ৩ডি বেভেল্ড শিল্ড উইথ পালসিং সাইবার সায়ান গ্লোয়িং অরা।
+  - *Temporary 5-Second Peek:* "👁 Temporary Peek" বাটন চাপলে ব্লার অপাসিটি হ্রাস পেয়ে ৫ সেকেন্ডের রিভার্স কাউন্টডাউন টাইমার চলে এবং টাইমার শেষে স্বয়ংক্রিয়ভাবে ১০০% ব্লার রিলক হয়ে যায়।
+  - *Dismiss / Exit:* "✕ Dismiss Shield" ট্যাপে উইন্ডো ম্যানেজার থেকে ওভারলে স্মুথলি রিমুভ হয়।
+- **FocusInterventionOverlay.kt & FocusInterventionOverlayManager.kt:**
+  - *Full-screen Intercept Overlay:* নির্ধারিত স্ক্রিন-টাইম শেষ হলে Reels বা Shorts ফিডের ওপর নো-ডিসমিসিবল সাইবার ইন্টারভেনশন স্ক্রিন।
+  - *Hero Graphic:* ৩ডি সাইবার শিল্ড এবং তার মাঝে ম্যাজেন্টা-পার্পল গ্লোয়িং আওয়ারগ্লাস এম্বলম।
+  - *Psychological Re-centering:* "Deep Breath • Reclaim Your Focus" হেডার ও স্ক্রিন-টাইম ওভারভিউ।
+  - *5-Minute Walk Break:* "Take a 5-Min Walk" অ্যাকশন বাটন ট্যাপ করলে স্ক্রিন থেকে বের হয়ে হেলদি মাইন্ডফুলনেস ব্রেক নেওয়ার জন্য ইনভাইটেশন।
+  - *2-Minute Emergency Pass:* জরুরি প্রয়োজনে "2-Min Emergency Pass" ট্যাপে কাউন্টডাউন শুরু হয় এবং সময় শেষ হওয়া মাত্রই উইন্ডো পুনরায় স্বয়ংক্রিয়ভাবে ফুল লকআউট স্টেটে ফিরে আসে।
+
+### ৯. মডিউল ০৮: সিস্টেম ফলব্যাক, এম্পটি ও এরর স্টেটস (Module 08 Complete — Phase 2B Done!)
+- **SafeScreenStateView.kt (`presentation/components/SafeScreenStateView.kt`):**
+  - সম্পূর্ণ স্বাধীন, রিউজেবল কম্পোনেন্ট যা যেকোনো স্ক্রিনে (Home, Activity Log, Error Screens) সরাসরি এমবেড করা যায়।
+  - *State 1 (ALL_CLEAN - All Clean & Clear):* ৩ডি বায়ো-গ্রিন শিল্ড উইথ হোয়াইট চেকমার্ক, সফট গ্রিন হ্যালো, ৩-মেট্রিক পিল কন্টেইনার `[0 Blurred] [0 Muted] [0 Blocked]` এবং ফ্রস্টেড ব্যাজ `"Stay Focused, Stay Safe 💚"`।
+  - *State 2 (SHIELD_PAUSED - Permission Lost):* ৩ডি অ্যাম্বার-গোল্ড শিল্ড উইথ ওয়ার্নিং ট্রায়াঙ্গেল ও `(!)` পিল, "Shield Paused: Screen Access Needed" টাইটেল, নিয়ন ইয়েলো গ্লোয়িং ক্যাপসুল বাটন `"Restore Permissions"` এবং গাইডেন্স কার্ড।
+  - *State 3 (AI_CORE_ERROR - AI Engine Offline):* ৩ডি ইলেকট্রিক সায়ান নিউরাল ব্রেন উইথ সার্কিট ট্র্যাকস, পিঙ্ক রেঞ্চ রিপেয়ার ব্যাজ, আউটলাইন্ড সায়ান গ্লো বাটন `"Reload Core"` এবং লোকাল রিলোড ইনফো কার্ড।
+  - *State 4 (EMPTY_LOG - Detailed Activity Log Clean):* ৩ডি গ্লোয়িং নিয়ন ফোল্ডার উইথ শিল্ড ও চেকমার্ক, "All Clear! No Threats Found.", সাবটাইটেল এবং `"Refresh"` ক্যাপসুল বাটন।
+- **EmptyAndErrorStatesScreen.kt (`presentation/screens/states/`):**
+  - ৪-ট্যাব সেগমেন্ট সুইচার (`[Clean] [Paused] [AI Error] [Empty Log]`) সহ ফুল-স্ক্রিন স্টেট ভেরিফায়ার।
+  - `HomeScreen.kt`-এ ডেডিকেটেড `FallbackStatesSimulatorCard` যোগ করা হয়েছে যা সরাসরি `Screen.EmptyAndErrorStates.route`-এ নেভিগেট করে।
+
 ---
 
 ## 🔍 ৪. কাজ করতে গিয়ে যেসব সমস্যা দেখা দিয়েছিল এবং যেভাবে সমাধান করা হয়েছে (Problems & Solutions)
@@ -138,31 +163,33 @@
 
 ## 🚀 ৫. পরবর্তী কার্যক্রম ও সিকোয়েন্স (Next Steps for the Next Agent / Device)
 
-বাসায় গিয়ে অন্য ডিভাইসে কাজ শুরু করলে আপনার **প্রথম ও সরাসরি কাজ হবে Module 08 শুরু করা**।
+যেহেতু **Phase 2B (UI Workflow Implementation) এর সকল মডিউল (Module 01 থেকে Module 08) ১০০% সফলভাবে সম্পন্ন হয়েছে**, বাসায় গিয়ে অন্য ডিভাইসে কাজ শুরু করলে আপনার **প্রথম ও সরাসরি কাজ হবে Phase 3 (Room DB & DataStore) শুরু করা**।
 
 ### ১. পরবর্তী টাস্কের বিস্তারিত বিবরণ (Next Task Details):
-* **পর্যায়:** **Phase 2B — Module 08: Error, Empty & Fallback States Flow**
-* **টাস্ক:** **Prompt 1 (`SafeScreenStates.kt` — Screen 16: Empty, Warning & Error State Composables)**
-* **টার্গেট ফাইল:** `app/src/main/java/com/safescreen/app/presentation/components/states/SafeScreenStates.kt`
-* **ভিজ্যুয়াল রেফারেন্স:** `Screen Workflow/08_Error_And_Empty_States/SafeScreen Neon Status Dashboard.png` ও `SafeScreen Activity Log_ All Cle.png`
-* **প্রম্পট গাইড:** `Screen Workflow/MASTER_UI_PROMPTS.md` ফাইলের **প্রম্পট ১৬-B** (Screen 16: Empty, Warning & Error States)
+* **পর্যায়:** **Phase 3 — Persistence Layer (Room Database & DataStore Preferences)**
+* **টাস্ক:** **Prompt 1 (`ThreatLogDao`, `WhitelistDao`, `AppDatabase.kt` & DataStore Setup)**
+* **টার্গেট ডিরেক্টরি:** 
+  - `app/src/main/java/com/safescreen/app/data/local/room/` (Entities, DAOs, Database, TypeConverters)
+  - `app/src/main/java/com/safescreen/app/data/local/datastore/` (UserPreferencesSerializer, PreferencesKeys)
+  - `app/src/main/java/com/safescreen/app/di/DatabaseModule.kt` (Hilt Dependency Injection)
+* **রোডম্যাপ গাইড:** `DEVELOPMENT_ROADMAP.md` ফাইলের **Phase 3: Persistence Layer**
 
-### ২. কী কী তৈরি করতে হবে (Requirements for Module 08):
-1. **EmptyStatsState (All Clean & Clear):**
-   - নিয়ন গ্রিন বেভেল্ড শিল্ড উইথ চেকমার্ক, পার্পল/সায়ান স্পার্কলস।
-   - টাইটেল: "All Clean & Clear", সাবটাইটেল: "No explicit visuals or music interruptions detected yet today. Enjoy your safe digital journey!"
-   - মেট্রিক পিল রো: [0 Blurred] [0 Muted] [0 Blocked], ব্যাজ: "✔ Stay Focused, Stay Safe 💚".
-2. **PermissionRevokedWarning (Shield Paused):**
-   - অ্যাম্বার-ইয়োলো শিল্ড উইথ এক্সক্লেমেশন মার্ক।
-   - টাইটেল: "⏸ Shield Paused: Screen Access Needed", অ্যাকশন বাটন: "Restore Permissions".
-3. **AiModelMissingError (AI Engine Offline):**
-   - রেড-অরেঞ্জ ৩ডি এরর শিল্ড উইথ ব্রোকেন চিপ আইকন।
-   - টাইটেল: "AI Core Offline", রিট্রাই বাটন: "Redownload Neural Weights".
+### ২. কী কী তৈরি করতে হবে (Requirements for Phase 3):
+1. **Room Entities & DAOs:**
+   - `ThreatLogEntity.kt`: id (AutoGenerate), timestamp (Long), threatType (VISUAL_NSFW, AUDIO_EXPLICIT, REELS_LIMIT), appPackageName (String), appName (String), severity (FLOAT), actionTaken (BLURRED, MUTED, BLOCKED).
+   - `ThreatLogDao.kt`: insert, getAllFlow, getGroupedByDate, getTodayCountsFlow, clearAll.
+   - `WhitelistEntity.kt`: packageName (PrimaryKey), appName, category, isExempted, isBankingDefault, addedTimestamp.
+   - `WhitelistDao.kt`: insertOrUpdate, getAllFlow, getExemptedPackagesFlow, toggleExemption.
+   - `AppDatabase.kt`: RoomDatabase with version 1, exportSchema = true, Thread-safe singleton with pre-population callback for banking apps.
+2. **Jetpack DataStore Preferences:**
+   - `UserPreferencesRepository.kt`: shieldEnabled, visualShieldActive, audioShieldActive, reelsBlockerActive, aiSensitivity (STRICT, BALANCED, RELAXED), fpsProfile (FPS_3, FPS_5, FPS_8), pinLockEnabled, pinHash (SHA-256), blurStyle (FROSTED, PIXELATED, OPAQUE), blurIntensity.
+3. **Hilt Database & DataStore Module:**
+   - Provide Room DB instance, ThreatLogDao, WhitelistDao, and DataStore DataStore<Preferences>.
 
 ### ৩. এর পরবর্তী ধাপসমূহ (Subsequent Roadmap):
-* **Phase 3:** Room Database (`AppDatabase.kt`, `ThreatLogDao.kt`, `WhitelistDao.kt`) এবং DataStore Preferences ইন্টিগ্রেশন।
-* **Phase 4:** Android OS Permissions Wiring (MediaProjection, Audio, AccessibilityService, Battery Whitelist) ও ফোরগ্রাউন্ড সার্ভিস।
+* **Phase 4:** Android OS Permissions Wiring (MediaProjection, AudioRecord, AccessibilityService, Battery Whitelist) ও ফোরগ্রাউন্ড সার্ভিস।
 * **Phase 5:** On-Device AI Pipeline (TFLite NSFW Detection & YAMNet Audio Classifier) ইন্টিগ্রেশন।
+* **Phase 6:** End-to-End Real-Time Protection Loop & Background Battery Optimization.
 
 ---
 

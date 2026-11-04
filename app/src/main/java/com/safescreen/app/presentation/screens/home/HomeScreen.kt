@@ -99,7 +99,8 @@ fun HomeScreen(
     onNavigateToStats: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
     onNavigateToFocus: () -> Unit = {},
-    onNavigateToBlurPreview: () -> Unit = {}
+    onNavigateToBlurPreview: () -> Unit = {},
+    onNavigateToStates: () -> Unit = {}
 ) {
     val context = LocalContext.current
     var state by remember { mutableStateOf(HomeUiState()) }
@@ -140,6 +141,7 @@ fun HomeScreen(
                     state = state.copy(showBlurPreviewSheet = true)
                     onNavigateToBlurPreview()
                 }
+                is HomeUiEvent.NavigateToStates -> onNavigateToStates()
                 is HomeUiEvent.TriggerLiveBlurDemo -> {
                     LiveBlurOverlayManager.showOverlay(
                         context = context,
@@ -313,6 +315,12 @@ fun HomeScreenContent(
 
             FocusInterventionSimulatorCard(
                 onTriggerClick = { onEvent(HomeUiEvent.TriggerFocusInterventionDemo) }
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            FallbackStatesSimulatorCard(
+                onTriggerClick = { onEvent(HomeUiEvent.NavigateToStates) }
             )
 
             // Extra bottom spacing to ensure content is never obscured by the floating nav bar
@@ -959,6 +967,99 @@ private fun FocusInterventionSimulatorCard(
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
+                        fontSize = 12.sp
+                    )
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Demo trigger card for Module 08 Fallback, Warning & Empty States.
+ */
+@Composable
+private fun FallbackStatesSimulatorCard(
+    onTriggerClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    GlassmorphicCard(
+        modifier = modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(16.dp),
+        borderColor = NeonGreen.copy(alpha = 0.40f),
+        backgroundColor = Color(0xFF0C1918)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(42.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(NeonGreen.copy(alpha = 0.18f))
+                        .border(1.dp, NeonGreen.copy(alpha = 0.50f), RoundedCornerShape(12.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Shield,
+                        contentDescription = null,
+                        tint = NeonGreen,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Column {
+                    Text(
+                        text = "System Fallback States",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary,
+                            fontSize = 15.sp
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = "Clean, Paused & AI Error states",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = TextMuted,
+                            fontSize = 11.sp
+                        )
+                    )
+                }
+            }
+
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(
+                                Color(0xFF00FFA3),
+                                Color(0xFF00E676)
+                            )
+                        )
+                    )
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = onTriggerClick
+                    )
+                    .padding(horizontal = 14.dp, vertical = 9.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Test States",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black,
                         fontSize = 12.sp
                     )
                 )

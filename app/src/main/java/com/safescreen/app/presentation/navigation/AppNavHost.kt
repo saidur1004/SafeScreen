@@ -24,6 +24,7 @@ import com.safescreen.app.presentation.screens.settings.AppWhitelistScreen
 import com.safescreen.app.presentation.screens.settings.SecurityLockScreen
 import com.safescreen.app.presentation.screens.settings.SettingsScreen
 import com.safescreen.app.presentation.screens.splash.SplashScreen
+import com.safescreen.app.presentation.screens.states.EmptyAndErrorStatesScreen
 import com.safescreen.app.presentation.screens.stats.DetailedActivityLogScreen
 import com.safescreen.app.presentation.screens.stats.StatsScreen
 import com.safescreen.app.services.overlay.FocusInterventionContent
@@ -124,6 +125,9 @@ fun AppNavHost(
                             launchSingleTop = true
                             restoreState = true
                         }
+                    },
+                    onNavigateToStates = {
+                        navController.navigate(Screen.EmptyAndErrorStates.route)
                     }
                 )
             }
@@ -213,6 +217,14 @@ fun AppNavHost(
                         navController.popBackStack()
                     },
                     onDismiss = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+
+            composable(Screen.EmptyAndErrorStates.route) {
+                EmptyAndErrorStatesScreen(
+                    onNavigateBack = {
                         navController.popBackStack()
                     }
                 )
