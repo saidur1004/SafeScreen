@@ -95,3 +95,4 @@ class PermissionManager @Inject constructor() {
         }
     }
 }
+
