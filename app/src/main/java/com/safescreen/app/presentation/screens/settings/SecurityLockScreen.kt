@@ -47,7 +47,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -78,6 +80,7 @@ fun SecurityLockScreen(
     onEvent: (SecurityUiEvent) -> Unit = {}
 ) {
     val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
     val coroutineScope = rememberCoroutineScope()
     var localState by remember { mutableStateOf(state) }
 
@@ -85,6 +88,7 @@ fun SecurityLockScreen(
         when (event) {
             is SecurityUiEvent.EnterDigit -> {
                 if (localState.pinInput.length < localState.maxPinLength && !localState.isSuccess) {
+                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                     val newPin = localState.pinInput + event.digit
                     localState = localState.copy(pinInput = newPin, isError = false)
 
@@ -92,6 +96,7 @@ fun SecurityLockScreen(
                     if (newPin.length == localState.maxPinLength) {
                         if (newPin == "1234") {
                             // Correct PIN!
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             localState = localState.copy(isSuccess = true, isError = false)
                             coroutineScope.launch {
                                 delay(350)
@@ -99,6 +104,7 @@ fun SecurityLockScreen(
                             }
                         } else {
                             // Incorrect PIN
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             localState = localState.copy(
                                 isError = true,
                                 errorMessage = "Incorrect PIN. Try again.",
@@ -115,6 +121,7 @@ fun SecurityLockScreen(
             }
             is SecurityUiEvent.DeleteDigit -> {
                 if (localState.pinInput.isNotEmpty() && !localState.isSuccess) {
+                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                     localState = localState.copy(
                         pinInput = localState.pinInput.dropLast(1),
                         isError = false
@@ -128,6 +135,7 @@ fun SecurityLockScreen(
             }
             is SecurityUiEvent.TriggerBiometric -> {
                 // Simulate successful biometric authentication
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                 localState = localState.copy(isSuccess = true, isError = false)
                 Toast.makeText(context, "Biometric Authentication Verified", Toast.LENGTH_SHORT).show()
                 coroutineScope.launch {

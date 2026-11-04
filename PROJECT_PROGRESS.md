@@ -22,8 +22,8 @@
 
 ## 📌 ১. প্রজেক্টের বর্তমান ওভারভিউ ও লাইভ স্ট্যাটাস (Executive Snapshot)
 
-* **সর্বশেষ আপডেটের তারিখ ও সময়:** ০৪ নভেম্বর ২০২৬
-* **বর্তমান পর্যায়:** **Phase 2B — UI Workflow Implementation (Module 01 থেকে Module 08 পর্যন্ত ১০০% সম্পন্ন, ডিপ অডিট কৃত ও এমুলেটরে লাইভ ভেরিফাইড 🎉)**
+* **সর্বশেষ আপডেটের তারিখ ও সময়:** ০৪ নভেম্বর ২০২৬ (ডিপ স্ক্যান, হাই-এন্ড পলিশ ও মাস্টার স্ট্র্যাটেজিক রোডম্যাপ সহ আপডেটেড)
+* **বর্তমান পর্যায়:** **Phase 2B — UI Workflow Implementation (Module 01 থেকে Module 08 সম্পূর্ণ ফিনিশড, ডিপ স্ক্যান পলিশ সম্পন্ন, সিল্কি মোশন ও হ্যাপটিক্স ইন্টিগ্রেটেড, এমুলেটরে ১০০% লাইভ ভেরিফাইড 🎉)**
 * **পরবর্তী তাৎক্ষণিক কাজ (Immediate Next Task):** **Phase 3: Persistence Layer (Room Database & DataStore Preferences)** — *[ইউজারের স্পষ্ট "Go ahead" অনুমতির অপেক্ষায়]*
 * **গিট রিপোজিটরি:** `https://github.com/saidur1004/SafeScreen.git` (মেইন ব্রাঞ্চ: `main`)
 * **টেকনিক্যাল টুলচেইন:** Kotlin 2.0.21, Gradle 8.14, AGP 8.7.3, Jetpack Compose BOM 2024.10.01, Dagger-Hilt 2.52, Room 2.6.1, Java 21, Min SDK 29 (Android 10), Target SDK 35 (Android 15)
@@ -175,6 +175,28 @@
     - *কারণ:* `Theme.kt`-এ `window.statusBarColor` এবং `window.navigationBarColor` অ্যান্ড্রয়েড ১৫-এ ডেপ্রিকেটেড ওয়ার্নিং দিচ্ছিল এবং `view.context as Activity` ক্র্যাশ রিস্ক তৈরি করতে পারত।
     - *সমাধান:* `(view.context as? Activity)?.window` সেফ কাস্ট করা হয়েছে এবং সুনির্দিষ্ট `@Suppress("DEPRECATION")` অ্যানোটেশন দেওয়া হয়েছে, ফলে বিল্ড এখন ১০০% ওয়ার্নিং-মুক্ত।
 
+11. **সমস্যা ১১: নেভিগেশনে স্ক্রিন ট্রানজিশনের অভাব (Instant Snap/Jank)**
+    - *কারণ:* `AppNavHost.kt`-এ ডিফল্ট কোনো অ্যানিমেশন না থাকায় এক স্ক্রিন থেকে অন্য স্ক্রিনে যাওয়ার সময় দৃশ্যত তাৎক্ষণিক কাট (Instant Snap) হতো যা কমার্শিয়াল অ্যাপ কোয়ালিটির সাথে মানানসই ছিল না।
+    - *সমাধান:* গ্লোবাল সিল্কি মোশন ট্রানজিশন সংযুক্ত করা হয়েছে:
+      - ৪টি প্রধান ট্যাবের (`Home`, `Stats`, `FocusSchedule`, `Settings`) মধ্যে ন্যাভিগেট করার সময় প্রফেশনাল ক্রসফেড অ্যানিমেশন (`fadeIn(220ms)` + `fadeOut(220ms)`)।
+      - সাব-টাস্ক স্ক্রিনসমূহে (`DetailedActivityLog`, `AppWhitelist`, `SecurityLock`, `ReelsControl`, `EmptyAndErrorStates`) প্রবেশের সময় দিক-নির্দেশক স্লাইড ও ফেড (`slideIntoContainer(Start/End, 280ms)` + `fadeIn/Out(280ms)`)।
+
+12. **সমস্যা ১২: সফটওয়্যার কীবোর্ড (IME) এর নিচে সার্চ বার ও ইনপুট ফিল্ড ঢাকা পড়া**
+    - *কারণ:* `AppWhitelistScreen`, `ReelsControlScreen`-এর বটমশিট এবং `FocusScheduleScreen`-এর `AddScheduleSheet`-এ কীবোর্ড ওপেন হলে ইনপুট বক্স বা সেভ বাটন নিচে ঢাকা পড়ে যেত।
+    - *সমাধান:* প্রতিটি ইনপুট এরিয়া ও স্ক্রিন কলামে `.imePadding()` যুক্ত করা হয়েছে, যার ফলে সফটওয়্যার কীবোর্ড ওপেন হওয়ার সাথে সাথে ইনপুট ফিল্ড স্বয়ংক্রিয়ভাবে কীবোর্ডের ঠিক উপরে ভেসে ওঠে।
+
+13. **সমস্যা ১৩: ছোট স্ক্রিন ও ডিসপ্লে জুমে ডায়ালগ এবং বটমশিট কন্টেন্ট ট্রাঙ্কেশন (Missing Scrollability)**
+    - *কারণ:* `BlurStylePreviewSheet.kt` এবং `BatteryOptimizationDialog.kt`-এ ফিক্সড হাইট কন্টেন্ট থাকায় ছোট স্ক্রিনের ডিভাইসে বা সিস্টেম ডিসপ্লে জুম বাড়ানো থাকলে বাটন কেটে যাওয়ার ঝুঁকি ছিল।
+    - *সমাধান:* উভয় কম্পোনেন্টে `rememberScrollState()` সহ `.verticalScroll()` যুক্ত করা হয়েছে। ফলে যেকোনো স্ক্রিন সাইজ ও ডিসপ্লে স্কেলিংয়ে সমস্ত বাটন ও টেক্সট ১০০% অ্যাক্সেসিবল থাকে।
+
+14. **সমস্যা ১৪: সিকিউরিটি পিন কিপ্যাডে ট্যাকটাইল ফিডব্যাকের অনুপস্থিতি**
+    - *কারণ:* `SecurityLockScreen.kt`-এ ডিজিট প্রেস করার সময় কোনো ভাইব্রেশন বা হ্যাপটিক স্পর্শ অনুভূতি ছিল না।
+    - *সমাধান:* `LocalHapticFeedback` যুক্ত করে প্রতিটি ডিজিট প্রেসে হালকা ট্যাকটাইল ক্লিক (`TextHandleMove`), ভুল পিন এন্ট্রি করলে এরর শেক ভাইব্রেশন (`LongPress`), এবং বায়োমেট্রিক সফলতায় কনফার্মেশন হ্যাপটিক ফিডব্যাক দেওয়া হয়েছে।
+
+15. **সমস্যা ১৫: অনবোর্ডিং ইন্ডিকেটর পিলসের স্ট্যাটিক ট্রানজিশন**
+    - *কারণ:* `OnboardingScreen.kt`-এ পেজ পরিবর্তনের সময় ডট ইন্ডিকেটরগুলো তাৎক্ষণিক সাইজ পরিবর্তন করছিল।
+    - *সমাধান:* `animateDpAsState` (8dp থেকে 24dp) এবং `animateColorAsState` উইথ `FastOutSlowInEasing` ব্যবহার করে স্মুথ ফ্লুইড পিল এক্সপ্যানশন ইফেক্ট দেওয়া হয়েছে।
+
 ---
 
 ## 🔬 ৫. ডিপ কোড ও ইউআই অডিট রিপোর্ট (Deep System & UI Audit)
@@ -200,20 +222,105 @@
    - সব স্ক্রিনে `DESIGN.md` অনুমোদিত টোকেনস (`DeepBlack`, `DarkSurfaceCard`, `NeonGreen`, `NeonCyan`, `NeonPurple`, `CyberPink`, `WarningAmber`) যথাযথভাবে ব্যবহৃত হয়েছে।
    - প্রতিটি স্ক্রিনে টেক্সট হাইলাইটের ক্ষেত্রে `Spannable` বা স্প্যান স্টাইলিং অক্ষুণ্ণ রয়েছে।
 
+5. **টাচ রেসপন্সিভনেস ও হ্যাপটিক্স অডিট:**
+   - পিন ডায়াল প্যাডে প্রতিটি কি-প্রেসে রিয়েল-টাইম ট্যাকটাইল হ্যাপটিক্স কাজ করে।
+   - এমুলেটরে PIN `1234` টাইপ করলে ইনস্ট্যান্ট আনলক হয়ে আগের স্ক্রিনে পপ-ব্যাক করে।
+
 ---
 
-## 🚀 ৬. পরবর্তী কার্যক্রম ও সিকোয়েন্স (Next Steps for the Next Agent / Device)
+## 🧠 ৬. কনটেক্সচুয়াল অ্যানালাইসিস ও মাস্টার স্ট্র্যাটেজিক রোডম্যাপ (Contextual Analysis & Strategic Roadmap)
 
-যেহেতু **Phase 2B (UI Workflow Implementation) এর সকল মডিউল (Module 01 থেকে Module 08) ১০০% সফলভাবে সম্পন্ন হয়েছে এবং ডিপ অডিটে সব বাগ ফিক্স করা হয়েছে**, ব্যবহারকারীর কাছ থেকে **"Go ahead"** (অনুমতি) পাওয়ার পর আপনার **প্রথম ও সরাসরি কাজ হবে Phase 3 (Room DB & DataStore) শুরু করা**।
+### ক. সেফস্ক্রিনের ভিশন ও মূল আর্কিটেকচারাল সারমর্ম (The Core Vision & Architectural Philosophy)
+**SafeScreen** কোনো সাধারণ অ্যাপ নয় — এটি একটি **"100% On-Device Zero-Cloud AI Privacy Guardian"**। 
+- **মূল লক্ষ্য:** ব্যবহারকারীর স্ক্রিনের ভিজ্যুয়াল কন্টেন্ট (NSFW/Adult), অডিও স্ট্রিম (Explicit Sounds), এবং শর্ট ভিডিও আসক্তি (Reels/Shorts/TikTok Doomscrolling) প্রতিরোধ করা।
+- **জিরো ক্লাউড প্রতিশ্রুতি:** কোনো স্ক্রিনশট, ফ্রেম, অডিও বাফার বা ব্যবহারকারী ডেটা কখনোই কোনো রিমোট সার্ভার বা ক্লাউডে পাঠানো হবে না। সমস্ত প্রসেসিং সম্পূর্ণ লোকালভাবে অন-ডিভাইসে এনপিইউ/সিপিইউ-তে ঘটবে।
+- **আর্কিটেকচারাল ব্রিজ (UI to OS Services):**
+  - **প্রেজেন্টেশন লেয়ার (Compose + MVI):** ব্যবহারকারী যা দেখে এবং নিয়ন্ত্রণ করে। এটি ডেটার উৎস নয়, বরং **DataStore ও Room DB**-র রিয়েক্টিভ স্টেটকে লাইভ অবজার্ভ করে।
+  - **পারসিস্টেন্স লেয়ার (Room DB + DataStore):** একক সত্যের উৎস (Single Source of Truth - SSOT)।
+  - **ব্যাকগ্রাউন্ড ওএস সার্ভিসেস (Foreground Service + MediaProjection + AudioRecord + Accessibility):** ডেটা উৎপাদক (Producer)। ওএস ইভেন্ট ও স্ক্রিন ফ্রেম ক্যাপচার করে এআই ইঞ্জিনে পাঠায়, এবং সেখান থেকে প্রাপ্ত রেজাল্ট অনুযায়ী ওভারলে (`LiveBlurOverlayView`) প্রদর্শন করে এবং স্বয়ংক্রিয়ভাবে রুম ডিবিতে থ্রেট লগ ইনসার্ট করে।
+
+---
+
+### খ. নতুন টেকনিক্যাল রোডম্যাপ (New Technical Master Roadmap: Phase 3 to Phase 8)
+
+পরবর্তী কাজের প্রতিটি ধাপকে নিখুঁত ও ঝুঁকিমুক্ত রাখতে নিচের অপ্টিমাইজড সিকোয়েন্স তৈরি করা হয়েছে:
+
+```mermaid
+flowchart TD
+    UI[Phase 2B: 100% Polished UI] --> P3[Phase 3: Persistence Layer\nRoom DB & DataStore]
+    P3 --> P4[Phase 4: OS Services\nMediaProjection, Audio, Accessibility]
+    P4 --> P5[Phase 5: On-Device AI Engine\nTFLite NSFW & YAMNet Audio]
+    P5 --> P6[Phase 6: Real-Time Protection Loop\nEnd-to-End Reactive Shield]
+    P6 --> P7[Phase 7: Battery Optimization & Edge Hardening]
+    P7 --> P8[Phase 8: Security Audit & Production Release]
+```
+
+#### 📌 Phase 3: Persistence Layer (Room Database & DataStore Preferences)
+*লক্ষ্য: অ্যাপের সমস্ত স্টেট, কনফিগারেশন, থ্রেট হিস্ট্রি ও হোয়াইটলিস্ট লোকাল স্টোরেজে স্থায়ী করা।*
+- **Prompt 1: Room DB Infrastructure (`AppDatabase.kt`, Entities & DAOs)**
+  - `ThreatLogEntity.kt` ও `ThreatLogDao.kt` (ইভেন্ট লগিং, ডেট-গ্রুপড কোয়েরিজ, টুডে কাউন্টস ফ্লো, ক্লিয়ার লগ)।
+  - `WhitelistEntity.kt` ও `WhitelistDao.kt` (প্যাকেজ নেম, ক্যাটাগরি, এক্সেম্পশন ফ্ল্যাগ)।
+  - ডিফল্ট ব্যাংকিং অ্যাপ প্রিপপুলেশন রুম কলব্যাক (`PayPal`, `Bank of America`, `Google Pay`, `Chase`, `Revolut` ডিফল্ট এক্সিম্পশন সিড)।
+  - Hilt `DatabaseModule.kt` প্রোভাইডার্স।
+- **Prompt 2: Jetpack DataStore Repository (`UserPreferencesRepository.kt`)**
+  - শিল্ড টগলস (`isProtectionEnabled`, `isVisualActive`, `isAudioActive`, `isReelsActive`)।
+  - টিউনিং কনফিগ (`aiSensitivity`, `fpsProfile`, `blurStyle`, `blurIntensity`)।
+  - সিকিউরিটি স্টেট (`isPinLockEnabled`, `pinHashSha256`, `isBiometricEnabled`)।
+- **Prompt 3: Presentation ViewModels Integration**
+  - `HomeViewModel`, `StatsViewModel`, `SettingsViewModel`, `AppWhitelistViewModel`, `DetailedActivityLogViewModel` কে মক ডেটা থেকে মুক্ত করে রিয়েল রুম ডিবি ও ডেটাস্টোর ফ্লো-এর সাথে বাইন্ড করা।
+
+#### 📌 Phase 4: Android OS System Services & System Overlays
+*লক্ষ্য: অ্যান্ড্রয়েড অপারেটিং সিস্টেমের হার্ডওয়্যার ও কার্নেল সার্ভিসসমূহের সাথে অ্যাপকে সরাসরি সংযুক্ত করা।*
+- **Prompt 1: Foreground Service & Sticky Notification**
+  - `ShieldProtectionService.kt` (ফোরগ্রাউন্ড সার্ভিস, নোটিফিকেশন চ্যানেল, কুইক অ্যাকশন টগলস: Pause 5m, Resume, Stop)।
+- **Prompt 2: MediaProjection & VirtualDisplay Pipeline**
+  - ইউজার পারমিশন টোকেন ক্যাপচার, `ImageReader` দিয়ে স্ক্রিন ফ্রেম বাফারিং (RGB/Bitmap Decimation at 5 FPS)।
+- **Prompt 3: AudioRecord & Real-Time Buffer Stream**
+  - মাইক্রোফোন ও ইন্টারনাল অডিও স্ট্রিম ক্যাপচারিং (16kHz PCM বাফার)।
+- **Prompt 4: Accessibility Service for Social Apps**
+  - `ReelsAccessibilityService.kt` (Instagram Reels, YouTube Shorts, TikTok, Facebook Reels উইন্ডো ইভেন্ট ডিটেকশন ও স্ক্রোল ট্র্যাকিং)।
+- **Prompt 5: System WindowManager Overlay Integration**
+  - পূর্বের তৈরি `LiveBlurOverlayManager` ও `FocusInterventionOverlayManager` কে ব্যাকগ্রাউন্ড সার্ভিসের সাথে হুক করা।
+
+#### 📌 Phase 5: On-Device AI Engine & High-Performance Inference Pipeline
+*লক্ষ্য: ১০০% অন-ডিভাইস প্রাইভেট এআই মডেল লোডিং ও রিয়েল-টাইম ক্লাসিফিকেশন।*
+- **Prompt 1: TFLite Visual NSFW Classifier**
+  - INT8 Quantized MobileNet/EfficientNet NSFW মডেল ইন্টিগ্রেশন (সাইজ <15MB, লেটেন্সি <30ms)।
+  - GPU Delegate / NNAPI অ্যাকসিলারেশন ফলব্যাক সহ।
+- **Prompt 2: YAMNet Audio Classifier**
+  - অডিও স্পেকট্রোগ্রাম এক্সট্র্যাকশন ও অ্যাডাল্ট/এক্সপ্লিসিট সাউন্ড ডিটেকশন পাইপলাইন।
+- **Prompt 3: Adaptive FPS & Smart Decimation Engine**
+  - স্ক্রিন স্ট্যাটিক থাকলে ৩ FPS, সোশ্যাল মিডিয়া চালু থাকলে ৮ FPS এআই স্ক্যানিং।
+
+#### 📌 Phase 6: End-to-End Real-Time Protection Loop (The Heartbeat)
+*লক্ষ্য: ওএস সার্ভিস, এআই মডেল, রুম ডিবি এবং ইউআই ওভারলে-কে একটি নিরবচ্ছিন্ন লুপে সিঙ্ক করা।*
+- স্ক্রিন ফ্রেমে NSFW শনাক্ত হলে (<50ms-এ) `LiveBlurOverlayView` অ্যাক্টিভ হবে।
+- অডিওতে এক্সপ্লিসিট সাউন্ড পেলে ওএস অডিও স্ট্রিম তাৎক্ষণিক মিউট হবে।
+- রিলস লিমিট অতিক্রম করলে `FocusInterventionOverlay` ফুলস্ক্রিনে ট্রিগার হবে।
+- প্রতিটি থ্রেট স্বয়ংক্রিয়ভাবে `ThreatLogDao`-তে ইনসার্ট হবে এবং `HomeScreen` ও `StatsScreen`-এ লাইভ কাউন্টার আপডেট হবে।
+
+#### 📌 Phase 7: Performance, Battery & Edge-Case Hardening
+- স্ক্রিন অফ হলে (`ACTION_SCREEN_OFF`) এআই ও ক্যাপচার স্লিপ মোডে যাওয়া (দৈনিক ব্যাটারি ড্রেন <৩-৫%)।
+- হোয়াইটলিস্টে থাকা ব্যাংকিং অ্যাপ চালু হলে এআই ক্যাপচার সম্পূর্ণ বাইপাস হওয়া।
+- মেমোরি লিক প্রটেকশন ও বিটম্যাপ রিসাইক্লিং।
+
+#### 📌 Phase 8: Security Audit & Production Release Packaging
+- ProGuard / R8 রুলস কনফিগারেশন।
+- রিলিজ সাইনড এপিকে ও ফাইনাল প্রোডাকশন ডকুমেন্টেশন।
+
+---
+
+## 🚀 ৭. পরবর্তী কার্যক্রম ও সিকোয়েন্স (Next Steps for the Next Agent / Device)
+
+যেহেতু **Phase 2B (UI Workflow Implementation) এর সকল মডিউল (Module 01 থেকে Module 08) ১০০% সফলভাবে সম্পন্ন হয়েছে, ডিপ স্ক্যানে সমস্ত বাগ ফিক্স ও মোশন পলিশ সম্পন্ন হয়েছে**, ব্যবহারকারীর কাছ থেকে **"Go ahead"** (অনুমতি) পাওয়ার পর আপনার **প্রথম ও সরাসরি কাজ হবে Phase 3 (Room DB & DataStore) শুরু করা**।
 
 > ⚠️ **মনে রাখবেন:** ব্যবহারকারী অনুমতি না দেওয়া পর্যন্ত Phase 3-এর কোনো কোড লিখবেন না।
 
 ### ১. পরবর্তী টাস্কের বিস্তারিত বিবরণ (Next Task Details):
 * **পর্যায়:** **Phase 3 — Persistence Layer (Room Database & DataStore Preferences)**
-* **টাস্ক:** **Prompt 1 (`ThreatLogDao`, `WhitelistDao`, `AppDatabase.kt` & DataStore Setup)**
+* **টাস্ক:** **Prompt 1 (`ThreatLogDao`, `WhitelistDao`, `AppDatabase.kt` & DatabaseModule)**
 * **টার্গেট ডিরেক্টরি:** 
-  - `app/src/main/java/com/safescreen/app/data/local/room/` (Entities, DAOs, Database, TypeConverters)
-  - `app/src/main/java/com/safescreen/app/data/local/datastore/` (UserPreferencesSerializer, PreferencesKeys)
+  - `app/src/main/java/com/safescreen/app/data/local/room/` (Entities, DAOs, Database, TypeConverters, PrepopulationCallback)
   - `app/src/main/java/com/safescreen/app/di/DatabaseModule.kt` (Hilt Dependency Injection)
 * **রোডম্যাপ গাইড:** `DEVELOPMENT_ROADMAP.md` ফাইলের **Phase 3: Persistence Layer**
 
@@ -236,7 +343,7 @@
 
 ---
 
-## 💻 ৭. ডেভেলপার রান ও ভেরিফিকেশন গাইড (Developer Cheat Sheet)
+## 💻 ৮. ডেভেলপার রান ও ভেরিফিকেশন গাইড (Developer Cheat Sheet)
 
 অন্য ডিভাইসে অ্যাপটি ক্লোন করার পর কীভাবে রান ও টেস্ট করবেন:
 
@@ -263,7 +370,7 @@ adb shell am start -n com.safescreen.app/.MainActivity
 
 ---
 
-## 📂 ৮. সম্পূর্ণ প্রজেক্ট ফাইল স্ট্রাকচার রেফারেন্স (Complete Master File Map)
+## 📂 ৯. সম্পূর্ণ প্রজেক্ট ফাইল স্ট্রাকচার রেফারেন্স (Complete Master File Map)
 
 ```text
 SafeScreen/

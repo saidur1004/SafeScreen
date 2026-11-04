@@ -1,7 +1,9 @@
 package com.safescreen.app.presentation.screens.onboarding
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -276,7 +278,7 @@ fun OnboardingScreen(
                 }
             }
 
-            // Carousel Page Indicator (Elongated Active Pill)
+            // Carousel Page Indicator (Elongated Active Pill with Smooth Motion)
             Row(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
@@ -286,15 +288,23 @@ fun OnboardingScreen(
             ) {
                 repeat(onboardingPages.size) { index ->
                     val isSelected = pagerState.currentPage == index
+                    val animatedWidth by animateDpAsState(
+                        targetValue = if (isSelected) 24.dp else 8.dp,
+                        animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing),
+                        label = "onboarding_indicator_width"
+                    )
+                    val animatedColor by animateColorAsState(
+                        targetValue = if (isSelected) NeonCyan else Color(0xFF233246),
+                        animationSpec = tween(durationMillis = 300),
+                        label = "onboarding_indicator_color"
+                    )
                     Box(
                         modifier = Modifier
                             .padding(horizontal = 4.dp)
                             .height(8.dp)
-                            .width(if (isSelected) 22.dp else 8.dp)
+                            .width(animatedWidth)
                             .clip(CircleShape)
-                            .background(
-                                if (isSelected) NeonCyan else Color(0xFF233246)
-                            )
+                            .background(animatedColor)
                     )
                 }
             }

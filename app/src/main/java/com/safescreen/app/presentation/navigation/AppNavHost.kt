@@ -1,5 +1,9 @@
 package com.safescreen.app.presentation.navigation
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -40,13 +44,15 @@ fun AppNavHost(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    // Define the 4 primary persistent tabs
-    val isMainTab = currentRoute in listOf(
+    val mainTabs = listOf(
         Screen.Home.route,
         Screen.Stats.route,
         Screen.FocusSchedule.route,
         Screen.Settings.route
     )
+
+    // Define the 4 primary persistent tabs
+    val isMainTab = currentRoute in mainTabs
 
     val activeDestination = when (currentRoute) {
         Screen.Home.route -> BottomNavDestination.Home
@@ -64,7 +70,55 @@ fun AppNavHost(
         NavHost(
             navController = navController,
             startDestination = startDestination,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize(),
+            enterTransition = {
+                val fromTab = initialState.destination.route in mainTabs
+                val toTab = targetState.destination.route in mainTabs
+                if (fromTab && toTab) {
+                    fadeIn(animationSpec = tween(220))
+                } else {
+                    fadeIn(animationSpec = tween(280)) + slideIntoContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Start,
+                        animationSpec = tween(280)
+                    )
+                }
+            },
+            exitTransition = {
+                val fromTab = initialState.destination.route in mainTabs
+                val toTab = targetState.destination.route in mainTabs
+                if (fromTab && toTab) {
+                    fadeOut(animationSpec = tween(220))
+                } else {
+                    fadeOut(animationSpec = tween(280)) + slideOutOfContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Start,
+                        animationSpec = tween(280)
+                    )
+                }
+            },
+            popEnterTransition = {
+                val fromTab = initialState.destination.route in mainTabs
+                val toTab = targetState.destination.route in mainTabs
+                if (fromTab && toTab) {
+                    fadeIn(animationSpec = tween(220))
+                } else {
+                    fadeIn(animationSpec = tween(280)) + slideIntoContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.End,
+                        animationSpec = tween(280)
+                    )
+                }
+            },
+            popExitTransition = {
+                val fromTab = initialState.destination.route in mainTabs
+                val toTab = targetState.destination.route in mainTabs
+                if (fromTab && toTab) {
+                    fadeOut(animationSpec = tween(220))
+                } else {
+                    fadeOut(animationSpec = tween(280)) + slideOutOfContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.End,
+                        animationSpec = tween(280)
+                    )
+                }
+            }
         ) {
             composable(Screen.Splash.route) {
                 SplashScreen(
