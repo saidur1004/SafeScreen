@@ -80,6 +80,7 @@ import com.safescreen.app.presentation.theme.NeonPurple
 import com.safescreen.app.presentation.theme.TextMuted
 import com.safescreen.app.presentation.theme.TextPrimary
 import com.safescreen.app.presentation.theme.TextSecondary
+import com.safescreen.app.services.overlay.FocusInterventionOverlayManager
 import com.safescreen.app.services.overlay.LiveBlurOverlayManager
 
 /**
@@ -144,6 +145,13 @@ fun HomeScreen(
                         context = context,
                         threatConfidence = 0.98f,
                         threatType = "Harmful Content Blocked"
+                    )
+                }
+                is HomeUiEvent.TriggerFocusInterventionDemo -> {
+                    FocusInterventionOverlayManager.showOverlay(
+                        context = context,
+                        appName = "Instagram Reels",
+                        limitMinutes = 30
                     )
                 }
             }
@@ -296,9 +304,15 @@ fun HomeScreenContent(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // F. System Overlay Simulator Card (Module 07 Demo Trigger)
+            // F. System Overlay Simulator Cards (Module 07 Demo Triggers)
             LiveBlurOverlaySimulatorCard(
                 onTriggerClick = { onEvent(HomeUiEvent.TriggerLiveBlurDemo) }
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            FocusInterventionSimulatorCard(
+                onTriggerClick = { onEvent(HomeUiEvent.TriggerFocusInterventionDemo) }
             )
 
             // Extra bottom spacing to ensure content is never obscured by the floating nav bar
@@ -852,6 +866,99 @@ private fun LiveBlurOverlaySimulatorCard(
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontWeight = FontWeight.Bold,
                         color = Color.Black,
+                        fontSize = 12.sp
+                    )
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Demo trigger card for Module 07 Focus Intervention WindowManager System Overlay.
+ */
+@Composable
+private fun FocusInterventionSimulatorCard(
+    onTriggerClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    GlassmorphicCard(
+        modifier = modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(16.dp),
+        borderColor = NeonPurple.copy(alpha = 0.45f),
+        backgroundColor = Color(0xFF151028)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(42.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(NeonPurple.copy(alpha = 0.18f))
+                        .border(1.dp, NeonPurple.copy(alpha = 0.55f), RoundedCornerShape(12.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.HourglassTop,
+                        contentDescription = null,
+                        tint = Color(0xFFE879F9),
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Column {
+                    Text(
+                        text = "Focus Intervention",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary,
+                            fontSize = 15.sp
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = "Test Reels & Shorts lockout",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = TextMuted,
+                            fontSize = 11.sp
+                        )
+                    )
+                }
+            }
+
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(
+                                Color(0xFF8B5CF6),
+                                Color(0xFFC026D3)
+                            )
+                        )
+                    )
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = onTriggerClick
+                    )
+                    .padding(horizontal = 14.dp, vertical = 9.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Test Focus",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
                         fontSize = 12.sp
                     )
                 )

@@ -26,6 +26,7 @@ import com.safescreen.app.presentation.screens.settings.SettingsScreen
 import com.safescreen.app.presentation.screens.splash.SplashScreen
 import com.safescreen.app.presentation.screens.stats.DetailedActivityLogScreen
 import com.safescreen.app.presentation.screens.stats.StatsScreen
+import com.safescreen.app.services.overlay.FocusInterventionContent
 import com.safescreen.app.services.overlay.LiveBlurOverlayContent
 import com.safescreen.app.presentation.theme.DeepBlack
 
@@ -200,6 +201,17 @@ fun AppNavHost(
 
             composable(Screen.LiveBlurOverlay.route) {
                 LiveBlurOverlayContent(
+                    onDismiss = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+
+            composable(Screen.FocusInterventionOverlay.route) {
+                FocusInterventionContent(
+                    onExitToHomeClick = {
+                        navController.popBackStack()
+                    },
                     onDismiss = {
                         navController.popBackStack()
                     }

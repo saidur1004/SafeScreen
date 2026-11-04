@@ -168,3 +168,4 @@ object LiveBlurOverlayManager {
      */
     fun isShowing(): Boolean = overlayView != null
 }
+
