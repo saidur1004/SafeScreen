@@ -48,6 +48,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import com.safescreen.app.presentation.components.SafeScreenStateType
+import com.safescreen.app.presentation.components.SafeScreenStateView
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -207,7 +209,7 @@ fun DetailedActivityLogContent(
                         key = { _, group -> group.dateId }
                     ) { index, group ->
                         if (index > 0) {
-                            Spacer(modifier = Modifier.height(240.dp))
+                            Spacer(modifier = Modifier.height(10.dp))
                         }
                         DateGroupSection(
                             group = group,
@@ -880,133 +882,20 @@ private fun GlowingWarningTriangle(
 }
 
 /**
- * Screen 16: Empty Activity Log State ("All Clean & Clear")
- * Features a glowing bio-green shield with checkmark, status title, subtitle,
- * zero-metric pill row, and a reset logs button.
+ * Screen 16: Empty Activity Log State ("All Clear! No Threats Found.")
+ * Uses the official Module 08 SafeScreenStateView with 3D cyber-folder, checkmark,
+ * subtitle, and Refresh capsule button.
  */
 @Composable
 private fun EmptyActivityLogState(
     onResetLogs: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        // Glowing Bio-Green Shield
-        Box(
-            modifier = Modifier.size(100.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(
-                            NeonGreen.copy(alpha = 0.35f),
-                            Color.Transparent
-                        )
-                    ),
-                    radius = size.minDimension / 1.5f
-                )
-            }
-
-            Icon(
-                imageVector = Icons.Default.Security,
-                contentDescription = "Shield Clean",
-                tint = NeonGreen,
-                modifier = Modifier.size(64.dp)
-            )
-
-            Icon(
-                imageVector = Icons.Default.Check,
-                contentDescription = null,
-                tint = DeepBlack,
-                modifier = Modifier.size(26.dp)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(18.dp))
-
-        // Title
-        Text(
-            text = "All Clean & Clear",
-            color = NeonGreen,
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Subtitle
-        Text(
-            text = "No explicit visuals or music interruptions detected yet today. Enjoy your safe digital journey!",
-            color = TextSecondary,
-            fontSize = 13.5.sp,
-            lineHeight = 19.sp,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(horizontal = 16.dp)
-        )
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        // Metric Pill Row: [0 Blurred] [0 Muted] [0 Blocked]
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            listOf("0 Blurred", "0 Muted", "0 Blocked").forEach { metric ->
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(50))
-                        .background(Color(0xFF101927).copy(alpha = 0.7f))
-                        .border(1.dp, NeonGreen.copy(alpha = 0.4f), RoundedCornerShape(50))
-                        .padding(horizontal = 12.dp, vertical = 6.dp)
-                ) {
-                    Text(
-                        text = metric,
-                        color = NeonGreen,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(22.dp))
-
-        // Reset Sample Logs Capsule Button (Developer & Test Convenience)
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(50))
-                .background(NeonCyan.copy(alpha = 0.12f))
-                .border(1.dp, NeonCyan.copy(alpha = 0.65f), RoundedCornerShape(50))
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = onResetLogs
-                )
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Refresh,
-                    contentDescription = "Restore Sample Logs",
-                    tint = NeonCyan,
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = "Restore Sample Data",
-                    color = NeonCyan,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-        }
-    }
+    SafeScreenStateView(
+        stateType = SafeScreenStateType.EMPTY_LOG,
+        onActionClick = onResetLogs,
+        modifier = modifier
+    )
 }
 
 /**

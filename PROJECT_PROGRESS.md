@@ -13,7 +13,7 @@
 >    - [**`ARCHITECTURE.md`**](./ARCHITECTURE.md) (Clean Architecture: Data, Domain, Presentation, Services, DI)
 >
 > 2. **ধাপে ধাপে বাস্তবায়ন ও স্পষ্ট অনুমতি নীতি (Strict Step-by-Step Policy):**  
->    কোনো অবস্থাতেই একসাথে একাধিক স্ক্রিন বা একাধিক মডিউলের কোড লিখবেন না। প্রতিটি Prompt সম্পূর্ণ শেষ করে, `./gradlew assembleDebug` দিয়ে বিল্ড ও এমুলেটরে লাইভ টেস্ট করে, ব্যবহারকারীকে সাইড-বাই-সাইড রিপোর্ট দেখিয়ে তাঁর কাছ থেকে স্পষ্ট **"Go ahead"** (অনুমতি) পাওয়ার পরেই কেবল পরবর্তী Prompt শুরু করবেন।
+>    কোনো অবস্থাতেই একসাথে একাধিক স্ক্রিন বা একাধিক মডিউলের কোড লিখবেন না। প্রতিটি Prompt সম্পূর্ণ শেষ করে, `./gradlew assembleDebug` দিয়ে বিল্ড ও এমুলেটরে লাইভ টেস্ট করে, ব্যবহারকারীকে সাইড-বাই-সাইড রিপোর্ট দেখিয়ে তাঁর কাছ থেকে স্পষ্ট **"Go ahead"** (অনুমতি) পাওয়ার পরেই কেবল পরবর্তী Prompt শুরু করবেন। ইউজার অনুমতি না দেওয়া পর্যন্ত পরবর্তী কোনো ধাপে হাত দেবেন না।
 >
 > 3. **সেশন শেষে বাধ্যতামূলক হ্যান্ডওভার আপডেট:**  
 >    প্রতিটি কাজের সেশন শেষ করার পর অবশ্যই এই `PROJECT_PROGRESS.md` আপডেট করতে হবে এবং গিটহাবে পুশ করতে হবে।
@@ -23,11 +23,11 @@
 ## 📌 ১. প্রজেক্টের বর্তমান ওভারভিউ ও লাইভ স্ট্যাটাস (Executive Snapshot)
 
 * **সর্বশেষ আপডেটের তারিখ ও সময়:** ০৪ নভেম্বর ২০২৬
-* **বর্তমান পর্যায়:** **Phase 2B — UI Workflow Implementation (Module 01 থেকে Module 08 পর্যন্ত ১০০% সম্পন্ন ও এমুলেটরে লাইভ ভেরিফাইড 🎉)**
-* **পরবর্তী তাৎক্ষণিক কাজ (Immediate Next Task):** **Phase 3: Persistence Layer (Room Database & DataStore Preferences)**
+* **বর্তমান পর্যায়:** **Phase 2B — UI Workflow Implementation (Module 01 থেকে Module 08 পর্যন্ত ১০০% সম্পন্ন, ডিপ অডিট কৃত ও এমুলেটরে লাইভ ভেরিফাইড 🎉)**
+* **পরবর্তী তাৎক্ষণিক কাজ (Immediate Next Task):** **Phase 3: Persistence Layer (Room Database & DataStore Preferences)** — *[ইউজারের স্পষ্ট "Go ahead" অনুমতির অপেক্ষায়]*
 * **গিট রিপোজিটরি:** `https://github.com/saidur1004/SafeScreen.git` (মেইন ব্রাঞ্চ: `main`)
 * **টেকনিক্যাল টুলচেইন:** Kotlin 2.0.21, Gradle 8.14, AGP 8.7.3, Jetpack Compose BOM 2024.10.01, Dagger-Hilt 2.52, Room 2.6.1, Java 21, Min SDK 29 (Android 10), Target SDK 35 (Android 15)
-* **টেস্ট ডিভাইস:** Android Emulator (`emulator-5554`, Google APIs ARM64/x86_64, API 34/35)
+* **টেস্ট ডিভাইস:** Android Emulator (`emulator-5554`, Google APIs ARM64/x86_64, Pixel 9, Android 15 API 35)
 
 ---
 
@@ -35,10 +35,10 @@
 
 | মডিউল / ক্যাটাগরি | ফিচার / স্ক্রিন | স্ট্যাটাস | ফাইল রেফারেন্স ও প্রমাণ |
 | :--- | :--- | :---: | :--- |
-| **Toolchain & Build** | Gradle 8.14, Kotlin 2.0.21, AGP 8.7.3, Hilt 2.52, Java 21 | ✅ Verified | `./gradlew assembleDebug` সফল (০ এরর, ০ ওয়ার্নিং) |
+| **Toolchain & Build** | Gradle 8.14, Kotlin 2.0.21, AGP 8.7.3, Hilt 2.52, Java 21 | ✅ Verified | `./gradlew assembleDebug` ও `./gradlew compileReleaseKotlin` সফল (০ এরর, ০ ওয়ার্নিং) |
 | **Core Architecture** | 3-Layer Clean Architecture (data, domain, presentation, services, di) | ✅ Verified | `app/src/main/java/com/safescreen/app/` |
 | **UI Design System** | Cyber-Dark Theme, Tokens, Glassmorphism, Material 3, Typography | ✅ Verified | `DESIGN.md`, `Color.kt`, `Theme.kt`, `Typography.kt` |
-| **Global Navigation** | 4-Tab Floating Bottom Navigation Bar (`Home`, `Stats`, `Focus`, `Settings`) | ✅ Verified | `FloatingBottomNavigationBar.kt` & `AppNavHost.kt` |
+| **Global Navigation** | 4-Tab Floating Bottom Navigation Bar (`Home`, `Stats`, `Focus`, `Settings`) | ✅ Verified | `FloatingBottomNavigationBar.kt` & `AppNavHost.kt` (অটো-হাইড সহ) |
 | **Module 01: Onboarding** | `SplashScreen.kt` (৩ডি বেভেল্ড শিল্ড ও পালস) & `OnboardingScreen.kt` (৩টি পিলার্স) | ✅ 100% Polished | `presentation/screens/splash/`, `.../onboarding/` |
 | **Module 02: Permissions** | `PermissionHubScreen.kt` (পারমিশন কার্ডস) & `BatteryOptimizationDialog.kt` (গোল্ডেন শিট) | ✅ 100% Polished | `presentation/screens/permission/` |
 | **Module 03: Dashboard** | `HomeScreen.kt` (৩ডি সেন্ট্রাল শিল্ড বাটন, লাইভ মেট্রিক্স) & `BlurStylePreviewSheet.kt` (স্প্লিট ভিউ) | ✅ 100% Polished | `presentation/screens/home/` |
@@ -50,7 +50,7 @@
 | **Module 07: Live Blur** | `LiveBlurOverlayView.kt` (`WindowManager` Overlay, 3D Emblem, Breathing Aura, 5s Peek) | ✅ 100% Polished | `services/overlay/LiveBlurOverlayView.kt` |
 | **Module 07: Focus Overlay** | `FocusInterventionOverlay.kt` (3D Shield & Hourglass, 5m Walk, 2m Emergency Pass) | ✅ 100% Polished | `services/overlay/FocusInterventionOverlay.kt` |
 | **Module 08: Fallbacks** | `SafeScreenStateView.kt` & `EmptyAndErrorStatesScreen.kt` (Clean, Paused, AI Error, Empty Log) | ✅ 100% Polished | `presentation/components/SafeScreenStateView.kt` |
-| **Phase 3: Persistence** | Room Database (ThreatLogEntity, WhitelistEntity) & DataStore Preferences | ⏳ **Next Up (Phase 3)** | `AppDatabase.kt`, `StatDao.kt` |
+| **Phase 3: Persistence** | Room Database (ThreatLogEntity, WhitelistEntity) & DataStore Preferences | ⏳ **Next Up (Phase 3)** | `AppDatabase.kt`, `ThreatLogDao.kt`, `WhitelistDao.kt` |
 | **Phase 4: OS Services** | MediaProjection, AudioRecord, AccessibilityService, Foreground Notification | ⏳ Planned (Phase 4) | `services/ShieldProtectionService.kt` |
 | **Phase 5: On-Device AI** | INT8 Quantized TFLite NSFW Filter & YAMNet Audio Classifier Integration | ⏳ Planned (Phase 5) | `domain/ml/TFLiteClassifier.kt` |
 
@@ -62,7 +62,7 @@
 - **সমস্যা যা ছিল:** পূর্বে ফ্লোটিং বটম নেভিগেশন বারটি শুধু `HomeScreen.kt`-এর ভেতর প্রাইভেট কম্পোনেন্ট হিসেবে ছিল। ফলে ইউজার যখন Stats, Focus বা Settings স্ক্রিনে যেত, বটম বারটি গায়েব হয়ে যেত।
 - **সমাধান:** `FloatingBottomNavigationBar.kt` নামে একটি সম্পূর্ণ স্বাধীন, পুনর্ব্যবহারযোগ্য কম্পোনেন্ট তৈরি করে `AppNavHost.kt`-এ সংযুক্ত করা হয়েছে।
 - **৪টি মূল ট্যাব (Persistent 4 Main Tabs):** `Home`, `Stats`, `FocusSchedule` এবং `Settings` স্ক্রিনের মধ্যে সুইচ করার সময় বটম বারটি স্থায়ীভাবে স্ক্রিনের নিচে ফ্লোট করে এবং সিলেক্টেড আইটেমের নিচে গ্লোয়িং নিয়ন হ্যালো ও অ্যাক্টিভ পিল মসৃণভাবে অ্যানিমেট হয়।
-- **ইনার স্ক্রিনে অটো-হাইড (Smart Auto-Hiding):** যেকোনো সাব-স্ক্রিনে (`DetailedActivityLog`, `ReelsControl`, `AppWhitelist`, `SecurityLock`, `Splash`, `Onboarding`, `PermissionHub`) প্রবেশ করলে মসৃণ অ্যানিমেশনের মাধ্যমে বটম বারটি নিচে নেমে লুকিয়ে যায় এবং ব্যাক বাটন চাপলে আবার স্বয়ংক্রিয়ভাবে ফিরে আসে।
+- **ইনার স্ক্রিনে অটো-হাইড (Smart Auto-Hiding):** যেকোনো সাব-স্ক্রিনে (`DetailedActivityLog`, `ReelsControl`, `AppWhitelist`, `SecurityLock`, `Splash`, `Onboarding`, `PermissionHub`, `EmptyAndErrorStates`) প্রবেশ করলে মসৃণ অ্যানিমেশনের মাধ্যমে বটম বারটি নিচে নেমে লুকিয়ে যায় এবং ব্যাক বাটন চাপলে আবার স্বয়ংক্রিয়ভাবে ফিরে আসে।
 
 ### ২. মডিউল ০১: অনবোর্ডিং ফ্লো (`SplashScreen` & `OnboardingScreen`)
 - **SplashScreen:** সেন্ট্রাল ৩ডি বেভেল্ড শিল্ড, সাইবার নিয়ন গ্লো, রিয়েলিস্টিক এআই লোডার ও ডিপ ব্ল্যাক অ্যাম্বিয়েন্ট সারফেস।
@@ -78,11 +78,11 @@
 
 ### ৫. মডিউল ০৪: রিলস ও ডিজিটাল ওয়েলবিয়িং (`ReelsControlScreen` & `FocusScheduleScreen`)
 - **ReelsControlScreen:** ৩ডি আওয়ারগ্লাস হিরো, কাস্টম নিয়ন সায়ান টাইম লিমিট স্লাইডার্স (ডেইলি কোটা ও সেশন লিমিট), শর্ট-ভিডিও প্ল্যাটফর্ম টগলস (YouTube Shorts, Instagram Reels, TikTok) এবং কাস্টম অ্যাপ লিমিট বটম শিট।
-- **FocusScheduleScreen:** ফোকাস শিডিউল ক্যালেন্ডার, ডে সিলেক্টর পিলস (Mon-Sun), ডেইলি রুটিন কার্ডস (Deep Work, Sleep Mode) এবং নতুন শিডিউল যোগ করার ফ্রস্টেড মডাল।
+- **FocusScheduleScreen:** ফোকাস শিডিউল ক্যালেন্ডার, ডে সিলেক্টর পিলস (Mon-Sun), ডেইলি রুটিন কার্ডস (Deep Work, Sleep Mode) এবং নতুন শিডিউল যোগ করার ফ্রস্টেড মডাল। ফ্লোটিং অ্যাকশন বাটন (FAB) বটম বারের ঠিক উপরে এলিগ্যান্টলি স্থাপন করা হয়েছে।
 
 ### ৬. মডিউল ০৫: অ্যানালিটিক্স ও অ্যাক্টিভিটি হিস্ট্রি (`StatsScreen` & `DetailedActivityLogScreen`)
 - **StatsScreen:** কাস্টম ক্যানভাস দিয়ে আঁকা ডুয়াল-বার ট্রেন্ড চার্ট (ব্লকড ফ্রেম বনাম মিউটেড অডিও), ডোনাট ক্যাটাগরি ব্রেকডাউন চার্ট, অফলাইন SQLite প্রাইভেসি ব্যানার এবং টপ ইন্টারসেপ্টেড অ্যাপস র‍্যাঙ্কিং।
-- **DetailedActivityLogScreen:** ডেট-গ্রুপড টাইমলাইন ("Today", "Yesterday"), ক্যাটাগরি ফিল্টার চিপস (`All`, `Visual`, `Audio`, `Reels`), ইভেন্ট কার্ডস (নিয়ন পিঙ্ক/সায়ান/পার্পল অরা), ক্লিয়ার কনফার্মেশন অ্যালার্ট ডায়ালগ এবং স্ক্রিন ১৬-এর "All Clean" বায়ো-গ্রিন এম্পটি স্টেট।
+- **DetailedActivityLogScreen:** ডেট-গ্রুপড টাইমলাইন ("Today", "Yesterday"), ক্যাটাগরি ফিল্টার চিপস (`All`, `Visual`, `Audio`, `Reels`), ইভেন্ট কার্ডস (নিয়ন পিঙ্ক/সায়ান/পার্পল অরা), ক্লিয়ার কনফার্মেশন অ্যালার্ট ডায়ালগ এবং স্ক্রিন ১৬-এর "All Clear! No Threats Found." ৩ডি সাইবার ফোল্ডার এম্পটি স্টেট।
 
 ### ৭. মডিউল ০৬: সেটিংস, হোয়াইটলিস্ট ও সিকিউরিটি লক (Module 06 Complete)
 - **SettingsScreen.kt:**
@@ -159,11 +159,54 @@
    - *কারণ:* এমুলেটরে অটোমেটেড টেস্টিংয়ের সময় স্ট্যাটাস বার অফসেটের কারণে কিছু টাচ ইভেন্ট মিস হচ্ছিল।
    - *সমাধান:* পাইথন পিআইএল এবং অ্যান্ড্রয়েড উইন্ডোডাম্প (`uiautomator dump`) দিয়ে এক্স্যাক্ট সেন্ট্রয়েড বাউন্ডিং বক্স কোঅর্ডিনেট ক্যালকুলেট করে নিখুঁতভাবে অটোমেশন ভেরিফাই করা হয়েছে।
 
+7. **সমস্যা ৭: FocusScheduleScreen-এ FAB ও বটম বারের কলিশন**
+   - *কারণ:* `FloatingActionButton` এর বটম প্যাডিং পূর্বে ২০dp ছিল, যার ফলে ফ্লোটিং বটম বারের Settings ট্যাবের সাথে FAB ওভারল্যাপ হয়ে যেত।
+   - *সমাধান:* FAB-এর বটম প্যাডিং `105.dp` করা হয়েছে এবং স্ক্রিনের LazyColumn-এর নিচে `Spacer(height = 115.dp)` দেওয়া হয়েছে, যাতে এটি বটম বারের উপরে সুন্দরভাবে ভাসে এবং কন্টেন্ট পুরোপুরি স্ক্রোল করা যায়।
+
+8. **সমস্যা ৮: DetailedActivityLogScreen-এ বিশাল খালি গ্যাপ (240dp Spacer Bug)**
+   - *কারণ:* পূর্বে স্ক্রিনশট নেওয়ার সময় ডায়ালগের জন্য ব্যবহৃত টেস্টিং `Spacer(height = 240.dp)` কোডে রয়ে গিয়েছিল, যা Today এবং Yesterday-এর মাঝে বিশাল গ্যাপ তৈরি করছিল।
+   - *সমাধান:* এই স্পেসারটি ফিক্স করে স্ট্যান্ডার্ড `10.dp` স্পেসিং করা হয়েছে, যার ফলে টাইমলাইন এখন স্বাভাবিক ও মসৃণভাবে স্ক্রোল হয়।
+
+9. **সমস্যা ৯: এম্পটি স্টেট আর্কিটেকচার ইউনিফিকেশন**
+   - *কারণ:* `DetailedActivityLogScreen`-এ প্রাথমিক ড্রাফট এম্পটি স্টেট ছিল, যা মডিউল ০৮-এর প্রিমিয়াম ৩ডি ক্যানভাসের সাথে মিলছিল না।
+   - *সমাধান:* `DetailedActivityLogScreen`-এর `EmptyActivityLogState`-কে সরাসরি `SafeScreenStateView(SafeScreenStateType.EMPTY_LOG)` দিয়ে রিপ্লেস করা হয়েছে, ফলে ৩ডি সাইবার ফোল্ডার ও রিফ্রেশ বাটন এখন ডাইনামিকালি কাজ করে।
+
+10. **সমস্যা ১০: Android 15 Edge-to-Edge উইন্ডো ইনসেটস ও ডেপ্রিকেশন ওয়ার্নিং**
+    - *কারণ:* `Theme.kt`-এ `window.statusBarColor` এবং `window.navigationBarColor` অ্যান্ড্রয়েড ১৫-এ ডেপ্রিকেটেড ওয়ার্নিং দিচ্ছিল এবং `view.context as Activity` ক্র্যাশ রিস্ক তৈরি করতে পারত।
+    - *সমাধান:* `(view.context as? Activity)?.window` সেফ কাস্ট করা হয়েছে এবং সুনির্দিষ্ট `@Suppress("DEPRECATION")` অ্যানোটেশন দেওয়া হয়েছে, ফলে বিল্ড এখন ১০০% ওয়ার্নিং-মুক্ত।
+
 ---
 
-## 🚀 ৫. পরবর্তী কার্যক্রম ও সিকোয়েন্স (Next Steps for the Next Agent / Device)
+## 🔬 ৫. ডিপ কোড ও ইউআই অডিট রিপোর্ট (Deep System & UI Audit)
 
-যেহেতু **Phase 2B (UI Workflow Implementation) এর সকল মডিউল (Module 01 থেকে Module 08) ১০০% সফলভাবে সম্পন্ন হয়েছে**, বাসায় গিয়ে অন্য ডিভাইসে কাজ শুরু করলে আপনার **প্রথম ও সরাসরি কাজ হবে Phase 3 (Room DB & DataStore) শুরু করা**।
+অডিট চলাকালে নিম্নলিখিত বিষয়গুলো পুঙ্খানুপুঙ্খভাবে পরীক্ষা ও ভেরিফাই করা হয়েছে:
+
+1. **কম্পাইলার ও স্ট্যাটিক অ্যানালাইসিস অডিট:**
+   - `./gradlew compileDebugKotlin` — সফল (০ এরর, ০ ওয়ার্নিং)
+   - `./gradlew compileReleaseKotlin` — সফল (০ এরর, ০ ওয়ার্নিং)
+   - `./gradlew assembleDebug` — সফল (০ এরর, ০ ওয়ার্নিং)
+   - কোডবেসে কোনো অনিষ্পন্ন `TODO` বা `FIXME` নেই।
+
+2. **রানটাইম ও লগক্যাট অডিট (Logcat Crash Audit):**
+   - `adb logcat -d "*:E" | grep -i "safescreen"` চালিয়ে দেখা গেছে অ্যাপে কোনো আনক্যাচড এক্সেপশন বা ক্র্যাশ নেই।
+
+3. **ইউআই নেভিগেশন ও রাউটিং অডিট:**
+   - ১৬টি ডেস্টিনেশন রুট `Screen.kt`-এ ডেটা অবজেক্ট হিসেবে ডিফাইন করা।
+   - সবকটি মূল ট্যাব (`Home`, `Stats`, `FocusSchedule`, `Settings`) ব্যাকস্ট্যাক সুরক্ষিত রেখে সিঙ্গল-টপ নেভিগেট করে।
+   - সেকেন্ডারি স্ক্রিনসমূহে ব্যাক বাটন পপ-ব্যাকস্ট্যাক করে সঠিকভাবে পূর্বের স্ক্রিনে ফেরত যায়।
+   - বটম নেভিগেশন বার শুধুমাত্র ৪টি মূল ট্যাবে দৃশ্যমান থাকে এবং অন্য সব স্ক্রিনে স্মুথলি হাইড হয়ে যায়।
+
+4. **থিম, কালার ও ডিজাইন টোকেন অডিট:**
+   - সব স্ক্রিনে `DESIGN.md` অনুমোদিত টোকেনস (`DeepBlack`, `DarkSurfaceCard`, `NeonGreen`, `NeonCyan`, `NeonPurple`, `CyberPink`, `WarningAmber`) যথাযথভাবে ব্যবহৃত হয়েছে।
+   - প্রতিটি স্ক্রিনে টেক্সট হাইলাইটের ক্ষেত্রে `Spannable` বা স্প্যান স্টাইলিং অক্ষুণ্ণ রয়েছে।
+
+---
+
+## 🚀 ৬. পরবর্তী কার্যক্রম ও সিকোয়েন্স (Next Steps for the Next Agent / Device)
+
+যেহেতু **Phase 2B (UI Workflow Implementation) এর সকল মডিউল (Module 01 থেকে Module 08) ১০০% সফলভাবে সম্পন্ন হয়েছে এবং ডিপ অডিটে সব বাগ ফিক্স করা হয়েছে**, ব্যবহারকারীর কাছ থেকে **"Go ahead"** (অনুমতি) পাওয়ার পর আপনার **প্রথম ও সরাসরি কাজ হবে Phase 3 (Room DB & DataStore) শুরু করা**।
+
+> ⚠️ **মনে রাখবেন:** ব্যবহারকারী অনুমতি না দেওয়া পর্যন্ত Phase 3-এর কোনো কোড লিখবেন না।
 
 ### ১. পরবর্তী টাস্কের বিস্তারিত বিবরণ (Next Task Details):
 * **পর্যায়:** **Phase 3 — Persistence Layer (Room Database & DataStore Preferences)**
@@ -193,7 +236,7 @@
 
 ---
 
-## 💻 ৬. ডেভেলপার রান ও ভেরিফিকেশন গাইড (Developer Cheat Sheet)
+## 💻 ৭. ডেভেলপার রান ও ভেরিফিকেশন গাইড (Developer Cheat Sheet)
 
 অন্য ডিভাইসে অ্যাপটি ক্লোন করার পর কীভাবে রান ও টেস্ট করবেন:
 
@@ -220,52 +263,81 @@ adb shell am start -n com.safescreen.app/.MainActivity
 
 ---
 
-## 📂 ৭. প্রজেক্ট ফাইল স্ট্রাকচার রেফারেন্স (Key Files Map)
+## 📂 ৮. সম্পূর্ণ প্রজেক্ট ফাইল স্ট্রাকচার রেফারেন্স (Complete Master File Map)
 
 ```text
 SafeScreen/
 ├── app/src/main/java/com/safescreen/app/
-│   ├── MainActivity.kt                         # রুট অ্যাক্টিভিটি
-│   ├── SafeScreenApp.kt                        # Application ক্লাস (@HiltAndroidApp)
-│   ├── di/                                     # Dagger-Hilt ডিপেনডেন্সি ইনজেকশন মডিউলস
+│   ├── MainActivity.kt                                 # রুট অ্যাক্টিভিটি (Edge-to-Edge)
+│   ├── SafeScreenApp.kt                                # Application ক্লাস (@HiltAndroidApp)
+│   ├── di/                                             # Dagger-Hilt ডিপেনডেন্সি ইনজেকশন মডিউলস
 │   ├── presentation/
-│   │   ├── components/                         # পুনর্ব্যবহারযোগ্য সাইবার-ডার্ক কম্পোনেন্টস
-│   │   │   ├── CyberBackgroundWaves.kt         # ডাইনামিক অ্যাম্বিয়েন্ট ব্যাকগ্রাউন্ড
-│   │   │   ├── FloatingBottomNavigationBar.kt  # গ্লোবাল ৪-ট্যাব ফ্লোটিং বটম বার
-│   │   │   ├── GlassmorphicCard.kt             # প্রিমিয়াম ফ্রস্টেড গ্লাস কার্ড
-│   │   │   ├── NeonSwitch.kt                   # ট্যাকটাইল সাইবার নিয়ন টগল সুইচ
-│   │   │   ├── ShieldButton.kt                 # ৩ডি ইন্টারঅ্যাক্টিভ শিল্ড বাটন
-│   │   │   └── TimeLimitSlider.kt              # কাস্টম নিয়ন রেঞ্জ স্লাইডার
+│   │   ├── components/                                 # পুনর্ব্যবহারযোগ্য সাইবার-ডার্ক কম্পোনেন্টস
+│   │   │   ├── CyberBackgroundWaves.kt                 # ডাইনামিক অ্যাম্বিয়েন্ট ব্যাকগ্রাউন্ড
+│   │   │   ├── FloatingBottomNavigationBar.kt          # গ্লোবাল ৪-ট্যাব ফ্লোটিং বটম বার
+│   │   │   ├── GlassmorphicCard.kt                     # প্রিমিয়াম ফ্রস্টেড গ্লাস কার্ড
+│   │   │   ├── NeonSwitch.kt                           # ট্যাকটাইল সাইবার নিয়ন টগল সুইচ
+│   │   │   ├── SafeScreenStateView.kt                  # রিউজেবল এম্পটি, ওয়ার্নিং ও ফলব্যাক স্টেট
+│   │   │   ├── ShieldButton.kt                         # ৩ডি ইন্টারঅ্যাক্টিভ শিল্ড বাটন
+│   │   │   └── TimeLimitSlider.kt                      # কাস্টম নিয়ন রেঞ্জ স্লাইডার
 │   │   ├── navigation/
-│   │   │   ├── Screen.kt                       # ১৬টি স্ক্রিনের সম্পূর্ণ সিল্ড ক্লাস রুটস
-│   │   │   └── AppNavHost.kt                   # গ্লোবাল নেভিগেশন হোস্ট ও বটম বার হ্যান্ডলার
+│   │   │   ├── Screen.kt                               # ১৬টি স্ক্রিনের সম্পূর্ণ সিল্ড ক্লাস রুটস
+│   │   │   └── AppNavHost.kt                           # গ্লোবাল নেভিগেশন হোস্ট ও বটম বার হ্যান্ডলার
 │   │   ├── screens/
-│   │   │   ├── splash/SplashScreen.kt          # মডিউল ০১: স্প্ল্যাশ স্ক্রিন
-│   │   │   ├── onboarding/OnboardingScreen.kt  # মডিউল ০১: অনবোর্ডিং স্ক্রিন
-│   │   │   ├── permission/                     # মডিউল ০২: পারমিশন হাব ও ব্যাটারি শিট
-│   │   │   ├── home/                           # মডিউল ০৩: হোম ড্যাশবোর্ড ও ব্লার শিট
-│   │   │   ├── focus/                          # মডিউল ০৪: রিলস কন্ট্রোল ও ফোকাস শিডিউল
-│   │   │   ├── stats/                          # মডিউল ০৫: স্ট্যাটস চার্টস ও অ্যাক্টিভিটি লগ
-│   │   │   └── settings/                       # মডিউল ০৬: সেটিংস, হোয়াইটলিস্ট ও সিকিউরিটি লক
-│   │   │       ├── SettingsScreen.kt           # স্ক্রিন ১১: মেইন সেটিংস ও এআই টিউন
-│   │   │       ├── SettingsUiState.kt          # সেটিংস স্টেট ও ইভেন্টস
-│   │   │       ├── AppWhitelistScreen.kt       # স্ক্রিন ১২: এক্সিম্পটেড অ্যাপস তালিকা ও সার্চ
-│   │   │       ├── WhitelistUiState.kt         # হোয়াইটলিস্ট স্টেট ও ইভেন্টস
-│   │   │       ├── SecurityLockScreen.kt       # স্ক্রিন ১৩: পিন ডায়াল প্যাড ও বায়োমেট্রিক
-│   │   │       └── SecurityUiState.kt          # সিকিউরিটি স্টেট ও ইভেন্টস
-│   │   └── theme/                              # থিম, টাইপোগ্রাফি ও কালার টোকেনস
-│   └── services/                               # ব্যাকগ্রাউন্ড সার্ভিস ও ওভারলে ভিউজ
-│       └── overlay/                            # [মডিউল ০৭ এর জন্য প্রস্তুত ডিরেক্টরি]
-├── Screen Workflow/                            # ১৬টি স্ক্রিনের রেফারেন্স মকআপস ও প্রম্পট বুক
-│   ├── MASTER_UI_PROMPTS.md                    # সেলফ-কন্টেইন্ড প্রম্পট বুক
-│   ├── 06_Settings_And_Security/               # সেটিংস ও সিকিউরিটি রেফারেন্স
-│   └── 07_Overlays_And_Dialogs/                # সিস্টেম ওভারলে রেফারেন্স মকআপস
-├── DESIGN.md                                   # ডিজাইন সিস্টেম স্পেসিফিকেশন
-└── PROJECT_PROGRESS.md                         # বর্তমান হ্যান্ডওভার ও প্রগ্রেস রিপোর্ট
+│   │   │   ├── splash/SplashScreen.kt                  # মডিউল ০১: স্প্ল্যাশ স্ক্রিন
+│   │   │   ├── onboarding/OnboardingScreen.kt          # মডিউল ০১: অনবোর্ডিং স্ক্রিন
+│   │   │   ├── permission/                             # মডিউল ০২: পারমিশন হাব ও ব্যাটারি শিট
+│   │   │   │   ├── PermissionHubScreen.kt              # ৫টি পারমিশন কার্ডস
+│   │   │   │   └── BatteryOptimizationDialog.kt        # গোল্ডেন অরবিটাল শিট
+│   │   │   ├── home/                                   # মডিউল ০৩: হোম ড্যাশবোর্ড ও ব্লার শিট
+│   │   │   │   ├── HomeScreen.kt                       # ফ্ল্যাগশিপ ড্যাশবোর্ড ও সিমুলেটরস
+│   │   │   │   ├── HomeUiState.kt                      # হোম স্টেট ও ইভেন্টস
+│   │   │   │   └── BlurStylePreviewSheet.kt            # ৩-স্টাইল স্প্লিট প্রিভিউ শিট
+│   │   │   ├── focus/                                  # মডিউল ০৪: রিলস কন্ট্রোল ও ফোকাস শিডিউল
+│   │   │   │   ├── ReelsControlScreen.kt               # ৩ডি আওয়ারগ্লাস ও টাইম লিমিট স্লাইডার্স
+│   │   │   │   ├── ReelsControlUiState.kt              # রিলস স্টেট ও ইভেন্টস
+│   │   │   │   ├── FocusScheduleScreen.kt              # ফোকাস শিডিউল, ডে পিলস ও এফএবি
+│   │   │   │   └── FocusScheduleUiState.kt             # শিডিউল স্টেট ও ইভেন্টস
+│   │   │   ├── stats/                                  # মডিউল ০৫: স্ট্যাটস চার্টস ও অ্যাক্টিভিটি লগ
+│   │   │   │   ├── StatsScreen.kt                      # ডুয়াল-বার ট্রেন্ড ও ডোনাট চার্ট
+│   │   │   │   ├── StatsUiState.kt                     # স্ট্যাটস স্টেট ও ইভেন্টস
+│   │   │   │   ├── DetailedActivityLogScreen.kt        # টাইমলাইন ফিড, ফিল্টার ও এম্পটি স্টেট
+│   │   │   │   └── DetailedActivityLogUiState.kt       # অ্যাক্টিভিটি লগ স্টেট ও ইভেন্টস
+│   │   │   ├── settings/                               # মডিউল ০৬: সেটিংস, হোয়াইটলিস্ট ও সিকিউরিটি লক
+│   │   │   │   ├── SettingsScreen.kt                   # স্ক্রিন ১১: মেইন সেটিংস ও এআই টিউন
+│   │   │   │   ├── SettingsUiState.kt                  # সেটিংস স্টেট ও ইভেন্টস
+│   │   │   │   ├── AppWhitelistScreen.kt               # স্ক্রিন ১২: এক্সিম্পটেড অ্যাপস তালিকা ও সার্চ
+│   │   │   │   ├── WhitelistUiState.kt                 # হোয়াইটলিস্ট স্টেট ও ইভেন্টস
+│   │   │   │   ├── SecurityLockScreen.kt               # স্ক্রিন ১৩: পিন ডায়াল প্যাড ও বায়োমেট্রিক
+│   │   │   │   └── SecurityUiState.kt                  # সিকিউরিটি স্টেট ও ইভেন্টস
+│   │   │   └── states/                                 # মডিউল ০৮: সিস্টেম স্টেট সিমুলেটর
+│   │   │       └── EmptyAndErrorStatesScreen.kt        # ৪-ট্যাব স্টেট এক্সপ্লোরার স্ক্রিন
+│   │   └── theme/                                      # থিম, টাইপোগ্রাফি ও কালার টোকেনস
+│   │       ├── Color.kt                                # অফিশিয়াল সাইবার-ডার্ক নিয়ন প্যালেট
+│   │       ├── Theme.kt                                # মেটেরিয়াল ৩ ডার্ক কালার স্কিম ও ইনসেটস
+│   │       └── Typography.kt                           # প্রিমিয়াম সাইবার টাইপোগ্রাফি
+│   └── services/
+│       └── overlay/                                    # মডিউল ০৭: রিয়েল-টাইম সিস্টেম ওভারলে
+│           ├── LiveBlurOverlayView.kt                  # WindowManager কম্পোজ ওভারলে ভিউ
+│           ├── LiveBlurOverlayManager.kt               # টাইপ অ্যাপ্লিকেশন ওভারলে সার্ভিস ম্যানেজার
+│           ├── FocusInterventionOverlay.kt             # ফুলস্ক্রিন ফোকাস ইন্টারভেনশন স্ক্রিন
+│           └── FocusInterventionOverlayManager.kt      # ৫-মিনিট ওয়াক ও ২-মিনিট পাস ম্যানেজার
+├── Screen Workflow/                                    # ১৬টি স্ক্রিনের রেফারেন্স মকআপস ও প্রম্পট বুক
+│   ├── MASTER_UI_PROMPTS.md                            # সেলফ-কন্টেইন্ড প্রম্পট বুক
+│   ├── 01_Splash_And_Onboarding/
+│   ├── 02_Permissions_And_Battery/
+│   ├── 03_Home_And_Core_Monitoring/
+│   ├── 04_Reels_And_Focus/
+│   ├── 05_Stats_And_Analytics/
+│   ├── 06_Settings_And_Security/
+│   ├── 07_Overlays_And_Dialogs/
+│   └── 08_Error_And_Empty_States/
+├── DESIGN.md                                           # ডিজাইন সিস্টেম স্পেসিফিকেশন
+└── PROJECT_PROGRESS.md                                 # বর্তমান হ্যান্ডওভার ও প্রগ্রেস রিপোর্ট
 ```
 
 ---
 
 *রিপোর্ট প্রস্তুতকারক: Antigravity AI Pair Programmer*  
-*সর্বশেষ কমিট হ্যাশ:* `78a5d75` (এবং পরবর্তী সিঙ্ক)  
-*রিপোজিটরি ব্রাঞ্চ:* `main` (সম্পূর্ণ ক্লিন ও পুশড)
+*সর্বশেষ কমিট স্ট্যাটাস:* Clean & Pushed to GitHub  
+*রিপোজিটরি ব্রাঞ্চ:* `main` (সম্পূর্ণ সিঙ্কড)

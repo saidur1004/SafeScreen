@@ -1405,3 +1405,4 @@ private fun AiCoreErrorStatePreview() {
 private fun EmptyActivityLogPreview() {
     SafeScreenStateView(stateType = SafeScreenStateType.EMPTY_LOG)
 }
+

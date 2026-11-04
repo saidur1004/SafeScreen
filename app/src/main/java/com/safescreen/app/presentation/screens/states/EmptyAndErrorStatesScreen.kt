@@ -228,3 +228,4 @@ private fun StateTabItem(
 private fun EmptyAndErrorStatesScreenPreview() {
     EmptyAndErrorStatesScreen(onNavigateBack = {})
 }
+

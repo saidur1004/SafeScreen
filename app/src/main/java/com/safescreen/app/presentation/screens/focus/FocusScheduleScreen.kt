@@ -317,10 +317,15 @@ fun FocusScheduleContent(
                         modifier = Modifier.padding(top = 10.dp, bottom = 6.dp)
                     )
                 }
+
+                // Bottom padding for Global Floating Nav Bar
+                item {
+                    Spacer(modifier = Modifier.height(115.dp))
+                }
             }
         }
 
-        // Floating Action Button (FAB) at Bottom-Right
+        // Floating Action Button (FAB) at Bottom-Right (positioned comfortably above floating bottom bar)
         FloatingActionButton(
             onClick = { onEvent(FocusScheduleUiEvent.OpenAddScheduleSheet) },
             shape = CircleShape,
@@ -328,7 +333,7 @@ fun FocusScheduleContent(
             elevation = androidx.compose.material3.FloatingActionButtonDefaults.elevation(0.dp),
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(end = 20.dp, bottom = 20.dp)
+                .padding(end = 20.dp, bottom = 105.dp)
                 .size(56.dp)
                 .shadow(elevation = 12.dp, shape = CircleShape, ambientColor = NeonPurple, spotColor = NeonPurple)
                 .background(
