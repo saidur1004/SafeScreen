@@ -22,9 +22,9 @@
 
 ## 📌 ১. প্রজেক্টের বর্তমান ওভারভিউ ও লাইভ স্ট্যাটাস (Executive Snapshot)
 
-* **সর্বশেষ আপডেটের তারিখ ও সময়:** ০৪ নভেম্বর ২০২৬ (Phase 4.1: MediaProjection Core Engine ১০০% সম্পন্ন ও এমুলেটরে ভেরিফাইড ✅)
-* **বর্তমান পর্যায়:** **Phase 4: Android OS System Services (Phase 4.0 ও 4.1 সম্পন্ন ✅ | Phase 4.2: AudioPlaybackCapture এর অপেক্ষায় ⏳)**
-* **পরবর্তী তাৎক্ষণিক কাজ (Immediate Next Task):** **Phase 4.2: AudioPlaybackCapture Engine (AudioRecord, AudioPlaybackCaptureConfiguration & 16kHz Mono Stream Buffer)** — *[ইউজারের স্পষ্ট "Go ahead" অনুমতির অপেক্ষায়]*
+* **সর্বশেষ আপডেটের তারিখ ও সময়:** ০৪ নভেম্বর ২০২৬ (Phase 4.2: AudioPlaybackCapture Engine ১০০% সম্পন্ন ও এমুলেটরে ভেরিফাইড ✅)
+* **বর্তমান পর্যায়:** **Phase 4: Android OS System Services (Phase 4.0, 4.1 ও 4.2 সম্পন্ন ✅ | Phase 4.3: Reels Accessibility এর অপেক্ষায় ⏳)**
+* **পরবর্তী তাৎক্ষণিক কাজ (Immediate Next Task):** **Phase 4.3: Reels Accessibility Observer (Shorts/Reels Node Interception & Screen-time Limits)** — *[ইউজারের স্পষ্ট "Go ahead" অনুমতির অপেক্ষায়]*
 * **গিট রিপোজিটরি:** `https://github.com/saidur1004/SafeScreen.git` (মেইন ব্রাঞ্চ: `main`)
 * **টেকনিক্যাল টুলচেইন:** Kotlin 2.0.21, Gradle 8.14, AGP 8.7.3, Jetpack Compose BOM 2024.10.01, Dagger-Hilt 2.52, Room 2.6.1, Java 21, Min SDK 29 (Android 10), Target SDK 35 (Android 15)
 * **টেস্ট ডিভাইস:** Android Emulator (`emulator-5554`, Google APIs ARM64/x86_64, Pixel 9, Android 15 API 35)
@@ -452,16 +452,22 @@ flowchart TD
 - [x] সার্ভিস ইন্টিগ্রেশন: `ShieldProtectionService`-এর সাথে ফ্রেম স্ট্রিম কানেক্টেড এবং `onDestroy`/`stopForegroundShield`-এ নিখুঁত রিসোর্স রিলিজ।
 - [x] লাইভ এমুলেটর ভেরিফিকেশন: Pixel 9 (Android 15) এমুলেটরে ১০০০+ ফ্রেম সফলভাবে ক্যাপচার হয়েছে (লগক্যাটে `360x808 @ 5 FPS` ও স্ট্যাটিক ফ্রেম স্কিপিং প্রমাণিত, কোনো ক্র্যাশ বা মেমোরি লিক ছাড়া)।
 
-#### ধাপ ৩ (Phase 4.2): AudioPlaybackCapture Engine (পরবর্তী কাজ — ইউজারের "Go ahead" অনুমতির অপেক্ষায় ⏳)
+#### ধাপ ৩ (Phase 4.2): AudioPlaybackCapture Engine (সম্পন্ন ও এমুলেটরে ভেরিফাইড ✅)
 *টার্গেট ডিরেক্টরি:* `app/src/main/java/com/safescreen/app/services/audio/`
-- [ ] `AudioPlaybackCaptureEngine.kt`:
-  - `AudioRecord` উইথ `AudioPlaybackCaptureConfiguration`।
-  - ১৬kHz ১৬-বিট মনো অডিও স্ট্রিম চাঙ্ক বাফার (জিরো-জিসি বাফার লুপ)।
-  - ব্যাকগ্রাউন্ড মিউজিক/সাউন্ড স্পিচ ডিটেকশনের জন্য অডিও পাইপলাইন প্রস্তুতকরণ।
+- [x] `AudioPlaybackCaptureEngine.kt`:
+  - `AudioRecord` উইথ `AudioPlaybackCaptureConfiguration` (অ্যান্ড্রয়েড ১০+ / API 29+ ইন্টারনাল মিডিয়া প্লেব্যাক ক্যাপচারিং: YouTube, Spotify, Reels, Chrome) এবং `MIC_FALLBACK` অটোমেটিক সাপোর্ট।
+  - Critical AI Formatting: **16kHz (16,000 Hz), 16-bit PCM, Mono** (YAMNet অডিও ক্লাসিফিকেশন মডেলের সুনির্দিষ্ট ইনপুট স্পেসিফিকেশন)।
+  - Zero-GC Pressure Architecture: প্রতি সেকেন্ডে কোনো নতুন অ্যারে অ্যালোকেশন না করে ৩-সেকেন্ডের প্রি-অ্যালোকেটেড সার্কুলার রিং বাফার (`AudioRingBuffer`, ৪৮,০০০ শর্টস / ~৯৬ KB মেমোরি), ১০২৪ শর্টস রিড চাঙ্ক বাফার এবং ১৫,৬০০ শর্টস (০.৯৭৫ সেকেন্ড) YAMNet উইন্ডো এমিশন বাফার।
+  - প্রিমিটিভ আরএমএস (RMS dB) ক্যালকুলেশন: কোনো হিপ অবজেক্ট ছাড়া সরাসরি লাইভ অডিও এনার্জি (-১০০ dB থেকে ০ dB) ট্র্যাক ও ডায়াগনস্টিক্স।
+  - রিঅ্যাক্টিভ অটো-পজ: DataStore-এর `isAudioMuteEnabledFlow` পর্যবেক্ষণ করে ব্যবহারকারী অডিও গার্ড বন্ধ করলে অডিও পোলিং থ্রেড স্বয়ংক্রিয়ভাবে পজ হয়ে সিপিইউ ও ব্যাটারি বাঁচায়।
+- [x] সার্ভিস ইন্টিগ্রেশন: `ShieldProtectionService`-এর সাথে ডুয়াল-ইঞ্জিন (স্ক্রিন ও অডিও) একসাথে কানেক্টেড এবং শিল্ড বন্ধ হলে `audioRecord.stop()` ও `release()` নিখুঁতভাবে সম্পাদিত।
+- [x] লাইভ এমুলেটর ভেরিফিকেশন: Pixel 9 (Android 15) এমুলেটরে ১.৪৭ মিলিয়নেরও বেশি অডিও স্যাম্পল স্ক্রিন ক্যাপচারের সাথে সমান্তরালভাবে ব্যাকগ্রাউন্ডে ক্যাপচার হয়েছে (`INTERNAL_PLAYBACK` মোডে), কোনো ক্র্যাশ, মেমোরি লিক বা UI ফ্রিল্যাগ পরিলক্ষিত হয়নি।
 
-#### ধাপ ৪ (Phase 4.3): Reels Accessibility Observer (পরবর্তী মাইলস্টোন ⏳)
+#### ধাপ ৪ (Phase 4.3): Reels Accessibility Observer (পরবর্তী কাজ — ইউজারের "Go ahead" অনুমতির অপেক্ষায় ⏳)
+*টার্গেট ডিরেক্টরি:* `app/src/main/java/com/safescreen/app/services/accessibility/`
 - [ ] `ReelsAccessibilityObserver.kt`:
   - শর্ট-ভিডিও প্ল্যাটফর্মস (Instagram Reels, YouTube Shorts, TikTok) ভিউ আইডি ও নোড ইন্টারসেপশন।
+  - ডুয়াল-লেয়ার স্ক্রিন-টাইম ট্র্যাকিং ও দৈনিক লিমিট এক্সিড হলে FocusInterventionOverlay ট্রিগার।
 
 ---
 

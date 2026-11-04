@@ -18,6 +18,7 @@ import androidx.lifecycle.LifecycleService
 import com.safescreen.app.MainActivity
 import com.safescreen.app.R
 import com.safescreen.app.data.local.datastore.UserPreferencesRepository
+import com.safescreen.app.services.audio.AudioPlaybackCaptureEngine
 import com.safescreen.app.services.capture.MediaProjectionCaptureEngine
 import com.safescreen.app.services.permission.PermissionManager
 import dagger.hilt.android.AndroidEntryPoint
@@ -38,6 +39,9 @@ class ShieldProtectionService : LifecycleService() {
 
     @Inject
     lateinit var captureEngine: MediaProjectionCaptureEngine
+
+    @Inject
+    lateinit var audioCaptureEngine: AudioPlaybackCaptureEngine
 
     override fun onCreate() {
         super.onCreate()
@@ -113,13 +117,27 @@ class ShieldProtectionService : LifecycleService() {
             }
             Log.d(TAG, "ShieldProtectionService running in foreground")
 
-            // Start screen capture if MediaProjection consent has been granted
+            // 1. Start screen capture if MediaProjection consent has been granted
+            var mediaProjectionSession: android.media.projection.MediaProjection? = null
             if (PermissionManager.hasMediaProjectionConsent) {
                 val resultCode = PermissionManager.mediaProjectionResultCode
                 val resultData = PermissionManager.mediaProjectionResultData
                 if (resultCode != 0 && resultData != null) {
-                    captureEngine.startCapture(resultCode, resultData)
+                    val started = captureEngine.startCapture(resultCode, resultData)
+                    if (started) {
+                        mediaProjectionSession = captureEngine.activeMediaProjection
+                    }
                 }
+            }
+
+            // 2. Start audio playback capture (16kHz Mono PCM for YAMNet)
+            val isAudioGranted = ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.RECORD_AUDIO
+            ) == PackageManager.PERMISSION_GRANTED
+
+            if (isAudioGranted) {
+                audioCaptureEngine.startCapture(mediaProjectionSession)
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to start foreground service: ${e.message}", e)
@@ -128,6 +146,7 @@ class ShieldProtectionService : LifecycleService() {
 
     private fun stopForegroundShield() {
         Log.d(TAG, "Stopping ShieldProtectionService")
+        audioCaptureEngine.stopCapture()
         captureEngine.stopCapture()
         _isServiceRunning.value = false
         stopForeground(STOP_FOREGROUND_REMOVE)
@@ -181,6 +200,7 @@ class ShieldProtectionService : LifecycleService() {
 
     override fun onDestroy() {
         super.onDestroy()
+        audioCaptureEngine.stopCapture()
         captureEngine.stopCapture()
         _isServiceRunning.value = false
         Log.d(TAG, "ShieldProtectionService destroyed")

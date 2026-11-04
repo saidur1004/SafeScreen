@@ -111,6 +111,9 @@ class MediaProjectionCaptureEngine @Inject constructor(
     val isCapturing: Boolean
         get() = virtualDisplay != null && mediaProjection != null
 
+    val activeMediaProjection: MediaProjection?
+        get() = mediaProjection
+
     init {
         // Observe performance profile from DataStore to adapt frame decimation
         userPreferencesRepository.performanceProfileFlow
