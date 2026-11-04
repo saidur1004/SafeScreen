@@ -3,7 +3,10 @@ package com.safescreen.app.di
 import android.content.Context
 import androidx.room.Room
 import com.safescreen.app.data.local.AppDatabase
+import com.safescreen.app.data.local.dao.FocusScheduleDao
 import com.safescreen.app.data.local.dao.StatDao
+import com.safescreen.app.data.local.dao.ThreatLogDao
+import com.safescreen.app.data.local.dao.WhitelistDao
 import com.safescreen.app.data.repository.StatRepositoryImpl
 import com.safescreen.app.domain.repository.StatRepository
 import dagger.Module
@@ -13,6 +16,9 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
+/**
+ * Dagger-Hilt Module for providing thread-safe Room Database instances and DAOs.
+ */
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
@@ -24,7 +30,28 @@ object DatabaseModule {
             context,
             AppDatabase::class.java,
             AppDatabase.DATABASE_NAME
-        ).fallbackToDestructiveMigration().build()
+        )
+            .addCallback(AppDatabase.PREPOPULATE_CALLBACK)
+            .fallbackToDestructiveMigration()
+            .build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideThreatLogDao(database: AppDatabase): ThreatLogDao {
+        return database.threatLogDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideWhitelistDao(database: AppDatabase): WhitelistDao {
+        return database.whitelistDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideFocusScheduleDao(database: AppDatabase): FocusScheduleDao {
+        return database.focusScheduleDao()
     }
 
     @Provides
@@ -39,4 +66,3 @@ object DatabaseModule {
         return StatRepositoryImpl(statDao)
     }
 }
-

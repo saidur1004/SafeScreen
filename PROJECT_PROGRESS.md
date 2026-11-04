@@ -22,9 +22,9 @@
 
 ## 📌 ১. প্রজেক্টের বর্তমান ওভারভিউ ও লাইভ স্ট্যাটাস (Executive Snapshot)
 
-* **সর্বশেষ আপডেটের তারিখ ও সময়:** ০৪ নভেম্বর ২০২৬ (ডিপ কনটেক্সচুয়াল রিভিশন, আর্কিটেকচার ব্লুপ্রিন্ট ও জিরো-ল্যাগ এআই মাস্টার প্ল্যান সম্পন্ন)
-* **বর্তমান পর্যায়:** **Phase 2B সম্পন্ন ✅ | Phase 3 (Room DB & DataStore) প্রস্তুতিকালীন ডিপ রিভিশন ও প্ল্যানিং সম্পন্ন (কোড শুরুর পূর্বে ইউজারের "Go ahead" অনুমতির অপেক্ষায়) ⏳**
-* **পরবর্তী তাৎক্ষণিক কাজ (Immediate Next Task):** **Phase 3: Persistence Layer (Prompt 1: Entities, DAOs, Database with Banking Prepopulation Seed & Hilt Module)** — *[ইউজারের স্পষ্ট "Go ahead" অনুমতির অপেক্ষায়]*
+* **সর্বশেষ আপডেটের তারিখ ও সময়:** ০৪ নভেম্বর ২০২৬ (Phase 3 Prompt 1: Room DB ইনফ্রাস্ট্রাকচার ও ব্যাংকিং প্রি-পপুলেশন ১০০% সম্পন্ন)
+* **বর্তমান পর্যায়:** **Phase 3: Persistence Layer (Prompt 1: Room DB সম্পন্ন ও এমুলেটরে ভেরিফাইড ✅ | Prompt 2: DataStore Preferences এর অপেক্ষায় ⏳)**
+* **পরবর্তী তাৎক্ষণিক কাজ (Immediate Next Task):** **Phase 3: Persistence Layer (Prompt 2: Jetpack DataStore Preferences Repository & Hilt Setup)** — *[ইউজারের স্পষ্ট "Go ahead" অনুমতির অপেক্ষায়]*
 * **গিট রিপোজিটরি:** `https://github.com/saidur1004/SafeScreen.git` (মেইন ব্রাঞ্চ: `main`)
 * **টেকনিক্যাল টুলচেইন:** Kotlin 2.0.21, Gradle 8.14, AGP 8.7.3, Jetpack Compose BOM 2024.10.01, Dagger-Hilt 2.52, Room 2.6.1, Java 21, Min SDK 29 (Android 10), Target SDK 35 (Android 15)
 * **টেস্ট ডিভাইস:** Android Emulator (`emulator-5554`, Google APIs ARM64/x86_64, Pixel 9, Android 15 API 35)
@@ -50,7 +50,8 @@
 | **Module 07: Live Blur** | `LiveBlurOverlayView.kt` (`WindowManager` Overlay, 3D Emblem, Breathing Aura, 5s Peek) | ✅ 100% Polished | `services/overlay/LiveBlurOverlayView.kt` |
 | **Module 07: Focus Overlay** | `FocusInterventionOverlay.kt` (3D Shield & Hourglass, 5m Walk, 2m Emergency Pass) | ✅ 100% Polished | `services/overlay/FocusInterventionOverlay.kt` |
 | **Module 08: Fallbacks** | `SafeScreenStateView.kt` & `EmptyAndErrorStatesScreen.kt` (Clean, Paused, AI Error, Empty Log) | ✅ 100% Polished | `presentation/components/SafeScreenStateView.kt` |
-| **Phase 3: Persistence** | Room Database (ThreatLogEntity, WhitelistEntity) & DataStore Preferences | ⏳ **Next Up (Phase 3)** | `AppDatabase.kt`, `ThreatLogDao.kt`, `WhitelistDao.kt` |
+| **Phase 3: Room DB (P1)** | Room Database (ThreatLogEntity, WhitelistEntity, FocusScheduleEntity, Prepopulation Callback) | ✅ **100% Verified** | `AppDatabase.kt`, `ThreatLogDao.kt`, `WhitelistDao.kt`, `FocusScheduleDao.kt` |
+| **Phase 3: DataStore (P2)** | Jetpack DataStore Preferences Repository (Shield, AI Config, PIN Hash, Hilt Module) | ⏳ **Next Up (P2)** | `UserPreferencesRepository.kt`, `PreferencesKeys.kt` |
 | **Phase 4: OS Services** | MediaProjection, AudioRecord, AccessibilityService, Foreground Notification | ⏳ Planned (Phase 4) | `services/ShieldProtectionService.kt` |
 | **Phase 5: On-Device AI** | INT8 Quantized TFLite NSFW Filter & YAMNet Audio Classifier Integration | ⏳ Planned (Phase 5) | `domain/ml/TFLiteClassifier.kt` |
 
@@ -126,6 +127,31 @@
 - **EmptyAndErrorStatesScreen.kt (`presentation/screens/states/`):**
   - ৪-ট্যাব সেগমেন্ট সুইচার (`[Clean] [Paused] [AI Error] [Empty Log]`) সহ ফুল-স্ক্রিন স্টেট ভেরিফায়ার।
   - `HomeScreen.kt`-এ ডেডিকেটেড `FallbackStatesSimulatorCard` যোগ করা হয়েছে যা সরাসরি `Screen.EmptyAndErrorStates.route`-এ নেভিগেট করে।
+
+### ১০. ফেজ ৩: লোকাল পারসিস্টেন্স লেয়ার — রুম ডাটাবেস ইনফ্রাস্ট্রাকচার (Phase 3 Prompt 1 Complete ✅)
+- **Entities (`data/local/entity/`):**
+  - `ThreatLogEntity.kt`: প্রতিটি থ্রেট ইভেন্টের `id`, `timestamp`, `threatType` (`VISUAL_NSFW`, `AUDIO_EXPLICIT`, `REELS_LIMIT`), `appPackageName`, `appName`, `severity`, `actionTaken` (`BLURRED`, `MUTED`, `BLOCKED`), এবং `details` সম্পূর্ণ অন-ডিভাইস স্টোরেজে ধারণ করে।
+  - `WhitelistEntity.kt`: অ্যাপ্লিকেশনের `packageName`, `appName`, `category`, `isExempted`, `isBankingDefault`, `isFlagSecure`, `addedTimestamp`, এবং `accentColorHex` সংরক্ষণ করে।
+  - `FocusScheduleEntity.kt`: ফোকাস ব্লকের `id`, `title`, `startTimeMinutes`, `endTimeMinutes`, `startTimeDisplay`, `endTimeDisplay`, `repeatSummary`, `activeDaysBitmask`, `isEnabled`, `iconType`, এবং `accentColorHex` ধারণ করে।
+- **DAOs (`data/local/dao/`):**
+  - `ThreatLogDao.kt`: ইনসার্ট, রিয়েক্টিভ ফ্লো (`getAllThreatLogsFlow`, `getThreatLogsByTypeFlow`, `getThreatLogsSinceFlow`), টুডে কাউন্টস ফ্লো (`getTodayThreatCountFlow`, `getTodayThreatCountByTypeFlow`), সার্চ এবং `clearAllThreatLogs()`।
+  - `WhitelistDao.kt`: ইনসার্ট, আপডেট, এক্সেম্পটেড প্যাকেজ নেমস ফ্লো (`getExemptedPackageNamesFlow`), সিঙ্ক চেক (`getExemptedPackageNames`, `isPackageExempted`), এবং লাইভ সার্চ।
+  - `FocusScheduleDao.kt`: শিডিউল ইনসার্ট, আপডেট, টগল এবং সক্রিয় শিডিউল ফ্লো কোয়েরিজ।
+- **Room TypeConverters (`data/local/converters/RoomConverters.kt`):**
+  - `ThreatType` এবং `ThreatAction` এনামগুলোকে নিরাপদ ও ব্যাকওয়ার্ড-কম্প্যাটিবল টেক্সট স্ট্রিংয়ে রূপান্তর।
+- **AppDatabase.kt (`data/local/AppDatabase.kt`):**
+  - Room v1 ডাটাবেস উইথ Thread-safe Singleton।
+  - **Banking Pre-population Callback:** `RoomDatabase.Callback.onCreate` মেথডে স্বয়ংক্রিয়ভাবে ৫টি শীর্ষস্থানীয় ব্যাংকিং অ্যাপ প্রি-সিড করা হয়েছে:
+    1. `com.paypal.android.p2pmobile` (PayPal • Banking & Finance)
+    2. `com.infonow.bofa` (Bank of America • Banking & Finance)
+    3. `com.google.android.apps.walletnfcrel` (Google Pay / Wallet • Banking & Finance)
+    4. `com.chase.sig.android` (Chase Mobile • Banking & Finance)
+    5. `com.revolut.revolut` (Revolut • Banking & Finance)
+    - এবং ২টি কোর ফোকাস শিডিউল: `"Night Purity & Sleep"` ও `"Deep Work / Study"`।
+- **Hilt Dependency Injection (`di/DatabaseModule.kt`):**
+  - `provideAppDatabase`, `provideThreatLogDao`, `provideWhitelistDao`, `provideFocusScheduleDao` এবং `provideStatDao` সিঙ্গলটন হিসেবে ইনজেকশন নিশ্চিত করা হয়েছে।
+- **লাইভ এমুলেটর ভেরিফিকেশন:**
+  - এমুলেটরে রান করে `SafeScreenDB` ট্যাগ দিয়ে প্রি-পপুলেশন ভেরিফাই করা হয়েছে: ৫টি ব্যাংকিং অ্যাপ ও ২টি শিডিউল ডাটাবেসে সফলভাবে লোড হয়েছে (০ এরর, ০ ওয়ার্নিং)। Unit Test: `RoomConvertersTest` সফল।
 
 ---
 
@@ -285,33 +311,20 @@ flowchart TD
 
 ### 📌 ফেজ ৩: লোকাল পারসিস্টেন্স লেয়ার (Phase 3 Execution Steps)
 
-#### ধাপ ১ (Prompt 1): Room Database Infrastructure
-*টার্গেট ডিরেক্টরি:* `app/src/main/java/com/safescreen/app/data/local/room/` ও `.../di/`
-1. `ThreatLogEntity.kt`:
-   - ফিল্ডস: `id` (AutoGenerate), `timestamp` (Long), `threatType` (`VISUAL_NSFW`, `AUDIO_EXPLICIT`, `REELS_LIMIT`), `appPackageName`, `appName`, `severity` (Float), `actionTaken` (`BLURRED`, `MUTED`, `BLOCKED`).
-2. `ThreatLogDao.kt`:
-   - `insertThreatLog(entity)`
-   - `getAllThreatLogsFlow(): Flow<List<ThreatLogEntity>>`
-   - `getLogsGroupedByDateFlow(): Flow<Map<String, List<ThreatLogEntity>>>`
-   - `getTodayThreatCountFlow(): Flow<Int>`
-   - `clearAllLogs()`
-3. `WhitelistEntity.kt`:
-   - ফিল্ডস: `packageName` (PrimaryKey), `appName`, `category`, `isExempted`, `isBankingDefault`, `addedTimestamp`.
-4. `WhitelistDao.kt`:
-   - `insertOrUpdate(entity)`
-   - `getAllWhitelistFlow(): Flow<List<WhitelistEntity>>`
-   - `getExemptedPackagesFlow(): Flow<List<String>>`
-   - `toggleExemption(packageName, isExempted)`
-5. `FocusScheduleEntity.kt` & `FocusScheduleDao.kt`:
-   - শিডিউল ডেটা সংরক্ষণ ও কোয়েরি।
-6. `AppDatabase.kt`:
-   - RoomDatabase v1, exportSchema = true, Thread-safe singleton।
-   - **Banking Pre-population Callback:** ডিফল্ট সিড হিসেবে ৫টি ব্যাংকিং অ্যাপ (`PayPal`, `Bank of America`, `Google Pay`, `Chase`, `Revolut`) স্বয়ংক্রিয়ভাবে ইনসার্ট করা।
-7. `DatabaseModule.kt` (Hilt):
-   - Provide Database, ThreatLogDao, WhitelistDao, FocusScheduleDao।
+#### ধাপ ১ (Prompt 1): Room Database Infrastructure (সম্পন্ন ও এমুলেটরে ভেরিফাইড ✅)
+*টার্গেট ডিরেক্টরি:* `app/src/main/java/com/safescreen/app/data/local/` ও `.../di/`
+- [x] `ThreatLogEntity.kt`: ফিল্ডস: `id` (AutoGenerate), `timestamp` (Long), `threatType` (`VISUAL_NSFW`, `AUDIO_EXPLICIT`, `REELS_LIMIT`), `appPackageName`, `appName`, `severity` (Float), `actionTaken` (`BLURRED`, `MUTED`, `BLOCKED`), `details`।
+- [x] `ThreatLogDao.kt`: `insertThreatLog`, `getAllThreatLogsFlow`, `getThreatLogsByTypeFlow`, `getTodayThreatCountFlow`, `searchThreatLogs`, `clearAllThreatLogs`।
+- [x] `WhitelistEntity.kt`: ফিল্ডস: `packageName` (PrimaryKey), `appName`, `category`, `isExempted`, `isBankingDefault`, `isFlagSecure`, `addedTimestamp`, `accentColorHex`।
+- [x] `WhitelistDao.kt`: `insertApp`, `getAllAppsFlow`, `getExemptedAppsFlow`, `getExemptedPackageNamesFlow`, `getExemptedPackageNames`, `updateExemptionStatus`, `searchAppsFlow`।
+- [x] `FocusScheduleEntity.kt` & `FocusScheduleDao.kt`: শিডিউল ডেটা সংরক্ষণ ও কোয়েরি।
+- [x] `RoomConverters.kt`: এনাম সিরিয়ালাইজেশন ও ডি-সিরিয়ালাইজেশন (`RoomConvertersTest` সফল)।
+- [x] `AppDatabase.kt`: RoomDatabase v1, exportSchema = false, Thread-safe singleton সহ `PREPOPULATE_CALLBACK` (৫টি ব্যাংকিং অ্যাপ ও ২টি ফোকাস শিডিউল অটো-সিড)।
+- [x] `DatabaseModule.kt` (Hilt): Provide Database, ThreatLogDao, WhitelistDao, FocusScheduleDao, StatDao।
+- [x] লাইভ টেস্ট: এমুলেটরে ৫টি ব্যাংকিং অ্যাপ ও ২টি শিডিউল ডাটাবেসে সফলভাবে লোড ও লগ ভেরিফাইড।
 
-#### ধাপ ২ (Prompt 2): Jetpack DataStore Preferences Repository
-*টার্গেট ডিরেক্টরি:* `app/src/main/java/com/safescreen/app/data/local/datastore/`
+#### ধাপ ২ (Prompt 2): Jetpack DataStore Preferences Repository (পরবর্তী কাজ — ইউজারের "Go ahead" অনুমতির অপেক্ষায় ⏳)
+*টার্গেট ডিরেক্টরি:* `app/src/main/java/com/safescreen/app/data/local/datastore/` ও `.../di/`
 1. `PreferencesKeys.kt`: DataStore কী-সমূহ ডিফাইন করা।
 2. `UserPreferencesRepository.kt`:
    - `shieldEnabled: Flow<Boolean>`
