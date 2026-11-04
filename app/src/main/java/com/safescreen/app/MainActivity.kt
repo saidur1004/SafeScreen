@@ -16,6 +16,7 @@ import com.safescreen.app.data.local.datastore.UserPreferencesRepository
 import com.safescreen.app.presentation.navigation.AppNavHost
 import com.safescreen.app.presentation.theme.DeepBlack
 import com.safescreen.app.presentation.theme.SafeScreenTheme
+import com.safescreen.app.services.ShieldProtectionService
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -50,6 +51,10 @@ class MainActivity : ComponentActivity() {
             Log.d("SafeScreenDB", "Pre-populated Banking Apps (${exempted.size}): $exempted")
             Log.d("SafeScreenDB", "Pre-populated Focus Schedules (${schedules.size}): ${schedules.map { it.title }}")
             Log.d("SafeScreenDataStore", "Active UserPreferences: ShieldActive=${userPrefs.isShieldActive}, Visual=${userPrefs.isVisualShieldEnabled}, Audio=${userPrefs.isAudioMuteEnabled}, Reels=${userPrefs.isReelsBlockerEnabled}, Sensitivity=${userPrefs.aiSensitivity}, FPS=${userPrefs.performanceProfile}, BlurStyle=${userPrefs.blurStyle}")
+
+            if (userPrefs.isShieldActive && userPrefs.hasCompletedOnboarding) {
+                ShieldProtectionService.startService(this@MainActivity)
+            }
         }
 
         setContent {

@@ -116,3 +116,4 @@ class AppWhitelistViewModel @Inject constructor(
         )
     }
 }
+

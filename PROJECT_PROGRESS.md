@@ -22,9 +22,9 @@
 
 ## 📌 ১. প্রজেক্টের বর্তমান ওভারভিউ ও লাইভ স্ট্যাটাস (Executive Snapshot)
 
-* **সর্বশেষ আপডেটের তারিখ ও সময়:** ০৪ নভেম্বর ২০২৬ (Phase 3 Prompt 3: ViewModels Integration with Room DB & DataStore ১০০% সম্পন্ন ও এমুলেটরে ভেরিফাইড)
-* **বর্তমান পর্যায়:** **Phase 3: Persistence Layer (Room DB, DataStore, এবং ViewModels Migration সম্পূর্ণ ✅ | Phase 4: OS System Services এর অপেক্ষায় ⏳)**
-* **পরবর্তী তাৎক্ষণিক কাজ (Immediate Next Task):** **Phase 4: Android OS System Services (MediaProjection, AudioPlaybackCapture, AccessibilityService, WindowManager Overlay, Foreground Notification)** — *[ইউজারের স্পষ্ট "Go ahead" অনুমতির অপেক্ষায়]*
+* **সর্বশেষ আপডেটের তারিখ ও সময়:** ০৪ নভেম্বর ২০২৬ (Phase 4.0: System Services Skeleton & Permission Bridging ১০০% সম্পন্ন ও এমুলেটরে ভেরিফাইড)
+* **বর্তমান পর্যায়:** **Phase 4: Android OS System Services (Phase 4.0 সম্পন্ন ✅ | Phase 4.1: MediaProjection Core এর অপেক্ষায় ⏳)**
+* **পরবর্তী তাৎক্ষণিক কাজ (Immediate Next Task):** **Phase 4.1: MediaProjection Core Engine (VirtualDisplay, ImageReader Buffer & Zero-GC Frame Decimation Pipeline)** — *[ইউজারের স্পষ্ট "Go ahead" অনুমতির অপেক্ষায়]*
 * **গিট রিপোজিটরি:** `https://github.com/saidur1004/SafeScreen.git` (মেইন ব্রাঞ্চ: `main`)
 * **টেকনিক্যাল টুলচেইন:** Kotlin 2.0.21, Gradle 8.14, AGP 8.7.3, Jetpack Compose BOM 2024.10.01, Dagger-Hilt 2.52, Room 2.6.1, Java 21, Min SDK 29 (Android 10), Target SDK 35 (Android 15)
 * **টেস্ট ডিভাইস:** Android Emulator (`emulator-5554`, Google APIs ARM64/x86_64, Pixel 9, Android 15 API 35)
@@ -53,7 +53,8 @@
 | **Phase 3: Room DB (P1)** | Room Database (ThreatLogEntity, WhitelistEntity, FocusScheduleEntity, Prepopulation Callback) | ✅ **100% Verified** | `AppDatabase.kt`, `ThreatLogDao.kt`, `WhitelistDao.kt`, `FocusScheduleDao.kt` |
 | **Phase 3: DataStore (P2)** | Jetpack DataStore Preferences Repository (Shield, AI Config, PIN Hash, Hilt Module) | ✅ **100% Verified** | `UserPreferencesRepository.kt`, `PreferencesKeys.kt`, `DataStoreModule.kt` |
 | **Phase 3: ViewModels (P3)** | ViewModels Integration (Home, Settings, Whitelist, Stats, Log, Focus, Security) | ✅ **100% Verified** | `HomeViewModel.kt`, `SettingsViewModel.kt`, `AppWhitelistViewModel.kt`, `DetailedActivityLogViewModel.kt`, `StatsViewModel.kt`, `FocusScheduleViewModel.kt`, `SecurityLockViewModel.kt` |
-| **Phase 4: OS Services** | MediaProjection, AudioRecord, AccessibilityService, Foreground Notification | ⏳ **Next Up (Phase 4)** | `services/ShieldProtectionService.kt` |
+| **Phase 4.0: Services & Perms** | System Services Skeleton & Real Permission Bridging (MediaProjection, A11y, Audio, Overlay, FGS) | ✅ **100% Verified** | `ShieldProtectionService.kt`, `PermissionManager.kt`, `SafeScreenAccessibilityService.kt`, `PermissionHubViewModel.kt` |
+| **Phase 4.1: MediaProjection** | MediaProjection Capture Engine (VirtualDisplay, ImageReader Buffer, Zero-GC Decimation) | ⏳ **Next Up (P4.1)** | `services/capture/MediaProjectionCaptureEngine.kt` |
 | **Phase 5: On-Device AI** | INT8 Quantized TFLite NSFW Filter & YAMNet Audio Classifier Integration | ⏳ Planned (Phase 5) | `domain/ml/TFLiteClassifier.kt` |
 
 ---
@@ -207,6 +208,31 @@
 - **লাইভ এমুলেটর ভেরিফিকেশন (Pixel 9, Android 15 API 35):**
   - এমুলেটরে প্রতিটি স্ক্রিনে নেভিগেশন, প্রি-পপুলেটেড ব্যাংকিং এক্সেম্পশন চেক, পিন ১২৩৪ এন্ট্রি করে সিকিউরিটি আনলক এবং হোম ও ফোকাস শিডিউল ডাইনামিক ডেটা লোডিং সফলভাবে ভেরিফাই ও স্ক্রিনশট ডকুমেন্টেড।
   - ইউনিট টেস্ট: `./gradlew testDebugUnitTest` ১০০% পাস (০ এরর, ০ ওয়ার্নিং)।
+
+### ১৩. ফেজ ৪.০: সিস্টেম সার্ভিসেস কঙ্কাল ও রিয়েল পারমিশন ব্রিজিং (Phase 4.0 Complete ✅)
+- **PermissionManager.kt (`services/permission/`):**
+  - রিয়েল অ্যান্ড্রয়েড ওএস পারমিশন চেকিং মেকানিজম (`Settings.canDrawOverlays`, `POST_NOTIFICATIONS`, `RECORD_AUDIO`, `SafeScreenAccessibilityService`, `PowerManager.isIgnoringBatteryOptimizations`)।
+  - `MediaProjection` কনসেন্ট টোকেন এবং রেজাল্ট ইনটেন্ট মেমোরিতে নিরাপদে ক্যাশ করার আর্কিটেকচার।
+- **SafeScreenAccessibilityService.kt (`services/`):**
+  - অ্যাপ ও রিলস ব্লকার পর্যবেক্ষণকারী ওএস অ্যাক্সেসিবিলিটি সার্ভিস কঙ্কাল।
+  - `accessibility_service_config.xml` দ্বারা `typeWindowStateChanged|typeWindowContentChanged` কনফিগারেশন এবং সিস্টেম সেটিংসে দৃশ্যমান।
+- **PermissionHubViewModel.kt ও PermissionHubScreen.kt (`presentation/screens/permission/`):**
+  - Jetpack Compose-এ রিয়েল ActivityResultLaunchers ইন্টিগ্রেশন:
+    1. `SYSTEM_ALERT_WINDOW`: `Settings.ACTION_MANAGE_OVERLAY_PERMISSION`
+    2. `MediaProjection`: `MediaProjectionManager.createScreenCaptureIntent()`
+    3. `RECORD_AUDIO`: `ActivityResultContracts.RequestPermission()`
+    4. `AccessibilityService`: `Settings.ACTION_ACCESSIBILITY_SETTINGS`
+    5. `POST_NOTIFICATIONS`: `ActivityResultContracts.RequestPermission()`
+    6. `Battery Optimization`: `Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`
+  - `DisposableEffect` ও `Lifecycle.Event.ON_RESUME` দিয়ে ইউজার যেকোনো সিস্টেম সেটিংস থেকে ফিরলেই স্বয়ংক্রিয়ভাবে পারমিশন রিফ্রেশ হয়ে গ্রিন চেকমার্ক সহ "Granted" স্ট্যাটাস প্রদর্শিত হয়।
+- **ShieldProtectionService.kt (`services/`):**
+  - অ্যান্ড্রয়েড ১৪ ও ১৫ (API 34/35) কমপ্লায়েন্ট ফোরগ্রাউন্ড সার্ভিস কঙ্কাল।
+  - সার্ভিস টাইপস: `mediaProjection|microphone|specialUse` (শূন্য ক্র্যাশ ও জিরো সিকিউরিটি এক্সেপশন পলিসি)।
+  - লো-প্রায়োরিটি নন-ইন্ট্রুসিভ পারসিস্টেন্ট নোটিফিকেশন চ্যানেল (`safescreen_protection_channel`), `R.drawable.ic_shield_notification` আইকন এবং তাৎক্ষণিক "Stop Shield" অ্যাকশন।
+- **লাইভ এমুলেটর ভেরিফিকেশন (Pixel 9, Android 15 API 35):**
+  - এমুলেটরে প্রতিটি পারমিশন ডায়ালগে ক্লিক করে রিয়েল ওএস কনসেন্ট প্রদান টেস্ট করা হয়েছে।
+  - ৫টি পারমিশনই সফলভাবে `Granted` স্টেটে পৌঁছানোর প্রমাণ ক্যাপচার্ড (`phase4_permissions_all_granted.png`)।
+  - "Enter Shield Hub" এ ক্লিক করে ড্যাশবোর্ডে যাওয়া এবং অ্যাপ ব্যাকগ্রাউন্ডে পাঠানোর পর নোটিফিকেশন বারে সার্ভিস চলমান থাকা ভেরিফাইড (`dumpsys notification` ও `dumpsys activity services` দ্বারা প্রমাণিত: `isForeground=true foregroundId=1001`).
 
 ---
 
@@ -405,39 +431,32 @@ flowchart TD
 
 ---
 
-### 📌 এর পরবর্তী ফেজ (Phase 4: Android OS System Services — ইউজারের "Go ahead" অনুমতির অপেক্ষায় ⏳)
-*টার্গেট ডিরেক্টরি:* `app/src/main/java/com/safescreen/app/services/`
-* **লক্ষ্য:** অ্যান্ড্রয়েড ওএস-লেভেল সার্ভিসেস সেটআপ করা যা রিয়েল-টাইমে ফ্রেম ও অডিও ক্যাপচার করে ব্যাকগ্রাউন্ডে সুরক্ষিত রাখবে।
-1. **`ShieldProtectionService.kt` (Foreground Service):**
-   - স্থায়ী ফোরগ্রাউন্ড নোটিফিকেশন (`FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION | FOREGROUND_SERVICE_TYPE_MICROPHONE`)
-   - ওএস কিল থেকে সুরক্ষা এবং `START_STICKY` রিস্টার্ট পলিসি।
-2. **`MediaProjectionCaptureEngine.kt`:**
-   - `MediaProjection` ও `VirtualDisplay` হ্যান্ডলিং।
-   - জিরো-জিসি (`HardwareBuffer` / `ImageReader`) ফ্রেম ডেসিমেশন পাইপলাইন (৩/৫/৮ এফপিএস)।
-3. **`AudioPlaybackCaptureEngine.kt`:**
-   - `AudioRecord` উইথ `AudioPlaybackCaptureConfiguration` (অ্যান্ড্রয়েড ১০+ রুলস)।
-   - ১৬-বিট মনো ১৬kHz PCM অডিও চাঙ্ক বাফার।
-4. **`ReelsAccessibilityService.kt`:**
-   - টিকটক, ইনস্টাগ্রাম ও ইউটিউব শর্টস উইন্ডো নোড এবং ভিউ আইডি ডিটেকশন ও টাইমার কাউন্টার।
-5. **`WindowManagerOverlayController.kt`:**
-   - এআই ডিটেকশনের সাথে সাথে <৫০ms-এ `LiveBlurOverlayView` এবং টাইম আউটে `FocusInterventionOverlay` প্রদর্শন।
+### 📌 ফেজ ৪: অ্যান্ড্রয়েড ওএস সিস্টেম সার্ভিসেস (Phase 4 Execution Status)
 
-### ২. কী কী তৈরি করতে হবে (Requirements for Phase 3):
-1. **Room Entities & DAOs:**
-   - `ThreatLogEntity.kt`: id (AutoGenerate), timestamp (Long), threatType (VISUAL_NSFW, AUDIO_EXPLICIT, REELS_LIMIT), appPackageName (String), appName (String), severity (FLOAT), actionTaken (BLURRED, MUTED, BLOCKED).
-   - `ThreatLogDao.kt`: insert, getAllFlow, getGroupedByDate, getTodayCountsFlow, clearAll.
-   - `WhitelistEntity.kt`: packageName (PrimaryKey), appName, category, isExempted, isBankingDefault, addedTimestamp.
-   - `WhitelistDao.kt`: insertOrUpdate, getAllFlow, getExemptedPackagesFlow, toggleExemption.
-   - `AppDatabase.kt`: RoomDatabase with version 1, exportSchema = true, Thread-safe singleton with pre-population callback for banking apps.
-2. **Jetpack DataStore Preferences:**
-   - `UserPreferencesRepository.kt`: shieldEnabled, visualShieldActive, audioShieldActive, reelsBlockerActive, aiSensitivity (STRICT, BALANCED, RELAXED), fpsProfile (FPS_3, FPS_5, FPS_8), pinLockEnabled, pinHash (SHA-256), blurStyle (FROSTED, PIXELATED, OPAQUE), blurIntensity.
-3. **Hilt Database & DataStore Module:**
-   - Provide Room DB instance, ThreatLogDao, WhitelistDao, and DataStore DataStore<Preferences>.
+#### ধাপ ১ (Phase 4.0): System Services Skeleton & Permission Bridging (সম্পন্ন ও এমুলেটরে ভেরিফাইড ✅)
+*টার্গেট ডিরেক্টরি:* `app/src/main/java/com/safescreen/app/services/` ও `.../permission/`
+- [x] `PermissionManager.kt`: রিয়েল ওএস পারমিশন চেকিং ও মিডিয়া প্রোজেকশন রেজাল্ট ক্যাশিং।
+- [x] `SafeScreenAccessibilityService.kt`: নোড লিসেনিং ওএস সার্ভিস কঙ্কাল ও `accessibility_service_config.xml`।
+- [x] `PermissionHubViewModel.kt` & `PermissionHubScreen.kt`: ActivityResultLaunchers (Overlay, MediaProjection, Audio, A11y, Notification) ও `ON_RESUME` অটোমেটিক রিফ্রেশ।
+- [x] `ShieldProtectionService.kt`: অ্যান্ড্রয়েড ১৪/১৫ কমপ্লায়েন্ট ফোরগ্রাউন্ড সার্ভিস কঙ্কাল (`mediaProjection|microphone|specialUse`)।
+- [x] লাইভ এমুলেটর ভেরিফিকেশন: প্রতিটি পারমিশন সিস্টেম ডায়ালগ দিয়ে এপ্রুভ করা হয়েছে, UI-তে ৫টি পারমিশনই `Granted` হয়েছে এবং ব্যাকগ্রাউন্ডে সার্ভিসটি নোটিফিকেশন সহ সচল থাকা প্রমাণিত।
 
-### ৩. এর পরবর্তী ধাপসমূহ (Subsequent Roadmap):
-* **Phase 4:** Android OS Permissions Wiring (MediaProjection, AudioRecord, AccessibilityService, Battery Whitelist) ও ফোরগ্রাউন্ড সার্ভিস।
-* **Phase 5:** On-Device AI Pipeline (TFLite NSFW Detection & YAMNet Audio Classifier) ইন্টিগ্রেশন।
-* **Phase 6:** End-to-End Real-Time Protection Loop & Background Battery Optimization.
+#### ধাপ ২ (Phase 4.1): MediaProjection Core Engine (পরবর্তী কাজ — ইউজারের "Go ahead" অনুমতির অপেক্ষায় ⏳)
+*টার্গেট ডিরেক্টরি:* `app/src/main/java/com/safescreen/app/services/capture/`
+- [ ] `MediaProjectionCaptureEngine.kt`:
+  - `MediaProjection` ও `VirtualDisplay` ইনিশিয়ালাইজেশন।
+  - `ImageReader` বাফার উইথ `PixelCopy` / `HardwareBuffer` (জিরো-জিসি প্রেশার)।
+  - ৩ / ৫ / ৮ FPS অ্যাডাপ্টিভ ফ্রেম ডেসিমেশন লুপ।
+- [ ] সার্ভিস ইন্টিগ্রেশন: `ShieldProtectionService`-এর সাথে ফ্রেম বাফার স্ট্রিম কানেকশন।
+
+#### ধাপ ৩ (Phase 4.2): AudioPlaybackCapture Engine (পরবর্তী মাইলস্টোন ⏳)
+- [ ] `AudioPlaybackCaptureEngine.kt`:
+  - `AudioRecord` উইথ `AudioPlaybackCaptureConfiguration`।
+  - ১৬kHz ১৬-বিট মনো অডিও স্ট্রিম চাঙ্ক বাফার।
+
+#### ধাপ ৪ (Phase 4.3): Reels Accessibility Observer (পরবর্তী মাইলস্টোন ⏳)
+- [ ] `ReelsAccessibilityObserver.kt`:
+  - শর্ট-ভিডিও প্ল্যাটফর্মস (Instagram Reels, YouTube Shorts, TikTok) ভিউ আইডি ও নোড ইন্টারসেপশন।
 
 ---
 

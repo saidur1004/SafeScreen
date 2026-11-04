@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">SafeScreen</string>
+    <string name="accessibility_service_description">SafeScreen Accessibility Service monitors app usage and blocks explicit content and doomscrolling reels on-device with zero cloud exposure.</string>
 </resources>

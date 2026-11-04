@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.safescreen.app.data.local.dao.ThreatLogDao
 import com.safescreen.app.data.local.datastore.UserPreferencesRepository
 import com.safescreen.app.data.local.entity.ThreatType
+import com.safescreen.app.domain.usecase.StartShieldUseCase
+import com.safescreen.app.domain.usecase.StopShieldUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -23,7 +25,9 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val userPreferencesRepository: UserPreferencesRepository,
-    private val threatLogDao: ThreatLogDao
+    private val threatLogDao: ThreatLogDao,
+    private val startShieldUseCase: StartShieldUseCase,
+    private val stopShieldUseCase: StopShieldUseCase
 ) : ViewModel() {
 
     private val _showBlurPreviewSheet = MutableStateFlow(false)
@@ -71,7 +75,13 @@ class HomeViewModel @Inject constructor(
             is HomeUiEvent.ToggleShield -> {
                 viewModelScope.launch {
                     val current = uiState.value.isShieldActive
-                    userPreferencesRepository.setShieldActive(!current)
+                    val newActive = !current
+                    userPreferencesRepository.setShieldActive(newActive)
+                    if (newActive) {
+                        startShieldUseCase()
+                    } else {
+                        stopShieldUseCase()
+                    }
                 }
             }
             is HomeUiEvent.SetVisualShield -> {
@@ -106,3 +116,4 @@ class HomeViewModel @Inject constructor(
         }
     }
 }
+
