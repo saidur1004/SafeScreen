@@ -24,5 +24,7 @@ data class UserPreferences(
     val reelsMinutesUsedToday: Int = 18,
     val hasCompletedOnboarding: Boolean = false,
     val hasAcceptedBatteryOptimization: Boolean = false
-)
+) {
+    val isPinSet: Boolean get() = pinHash.isNotBlank()
+}
 

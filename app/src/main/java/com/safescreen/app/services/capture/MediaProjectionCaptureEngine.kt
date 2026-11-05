@@ -73,11 +73,15 @@ class MediaProjectionCaptureEngine @Inject constructor(
     private var handlerThread: HandlerThread? = null
     private var backgroundHandler: Handler? = null
 
-    // Pre-allocated Zero-GC reusable buffers
-    private var reusableBitmap: Bitmap? = null
+    // Pre-allocated Zero-GC Double/Triple-Buffer Pool for thread-safe concurrent AI inference
+    private val bitmapPool = arrayOfNulls<Bitmap>(BITMAP_POOL_SIZE)
+    private var currentBufferIndex = 0
     private var cleanRowBuffer: ByteBuffer? = null
     private var captureWidth: Int = 0
     private var captureHeight: Int = 0
+
+    @Volatile
+    private var isScreenInteractive: Boolean = true
 
     // Adaptive FPS throttling
     private var targetFps: Int = 5
@@ -168,10 +172,13 @@ class MediaProjectionCaptureEngine @Inject constructor(
             // 4. Calculate downsampled dimensions for AI processing while preserving aspect ratio
             calculateDimensions()
 
-            // 5. Pre-allocate Zero-GC buffers
-            reusableBitmap = Bitmap.createBitmap(captureWidth, captureHeight, Bitmap.Config.ARGB_8888)
+            // 5. Pre-allocate Zero-GC Triple-Buffer Pool
+            for (i in 0 until BITMAP_POOL_SIZE) {
+                bitmapPool[i] = Bitmap.createBitmap(captureWidth, captureHeight, Bitmap.Config.ARGB_8888)
+            }
+            currentBufferIndex = 0
             cleanRowBuffer = ByteBuffer.allocateDirect(captureWidth * captureHeight * 4)
-            Log.d(TAG, "Zero-GC buffer pre-allocated: ${captureWidth}x${captureHeight} (${(captureWidth * captureHeight * 4) / 1024} KB)")
+            Log.d(TAG, "Zero-GC Triple-Buffer Pool pre-allocated: $BITMAP_POOL_SIZE x ${captureWidth}x${captureHeight} (${(BITMAP_POOL_SIZE * captureWidth * captureHeight * 4) / 1024} KB)")
 
             // 6. Create ImageReader with maxImages = 2
             imageReader = ImageReader.newInstance(
@@ -227,6 +234,14 @@ class MediaProjectionCaptureEngine @Inject constructor(
     private fun handleImageAvailable(reader: ImageReader) {
         val now = SystemClock.elapsedRealtime()
 
+        // Screen lock/off optimization: skip frames when display is not interactive
+        if (!isScreenInteractive) {
+            val droppedImage = reader.acquireLatestImage()
+            droppedImage?.close()
+            totalSkippedFrames++
+            return
+        }
+
         // Adaptive FPS Decimation: Drop frame immediately if arrived before target interval
         if (now - lastFrameTimeMillis < targetIntervalMillis) {
             val droppedImage = reader.acquireLatestImage()
@@ -251,7 +266,8 @@ class MediaProjectionCaptureEngine @Inject constructor(
             val rowStride = plane.rowStride
             val rowPadding = rowStride - pixelStride * captureWidth
 
-            val targetBitmap = reusableBitmap ?: return
+            // Obtain current ownership-safe buffer from pool
+            val targetBitmap = bitmapPool[currentBufferIndex] ?: return
 
             // Zero-GC pixel transfer: Reuse pre-allocated buffer
             if (rowPadding == 0) {
@@ -297,9 +313,10 @@ class MediaProjectionCaptureEngine @Inject constructor(
                 Log.d(TAG, "Capture Active: Frame #$totalCapturedFrames ($captureWidth x $captureHeight) @ %.1f FPS (Skipped: $totalSkippedFrames)".format(currentCalculatedFps))
             }
 
-            // Emit frame to downstream subscribers (AI engine)
+            // Emit frame to downstream subscribers (AI engine) and rotate buffer index
             _frameFlow.tryEmit(targetBitmap)
             onFrameCapturedListener?.invoke(targetBitmap)
+            currentBufferIndex = (currentBufferIndex + 1) % BITMAP_POOL_SIZE
 
         } catch (e: Exception) {
             Log.e(TAG, "Error processing frame: ${e.message}", e)
@@ -391,8 +408,11 @@ class MediaProjectionCaptureEngine @Inject constructor(
             handlerThread = null
             backgroundHandler = null
 
-            reusableBitmap?.recycle()
-            reusableBitmap = null
+            for (i in bitmapPool.indices) {
+                bitmapPool[i]?.recycle()
+                bitmapPool[i] = null
+            }
+            currentBufferIndex = 0
             cleanRowBuffer = null
 
             _metrics.update {
@@ -405,8 +425,17 @@ class MediaProjectionCaptureEngine @Inject constructor(
         }
     }
 
+    /**
+     * Pauses or resumes frame decimation when the screen locks/unlocks.
+     */
+    fun setScreenInteractive(interactive: Boolean) {
+        isScreenInteractive = interactive
+        Log.d(TAG, "MediaProjectionCaptureEngine screen interactive: $interactive")
+    }
+
     companion object {
         private const val TAG = "SafeScreenCapture"
         private const val VIRTUAL_DISPLAY_NAME = "SafeScreenVirtualDisplay"
+        private const val BITMAP_POOL_SIZE = 3
     }
 }

@@ -8,7 +8,16 @@ import androidx.compose.runtime.Immutable
 enum class SecurityLockMode {
     APP_UNLOCK,
     SHIELD_DISARM,
-    SETTINGS
+    SETTINGS,
+    ENROLL_PIN
+}
+
+/**
+ * Sequential stages for mandatory PIN enrollment.
+ */
+enum class PinEnrollmentStage {
+    ENTER_NEW_PIN,
+    CONFIRM_PIN
 }
 
 /**
@@ -17,6 +26,7 @@ enum class SecurityLockMode {
 @Immutable
 data class SecurityUiState(
     val mode: SecurityLockMode = SecurityLockMode.APP_UNLOCK,
+    val enrollmentStage: PinEnrollmentStage = PinEnrollmentStage.ENTER_NEW_PIN,
     val pinInput: String = "",
     val maxPinLength: Int = 4,
     val isError: Boolean = false,
@@ -38,6 +48,8 @@ sealed interface SecurityUiEvent {
     data object DeleteDigit : SecurityUiEvent
     data object ClearPin : SecurityUiEvent
     data object TriggerBiometric : SecurityUiEvent
+    data object BiometricSuccess : SecurityUiEvent
+    data class BiometricFailed(val errorMsg: String) : SecurityUiEvent
     data object ForgotPin : SecurityUiEvent
     data object NavigateBack : SecurityUiEvent
 }

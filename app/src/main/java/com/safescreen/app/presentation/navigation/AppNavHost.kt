@@ -260,8 +260,8 @@ fun AppNavHost(
                     onNavigateToWhitelist = {
                         navController.navigate(Screen.AppWhitelist.route)
                     },
-                    onNavigateToSecurityLock = {
-                        navController.navigate(Screen.SecurityLock.createRoute(SecurityLockMode.SETTINGS))
+                    onNavigateToSecurityLock = { mode ->
+                        navController.navigate(Screen.SecurityLock.createRoute(mode))
                     }
                 )
             }
@@ -303,7 +303,8 @@ fun AppNavHost(
                                     ?.set("shield_disarm_confirmed", true)
                                 navController.popBackStack()
                             }
-                            SecurityLockMode.SETTINGS -> {
+                            SecurityLockMode.SETTINGS,
+                            SecurityLockMode.ENROLL_PIN -> {
                                 navController.popBackStack()
                             }
                         }

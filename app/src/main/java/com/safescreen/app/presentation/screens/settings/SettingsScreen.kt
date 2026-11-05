@@ -90,7 +90,7 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit = {},
     onNavigateToWhitelist: () -> Unit = {},
-    onNavigateToSecurityLock: () -> Unit = {}
+    onNavigateToSecurityLock: (SecurityLockMode) -> Unit = {}
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -98,9 +98,14 @@ fun SettingsScreen(
     val handleEvent: (SettingsUiEvent) -> Unit = { event ->
         when (event) {
             is SettingsUiEvent.SetBiometricLock -> {
-                viewModel.onEvent(event)
                 if (event.enabled) {
-                    onNavigateToSecurityLock()
+                    if (!uiState.isPinEnrolled) {
+                        onNavigateToSecurityLock(SecurityLockMode.ENROLL_PIN)
+                    } else {
+                        viewModel.onEvent(event)
+                    }
+                } else {
+                    viewModel.onEvent(event)
                 }
             }
             is SettingsUiEvent.ConfirmClearCache -> {
@@ -111,7 +116,8 @@ fun SettingsScreen(
                 onNavigateToWhitelist()
             }
             is SettingsUiEvent.NavigateToSecurityLock -> {
-                onNavigateToSecurityLock()
+                val mode = if (uiState.isPinEnrolled) SecurityLockMode.ENROLL_PIN else SecurityLockMode.ENROLL_PIN
+                onNavigateToSecurityLock(mode)
             }
             is SettingsUiEvent.NavigateBack -> {
                 onNavigateBack()
@@ -141,7 +147,7 @@ fun SettingsScreen(
     onEvent: (SettingsUiEvent) -> Unit = {},
     onNavigateBack: () -> Unit = {},
     onNavigateToWhitelist: () -> Unit = {},
-    onNavigateToSecurityLock: () -> Unit = {}
+    onNavigateToSecurityLock: (SecurityLockMode) -> Unit = {}
 ) {
     val context = LocalContext.current
     SettingsContent(
@@ -149,7 +155,7 @@ fun SettingsScreen(
         onEvent = { event ->
             when (event) {
                 is SettingsUiEvent.NavigateToWhitelist -> onNavigateToWhitelist()
-                is SettingsUiEvent.NavigateToSecurityLock -> onNavigateToSecurityLock()
+                is SettingsUiEvent.NavigateToSecurityLock -> onNavigateToSecurityLock(SecurityLockMode.ENROLL_PIN)
                 is SettingsUiEvent.NavigateBack -> onNavigateBack()
                 is SettingsUiEvent.OpenPrivacyPolicy -> Toast.makeText(context, "Opening Privacy Policy...", Toast.LENGTH_SHORT).show()
                 is SettingsUiEvent.OpenLicenses -> Toast.makeText(context, "SafeScreen Open-Source Licenses", Toast.LENGTH_SHORT).show()
@@ -202,7 +208,9 @@ fun SettingsContent(
             item {
                 SecurityProtectionCard(
                     isBiometricLock = state.isBiometricLockEnabled,
+                    isPinEnrolled = state.isPinEnrolled,
                     onBiometricLockChange = { onEvent(SettingsUiEvent.SetBiometricLock(it)) },
+                    onChangePinClick = { onEvent(SettingsUiEvent.NavigateToSecurityLock) },
                     isPreventUninstall = state.isPreventUninstallEnabled,
                     onPreventUninstallChange = { onEvent(SettingsUiEvent.SetPreventUninstall(it)) }
                 )
@@ -543,7 +551,9 @@ private fun SegmentPillButton(
 @Composable
 private fun SecurityProtectionCard(
     isBiometricLock: Boolean,
+    isPinEnrolled: Boolean,
     onBiometricLockChange: (Boolean) -> Unit,
+    onChangePinClick: () -> Unit,
     isPreventUninstall: Boolean,
     onPreventUninstallChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier
@@ -607,9 +617,13 @@ private fun SecurityProtectionCard(
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "Require authentication to modify settings or disarm",
+                        text = if (isPinEnrolled) {
+                            "Require authentication to modify settings or disarm"
+                        } else {
+                            "Setup a 4-digit PIN to enable security lock"
+                        },
                         style = MaterialTheme.typography.bodySmall.copy(
-                            color = TextMuted,
+                            color = if (isPinEnrolled) TextMuted else NeonCyan.copy(alpha = 0.85f),
                             fontSize = 12.sp
                         )
                     )
@@ -618,6 +632,32 @@ private fun SecurityProtectionCard(
                     checked = isBiometricLock,
                     onCheckedChange = onBiometricLockChange
                 )
+            }
+
+            if (isPinEnrolled && isBiometricLock) {
+                Spacer(modifier = Modifier.height(10.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = onChangePinClick
+                        )
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    Text(
+                        text = "Change 4-Digit PIN →",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = NeonCyan,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 12.sp
+                        )
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(14.dp))

@@ -96,6 +96,11 @@ class UserPreferencesRepository @Inject constructor(
         .map { it[PreferencesKeys.BLUR_INTENSITY] ?: 0.85f }
         .distinctUntilChanged()
 
+    val isPinEnrolledFlow: Flow<Boolean> = dataStore.data
+        .catch { if (it is IOException) emit(emptyPreferences()) else throw it }
+        .map { (it[PreferencesKeys.PIN_HASH_SHA256] ?: "").isNotBlank() }
+        .distinctUntilChanged()
+
     val isPinLockEnabledFlow: Flow<Boolean> = dataStore.data
         .catch { if (it is IOException) emit(emptyPreferences()) else throw it }
         .map { it[PreferencesKeys.IS_PIN_LOCK_ENABLED] ?: false }
@@ -189,6 +194,11 @@ class UserPreferencesRepository @Inject constructor(
 
     suspend fun setPinLockEnabled(enabled: Boolean) {
         dataStore.edit { preferences ->
+            val hash = preferences[PreferencesKeys.PIN_HASH_SHA256] ?: ""
+            if (enabled && hash.isBlank()) {
+                // Security Hardening: Cannot enable PIN lock without prior mandatory enrollment
+                return@edit
+            }
             preferences[PreferencesKeys.IS_PIN_LOCK_ENABLED] = enabled
         }
     }
@@ -205,9 +215,10 @@ class UserPreferencesRepository @Inject constructor(
         val expectedHash = storedPreferences?.pinHash
             ?: dataStore.data.first()[PreferencesKeys.PIN_HASH_SHA256] ?: ""
 
-        // If no custom pin set, default to 1234
+        // Security Hardening: Default PIN vulnerability removed.
+        // A PIN cannot verify unless a valid hash has been explicitly enrolled by the user.
         if (expectedHash.isBlank()) {
-            return pinInput == "1234" || hashInput == hashSha256("1234")
+            return false
         }
         return hashInput == expectedHash
     }

@@ -90,6 +90,7 @@ class AiShieldCoordinator @Inject constructor(
 
     private var consecutiveSafeFrames = 0
     private var isAudioCurrentlyMuted = false
+    private var preMuteVolume: Int = -1
     private var lastThreatLogTimestamp = 0L
 
     init {
@@ -248,9 +249,13 @@ class AiShieldCoordinator @Inject constructor(
     private fun handleAudioThreatDetected(confidence: Float, category: String) {
         if (!isAudioCurrentlyMuted) {
             try {
+                val currentVol = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+                if (currentVol > 0) {
+                    preMuteVolume = currentVol
+                }
                 audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_MUTE, 0)
                 isAudioCurrentlyMuted = true
-                Log.w(TAG, "Explicit audio detected: $category (${(confidence * 100).toInt()}%). Audio stream muted!")
+                Log.w(TAG, "Explicit audio detected: $category (${(confidence * 100).toInt()}%). Audio stream muted! Saved pre-mute volume: $preMuteVolume")
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to mute audio stream", e)
             }
@@ -268,10 +273,19 @@ class AiShieldCoordinator @Inject constructor(
         if (isAudioCurrentlyMuted) {
             try {
                 audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_UNMUTE, 0)
+                // If stream remained at 0 or muted, explicitly restore pre-mute volume
+                if (preMuteVolume > 0) {
+                    val currentVol = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+                    if (currentVol == 0) {
+                        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, preMuteVolume, 0)
+                    }
+                }
                 isAudioCurrentlyMuted = false
-                Log.d(TAG, "Audio stream restored to normal")
+                Log.d(TAG, "Audio stream restored to normal (restored volume: $preMuteVolume)")
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to restore audio stream", e)
+            } finally {
+                preMuteVolume = -1
             }
         }
     }

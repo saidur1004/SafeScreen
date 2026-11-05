@@ -1,13 +1,11 @@
 package com.safescreen.app.presentation.screens.settings
 
-import android.app.Activity
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedVisibility
+import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricPrompt
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -41,10 +39,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -58,6 +53,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.FragmentActivity
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.safescreen.app.presentation.components.CyberBackgroundWaves
 import com.safescreen.app.presentation.theme.DeepBlack
 import com.safescreen.app.presentation.theme.NeonCyan
@@ -65,16 +64,15 @@ import com.safescreen.app.presentation.theme.NeonGreen
 import com.safescreen.app.presentation.theme.TextMuted
 import com.safescreen.app.presentation.theme.TextPrimary
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 /**
- * Security Lock Screen with Cyber-Dark PIN Dial Pad and Biometric Authentication.
+ * Security Lock Screen with Cyber-Dark PIN Dial Pad and Real BiometricPrompt.
  *
- * Implements Module 06 Prompt 3:
- * - Glowing 3D Shield Padlock hero with ambient aura
- * - 4-dot animated PIN entry indicators with error shake feedback
- * - Custom 3x4 Glassmorphic keypad with letters, biometric button, and backspace
- * - Immediate unlock callback when PIN "1234" or Biometrics is validated
+ * Implements Module 06 Security Hardening:
+ * - Real OS-level BiometricPrompt (Fingerprint / Face Unlock) via AndroidX Biometric.
+ * - Mandatory 2-step PIN Enrollment (ENTER_NEW_PIN -> CONFIRM_PIN) with zero default fallbacks.
+ * - Failed-attempt tracking with 30-second lockout penalty after 5 failed attempts.
+ * - Testing PIN leaks completely eliminated from UI.
  */
 @Composable
 fun SecurityLockScreen(
@@ -85,17 +83,100 @@ fun SecurityLockScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val activity = context as? Activity
+    val fragmentActivity = context as? FragmentActivity
     val haptic = LocalHapticFeedback.current
+
+    // Check Biometric hardware support on device
+    val biometricManager = remember(context) { BiometricManager.from(context) }
+    val isBiometricHardwareAvailable = remember(context) {
+        val canAuth = biometricManager.canAuthenticate(
+            BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.BIOMETRIC_WEAK
+        )
+        canAuth == BiometricManager.BIOMETRIC_SUCCESS
+    }
+
+    LaunchedEffect(isBiometricHardwareAvailable) {
+        viewModel.setBiometricHardwareAvailable(isBiometricHardwareAvailable)
+    }
+
+    // Launch real OS-level BiometricPrompt
+    val showBiometricPrompt: () -> Unit = remember(fragmentActivity, state.isBiometricAvailable, state.isLockedOut, mode) {
+        {
+            if (fragmentActivity != null &&
+                state.isBiometricAvailable &&
+                !state.isLockedOut &&
+                mode != SecurityLockMode.ENROLL_PIN
+            ) {
+                val executor = ContextCompat.getMainExecutor(fragmentActivity)
+                val prompt = BiometricPrompt(
+                    fragmentActivity,
+                    executor,
+                    object : BiometricPrompt.AuthenticationCallback() {
+                        override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                            super.onAuthenticationSucceeded(result)
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            viewModel.onEvent(SecurityUiEvent.BiometricSuccess)
+                        }
+
+                        override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                            super.onAuthenticationError(errorCode, errString)
+                            if (errorCode != BiometricPrompt.ERROR_USER_CANCELED &&
+                                errorCode != BiometricPrompt.ERROR_NEGATIVE_BUTTON &&
+                                errorCode != BiometricPrompt.ERROR_CANCELED
+                            ) {
+                                viewModel.onEvent(SecurityUiEvent.BiometricFailed(errString.toString()))
+                            }
+                        }
+
+                        override fun onAuthenticationFailed() {
+                            super.onAuthenticationFailed()
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            viewModel.onEvent(SecurityUiEvent.BiometricFailed("Biometric credential not recognized"))
+                        }
+                    }
+                )
+
+                val promptInfo = BiometricPrompt.PromptInfo.Builder()
+                    .setTitle("SafeScreen Security")
+                    .setSubtitle(
+                        when (mode) {
+                            SecurityLockMode.SHIELD_DISARM -> "Verify biometric identity to disarm protection shield"
+                            SecurityLockMode.SETTINGS -> "Verify biometric identity to access security settings"
+                            else -> "Unlock SafeScreen using Biometrics"
+                        }
+                    )
+                    .setNegativeButtonText("Use PIN")
+                    .setAllowedAuthenticators(
+                        BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.BIOMETRIC_WEAK
+                    )
+                    .build()
+
+                prompt.authenticate(promptInfo)
+            } else if (!state.isBiometricAvailable && mode != SecurityLockMode.ENROLL_PIN) {
+                Toast.makeText(context, "Biometric unlock is not configured or unavailable on this device", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    // Auto-prompt biometrics once on cold open if configured and available
+    var autoPromptTriggered by remember { mutableStateOf(false) }
+    LaunchedEffect(state.isBiometricAvailable, state.isLockedOut) {
+        if (!autoPromptTriggered && state.isBiometricAvailable && !state.isLockedOut && mode != SecurityLockMode.ENROLL_PIN) {
+            autoPromptTriggered = true
+            delay(250)
+            showBiometricPrompt()
+        }
+    }
 
     // Prevent security bypass on system back gesture or button
     BackHandler {
         when (mode) {
             SecurityLockMode.APP_UNLOCK -> {
-                activity?.finish()
+                fragmentActivity?.finish()
             }
             SecurityLockMode.SHIELD_DISARM,
-            SecurityLockMode.SETTINGS -> {
+            SecurityLockMode.SETTINGS,
+            SecurityLockMode.ENROLL_PIN -> {
                 onNavigateBack()
             }
         }
@@ -125,18 +206,23 @@ fun SecurityLockScreen(
                     viewModel.onEvent(event)
                 }
                 is SecurityUiEvent.TriggerBiometric -> {
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    Toast.makeText(context, "Biometric Authentication Verified", Toast.LENGTH_SHORT).show()
+                    showBiometricPrompt()
+                }
+                is SecurityUiEvent.BiometricSuccess -> {
+                    viewModel.onEvent(event)
+                }
+                is SecurityUiEvent.BiometricFailed -> {
                     viewModel.onEvent(event)
                 }
                 is SecurityUiEvent.ForgotPin -> {
-                    Toast.makeText(context, "Default testing PIN is 1234", Toast.LENGTH_LONG).show()
+                    // Removed testing PIN leaks
                 }
                 is SecurityUiEvent.NavigateBack -> {
                     when (mode) {
-                        SecurityLockMode.APP_UNLOCK -> activity?.finish()
+                        SecurityLockMode.APP_UNLOCK -> fragmentActivity?.finish()
                         SecurityLockMode.SHIELD_DISARM,
-                        SecurityLockMode.SETTINGS -> onNavigateBack()
+                        SecurityLockMode.SETTINGS,
+                        SecurityLockMode.ENROLL_PIN -> onNavigateBack()
                     }
                 }
             }
@@ -191,12 +277,26 @@ fun SecurityLockContent(
             "Security Authentication",
             "Enter your 4-digit PIN or use Biometrics to access security settings"
         )
+        SecurityLockMode.ENROLL_PIN -> {
+            if (state.enrollmentStage == PinEnrollmentStage.CONFIRM_PIN) {
+                Pair(
+                    "Confirm your PIN",
+                    "Re-enter the 4-digit PIN to confirm and activate protection"
+                )
+            } else {
+                Pair(
+                    "Create a 4-Digit PIN",
+                    "Enter a secure 4-digit PIN to safeguard SafeScreen"
+                )
+            }
+        }
     }
 
     val badgeText = when (state.mode) {
         SecurityLockMode.APP_UNLOCK -> "SECURE"
         SecurityLockMode.SHIELD_DISARM -> "ARMED"
         SecurityLockMode.SETTINGS -> "CONFIG"
+        SecurityLockMode.ENROLL_PIN -> "SETUP"
     }
 
     Box(
@@ -282,27 +382,54 @@ fun SecurityLockContent(
 
                 // Error / Status Message
                 Box(
-                    modifier = Modifier.height(20.dp),
+                    modifier = Modifier.height(24.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    if (state.isError) {
-                        Text(
-                            text = "Incorrect PIN. Please try again.",
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                color = Color(0xFFFF4D4D),
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 12.sp
+                    when {
+                        state.isLockedOut -> {
+                            Text(
+                                text = state.errorMessage ?: "Too many failed attempts. Locked for ${state.lockoutRemainingSeconds}s",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    color = Color(0xFFFF4D4D),
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 12.sp
+                                ),
+                                textAlign = TextAlign.Center
                             )
-                        )
-                    } else if (state.isSuccess) {
-                        Text(
-                            text = "PIN Verified • Access Granted",
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                color = NeonGreen,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 12.sp
+                        }
+                        state.isError -> {
+                            Text(
+                                text = state.errorMessage ?: "Incorrect PIN. Please try again.",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    color = Color(0xFFFF4D4D),
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 12.sp
+                                ),
+                                textAlign = TextAlign.Center
                             )
-                        )
+                        }
+                        state.isSuccess -> {
+                            Text(
+                                text = if (state.mode == SecurityLockMode.ENROLL_PIN) "PIN Enrolled • Security Activated" else "PIN Verified • Access Granted",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    color = NeonGreen,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 12.sp
+                                ),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                        state.mode == SecurityLockMode.ENROLL_PIN -> {
+                            Text(
+                                text = if (state.enrollmentStage == PinEnrollmentStage.ENTER_NEW_PIN) "Step 1 of 2: Set New PIN" else "Step 2 of 2: Confirm PIN",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    color = NeonCyan.copy(alpha = 0.85f),
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 12.sp
+                                ),
+                                textAlign = TextAlign.Center
+                            )
+                        }
                     }
                 }
             }
@@ -311,35 +438,46 @@ fun SecurityLockContent(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 12.dp),
+                    .padding(bottom = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 NumericDialPad(
                     onDigitClick = { digit -> onEvent(SecurityUiEvent.EnterDigit(digit)) },
                     onDeleteClick = { onEvent(SecurityUiEvent.DeleteDigit) },
-                    onBiometricClick = { onEvent(SecurityUiEvent.TriggerBiometric) }
+                    onBiometricClick = { onEvent(SecurityUiEvent.TriggerBiometric) },
+                    enabled = !state.isLockedOut && !state.isSuccess,
+                    showBiometric = state.mode != SecurityLockMode.ENROLL_PIN
                 )
 
-                Spacer(modifier = Modifier.height(18.dp))
+                Spacer(modifier = Modifier.height(20.dp))
 
-                // Forgot PIN link
-                Text(
-                    text = "Forgot PIN? (Default is 1234)",
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        color = NeonCyan.copy(alpha = 0.85f),
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 12.sp
-                    ),
-                    modifier = Modifier
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                            onClick = { onEvent(SecurityUiEvent.ForgotPin) }
+                // Security Assurance Footer
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier.padding(bottom = 4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Shield,
+                        contentDescription = null,
+                        tint = NeonCyan.copy(alpha = 0.5f),
+                        modifier = Modifier.size(13.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = if (state.mode == SecurityLockMode.ENROLL_PIN) {
+                            "SHA-256 On-Device Cryptographic Key"
+                        } else {
+                            "Zero-Knowledge On-Device Verification"
+                        },
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = TextMuted.copy(alpha = 0.7f),
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 11.sp,
+                            letterSpacing = 0.3.sp
                         )
-                        .padding(8.dp)
-                )
-
-                Spacer(modifier = Modifier.height(6.dp))
+                    )
+                }
             }
         }
     }
@@ -513,6 +651,8 @@ private fun NumericDialPad(
     onDigitClick: (String) -> Unit,
     onDeleteClick: () -> Unit,
     onBiometricClick: () -> Unit,
+    enabled: Boolean = true,
+    showBiometric: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val keypadItems = listOf(
@@ -544,25 +684,31 @@ private fun NumericDialPad(
                 rowKeys.forEach { key ->
                     when (key.digit) {
                         "bio" -> {
-                            KeypadActionButton(
-                                onClick = onBiometricClick
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Fingerprint,
-                                    contentDescription = "Biometric Unlock",
-                                    tint = NeonCyan,
-                                    modifier = Modifier.size(28.dp)
-                                )
+                            if (showBiometric) {
+                                KeypadActionButton(
+                                    onClick = onBiometricClick,
+                                    enabled = enabled
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Fingerprint,
+                                        contentDescription = "Biometric Unlock",
+                                        tint = if (enabled) NeonCyan else NeonCyan.copy(alpha = 0.3f),
+                                        modifier = Modifier.size(28.dp)
+                                    )
+                                }
+                            } else {
+                                Box(modifier = Modifier.size(72.dp))
                             }
                         }
                         "del" -> {
                             KeypadActionButton(
-                                onClick = onDeleteClick
+                                onClick = onDeleteClick,
+                                enabled = enabled
                             ) {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.Backspace,
                                     contentDescription = "Backspace",
-                                    tint = Color.White.copy(alpha = 0.75f),
+                                    tint = if (enabled) Color.White.copy(alpha = 0.75f) else Color.White.copy(alpha = 0.2f),
                                     modifier = Modifier.size(24.dp)
                                 )
                             }
@@ -571,7 +717,8 @@ private fun NumericDialPad(
                             KeypadDigitButton(
                                 digit = key.digit,
                                 letters = key.letters,
-                                onClick = { onDigitClick(key.digit) }
+                                onClick = { onDigitClick(key.digit) },
+                                enabled = enabled
                             )
                         }
                     }
@@ -591,13 +738,14 @@ private fun KeypadDigitButton(
     digit: String,
     letters: String,
     onClick: () -> Unit,
+    enabled: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     Box(
         modifier = modifier
             .size(72.dp)
             .shadow(
-                elevation = 6.dp,
+                elevation = if (enabled) 6.dp else 0.dp,
                 shape = CircleShape,
                 ambientColor = Color.Black
             )
@@ -605,17 +753,18 @@ private fun KeypadDigitButton(
             .background(
                 Brush.verticalGradient(
                     listOf(
-                        Color(0xFF131D2E),
-                        Color(0xFF0A101C)
+                        Color(0xFF131D2E).copy(alpha = if (enabled) 1f else 0.4f),
+                        Color(0xFF0A101C).copy(alpha = if (enabled) 1f else 0.4f)
                     )
                 )
             )
             .border(
                 1.dp,
-                Color.White.copy(alpha = 0.12f),
+                Color.White.copy(alpha = if (enabled) 0.12f else 0.04f),
                 CircleShape
             )
             .clickable(
+                enabled = enabled,
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 onClick = onClick
@@ -630,7 +779,7 @@ private fun KeypadDigitButton(
                 text = digit,
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontWeight = FontWeight.Bold,
-                    color = TextPrimary,
+                    color = if (enabled) TextPrimary else TextMuted.copy(alpha = 0.4f),
                     fontSize = 24.sp
                 )
             )
@@ -640,7 +789,7 @@ private fun KeypadDigitButton(
                     text = letters,
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontWeight = FontWeight.Medium,
-                        color = Color(0xFF64748B),
+                        color = if (enabled) Color(0xFF64748B) else Color(0xFF64748B).copy(alpha = 0.3f),
                         fontSize = 9.sp,
                         letterSpacing = 1.sp
                     )
@@ -656,6 +805,7 @@ private fun KeypadDigitButton(
 @Composable
 private fun KeypadActionButton(
     onClick: () -> Unit,
+    enabled: Boolean = true,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
@@ -663,9 +813,10 @@ private fun KeypadActionButton(
         modifier = modifier
             .size(72.dp)
             .clip(CircleShape)
-            .background(Color.White.copy(alpha = 0.04f))
-            .border(1.dp, Color.White.copy(alpha = 0.08f), CircleShape)
+            .background(Color.White.copy(alpha = if (enabled) 0.04f else 0.01f))
+            .border(1.dp, Color.White.copy(alpha = if (enabled) 0.08f else 0.03f), CircleShape)
             .clickable(
+                enabled = enabled,
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 onClick = onClick

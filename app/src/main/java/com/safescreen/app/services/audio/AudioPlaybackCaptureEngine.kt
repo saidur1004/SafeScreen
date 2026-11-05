@@ -109,12 +109,12 @@ class AudioPlaybackCaptureEngine @Inject constructor(
     private val isRecording = AtomicBoolean(false)
     private val isPausedByPreference = AtomicBoolean(false)
 
-    // Pre-allocated Zero-GC Buffers
-    // 3 seconds capacity at 16kHz mono = 48,000 shorts (~96 KB)
+    // Pre-allocated Zero-GC Double/Triple-Buffer Pool for thread-safe concurrent audio inference
     private val ringBuffer = AudioRingBuffer(RING_BUFFER_CAPACITY)
     private val readChunkBuffer = ShortArray(READ_CHUNK_SIZE)
-    // YAMNet standard window: 0.975s = 15,600 samples
-    private val windowBuffer = ShortArray(YAMNET_WINDOW_SAMPLES)
+    // YAMNet standard window pool: 3 x 0.975s (15,600 samples each)
+    private val windowBufferPool = Array(WINDOW_POOL_SIZE) { ShortArray(YAMNET_WINDOW_SAMPLES) }
+    private var currentWindowIndex = 0
 
     private val _metrics = MutableStateFlow(AudioCaptureMetrics())
     val metrics: StateFlow<AudioCaptureMetrics> = _metrics.asStateFlow()
@@ -323,10 +323,12 @@ class AudioPlaybackCaptureEngine @Inject constructor(
                 // 3. Emit AI inference window (YAMNet standard 0.975s window) every 500ms
                 if (now - lastWindowEmitTime >= WINDOW_EMIT_INTERVAL_MS) {
                     lastWindowEmitTime = now
-                    val samplesCopied = ringBuffer.readLatest(windowBuffer)
+                    val targetWindow = windowBufferPool[currentWindowIndex]
+                    val samplesCopied = ringBuffer.readLatest(targetWindow)
                     if (samplesCopied >= YAMNET_WINDOW_SAMPLES) {
-                        _audioFlow.tryEmit(windowBuffer)
-                        onAudioWindowCapturedListener?.invoke(windowBuffer)
+                        _audioFlow.tryEmit(targetWindow)
+                        onAudioWindowCapturedListener?.invoke(targetWindow)
+                        currentWindowIndex = (currentWindowIndex + 1) % WINDOW_POOL_SIZE
                     }
                 }
 
@@ -406,6 +408,8 @@ class AudioPlaybackCaptureEngine @Inject constructor(
         const val YAMNET_WINDOW_SAMPLES = 15600
         // Window emission interval: 500ms
         const val WINDOW_EMIT_INTERVAL_MS = 500L
+        // Triple-Buffer pool size for ownership-safe concurrent inference
+        const val WINDOW_POOL_SIZE = 3
     }
 }
 

@@ -5,8 +5,10 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.os.Build
@@ -46,9 +48,42 @@ class ShieldProtectionService : LifecycleService() {
     @Inject
     lateinit var aiShieldCoordinator: com.safescreen.app.services.ai.AiShieldCoordinator
 
+    private var isScreenReceiverRegistered = false
+
+    private val screenStateReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            when (intent?.action) {
+                Intent.ACTION_SCREEN_OFF -> {
+                    Log.d(TAG, "Screen turned OFF. Pausing frame decimation to preserve battery.")
+                    captureEngine.setScreenInteractive(false)
+                    if (com.safescreen.app.services.overlay.LiveBlurOverlayManager.isShowing()) {
+                        com.safescreen.app.services.overlay.LiveBlurOverlayManager.hideOverlay(this@ShieldProtectionService)
+                    }
+                }
+                Intent.ACTION_SCREEN_ON -> {
+                    Log.d(TAG, "Screen turned ON. Resuming AI frame capture.")
+                    captureEngine.setScreenInteractive(true)
+                }
+            }
+        }
+    }
+
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
+
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_SCREEN_OFF)
+            addAction(Intent.ACTION_SCREEN_ON)
+        }
+        try {
+            registerReceiver(screenStateReceiver, filter)
+            isScreenReceiverRegistered = true
+            Log.d(TAG, "ScreenStateReceiver registered for background battery preservation")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed registering ScreenStateReceiver: ${e.message}")
+        }
+
         Log.d(TAG, "ShieldProtectionService created")
     }
 
@@ -208,6 +243,14 @@ class ShieldProtectionService : LifecycleService() {
 
     override fun onDestroy() {
         super.onDestroy()
+        if (isScreenReceiverRegistered) {
+            try {
+                unregisterReceiver(screenStateReceiver)
+                isScreenReceiverRegistered = false
+            } catch (e: Exception) {
+                Log.w(TAG, "Error unregistering ScreenStateReceiver: ${e.message}")
+            }
+        }
         aiShieldCoordinator.stopObserving()
         audioCaptureEngine.stopCapture()
         captureEngine.stopCapture()

@@ -1,8 +1,11 @@
 package com.safescreen.app.data.local
 
+import com.safescreen.app.data.local.datastore.UserPreferences
 import com.safescreen.app.data.local.datastore.UserPreferencesRepository
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class UserPreferencesRepositoryTest {
@@ -28,20 +31,25 @@ class UserPreferencesRepositoryTest {
     }
 
     @Test
-    fun testPinVerificationLogicWithDefaultAndCustomHash() {
-        // Default PIN logic when stored hash is empty
-        val defaultPin = "1234"
-        val wrongPin = "0000"
-        val defaultHash = UserPreferencesRepository.hashSha256(defaultPin)
+    fun testDefaultPinVulnerabilityEliminated() {
+        // When pinHash is blank, isPinSet must be false
+        val defaultPrefs = UserPreferences(pinHash = "")
+        assertFalse("PIN must not be reported as set when hash is blank", defaultPrefs.isPinSet)
 
-        // Custom PIN logic
-        val customPin = "9876"
-        val customHash = UserPreferencesRepository.hashSha256(customPin)
+        // When pin is enrolled, isPinSet must be true
+        val enrolledPrefs = UserPreferences(pinHash = UserPreferencesRepository.hashSha256("2580"))
+        assertTrue("PIN must be reported as set when valid hash is present", enrolledPrefs.isPinSet)
+    }
 
-        assertEquals(defaultHash, UserPreferencesRepository.hashSha256("1234"))
-        assertNotEquals(defaultHash, UserPreferencesRepository.hashSha256(wrongPin))
-        assertEquals(customHash, UserPreferencesRepository.hashSha256("9876"))
-        assertNotEquals(customHash, UserPreferencesRepository.hashSha256(defaultPin))
+    @Test
+    fun testPinVerificationLogicWithEnrolledAndCustomHash() {
+        val enrolledPin = "9876"
+        val enrolledHash = UserPreferencesRepository.hashSha256(enrolledPin)
+
+        val inputHash = UserPreferencesRepository.hashSha256("9876")
+        val wrongHash = UserPreferencesRepository.hashSha256("1234")
+
+        assertEquals(enrolledHash, inputHash)
+        assertNotEquals(enrolledHash, wrongHash)
     }
 }
-

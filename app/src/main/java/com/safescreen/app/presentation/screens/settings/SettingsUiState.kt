@@ -29,6 +29,7 @@ data class SettingsUiState(
     val performanceProfile: PerformanceProfile = PerformanceProfile.BALANCED,
     val isBiometricLockEnabled: Boolean = true,
     val isPreventUninstallEnabled: Boolean = true,
+    val isPinEnrolled: Boolean = false,
     val whitelistCount: Int = 5,
     val showClearCacheDialog: Boolean = false,
     val isCacheCleared: Boolean = false,

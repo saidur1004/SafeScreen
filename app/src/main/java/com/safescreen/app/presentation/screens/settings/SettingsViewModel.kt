@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -40,6 +41,7 @@ class SettingsViewModel @Inject constructor(
             performanceProfile = prefs.performanceProfile,
             isBiometricLockEnabled = prefs.isPinLockEnabled,
             isPreventUninstallEnabled = prefs.isPreventUninstallEnabled,
+            isPinEnrolled = prefs.isPinSet,
             whitelistCount = exemptedCount,
             showClearCacheDialog = showDialog,
             isCacheCleared = cacheCleared,
@@ -67,6 +69,11 @@ class SettingsViewModel @Inject constructor(
             }
             is SettingsUiEvent.SetBiometricLock -> {
                 viewModelScope.launch {
+                    val prefs = userPreferencesRepository.userPreferencesFlow.first()
+                    if (event.enabled && !prefs.isPinSet) {
+                        // User cannot directly enable PIN lock if PIN is not enrolled yet.
+                        return@launch
+                    }
                     userPreferencesRepository.setPinLockEnabled(event.enabled)
                     userPreferencesRepository.setBiometricEnabled(event.enabled)
                 }
