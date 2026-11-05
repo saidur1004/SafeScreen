@@ -100,12 +100,14 @@ fun SecurityLockScreen(
     }
 
     // Launch real OS-level BiometricPrompt
-    val showBiometricPrompt: () -> Unit = remember(fragmentActivity, state.isBiometricAvailable, state.isLockedOut, mode) {
+    val needsCurrentPinVerification = mode == SecurityLockMode.ENROLL_PIN &&
+        state.enrollmentStage == PinEnrollmentStage.VERIFY_CURRENT_PIN
+    val showBiometricPrompt: () -> Unit = remember(fragmentActivity, state.isBiometricAvailable, state.isLockedOut, mode, needsCurrentPinVerification) {
         {
             if (fragmentActivity != null &&
                 state.isBiometricAvailable &&
                 !state.isLockedOut &&
-                mode != SecurityLockMode.ENROLL_PIN
+                (mode != SecurityLockMode.ENROLL_PIN || needsCurrentPinVerification)
             ) {
                 val executor = ContextCompat.getMainExecutor(fragmentActivity)
                 val prompt = BiometricPrompt(
@@ -142,6 +144,7 @@ fun SecurityLockScreen(
                         when (mode) {
                             SecurityLockMode.SHIELD_DISARM -> "Verify biometric identity to disarm protection shield"
                             SecurityLockMode.SETTINGS -> "Verify biometric identity to access security settings"
+                            SecurityLockMode.ENROLL_PIN -> "Verify identity before changing your PIN"
                             else -> "Unlock SafeScreen using Biometrics"
                         }
                     )
@@ -152,7 +155,7 @@ fun SecurityLockScreen(
                     .build()
 
                 prompt.authenticate(promptInfo)
-            } else if (!state.isBiometricAvailable && mode != SecurityLockMode.ENROLL_PIN) {
+            } else if (!state.isBiometricAvailable && (mode != SecurityLockMode.ENROLL_PIN || needsCurrentPinVerification)) {
                 Toast.makeText(context, "Biometric unlock is not configured or unavailable on this device", Toast.LENGTH_SHORT).show()
             }
         }
@@ -161,7 +164,9 @@ fun SecurityLockScreen(
     // Auto-prompt biometrics once on cold open if configured and available
     var autoPromptTriggered by remember { mutableStateOf(false) }
     LaunchedEffect(state.isBiometricAvailable, state.isLockedOut) {
-        if (!autoPromptTriggered && state.isBiometricAvailable && !state.isLockedOut && mode != SecurityLockMode.ENROLL_PIN) {
+        if (!autoPromptTriggered && state.isBiometricAvailable && !state.isLockedOut &&
+            (mode != SecurityLockMode.ENROLL_PIN || needsCurrentPinVerification)
+        ) {
             autoPromptTriggered = true
             delay(250)
             showBiometricPrompt()
@@ -278,15 +283,18 @@ fun SecurityLockContent(
             "Enter your 4-digit PIN or use Biometrics to access security settings"
         )
         SecurityLockMode.ENROLL_PIN -> {
-            if (state.enrollmentStage == PinEnrollmentStage.CONFIRM_PIN) {
-                Pair(
-                    "Confirm your PIN",
-                    "Re-enter the 4-digit PIN to confirm and activate protection"
+            when (state.enrollmentStage) {
+                PinEnrollmentStage.VERIFY_CURRENT_PIN -> Pair(
+                    "Verify your current PIN",
+                    "Confirm your existing PIN or use biometrics before changing it"
                 )
-            } else {
-                Pair(
+                PinEnrollmentStage.CONFIRM_PIN -> Pair(
+                    "Confirm your new PIN",
+                    "Re-enter the 4-digit PIN to confirm the change"
+                )
+                PinEnrollmentStage.ENTER_NEW_PIN -> Pair(
                     "Create a 4-Digit PIN",
-                    "Enter a secure 4-digit PIN to safeguard SafeScreen"
+                    "Enter a new secure 4-digit PIN"
                 )
             }
         }
@@ -421,7 +429,11 @@ fun SecurityLockContent(
                         }
                         state.mode == SecurityLockMode.ENROLL_PIN -> {
                             Text(
-                                text = if (state.enrollmentStage == PinEnrollmentStage.ENTER_NEW_PIN) "Step 1 of 2: Set New PIN" else "Step 2 of 2: Confirm PIN",
+                                text = when (state.enrollmentStage) {
+                                    PinEnrollmentStage.VERIFY_CURRENT_PIN -> "Verify your existing PIN first"
+                                    PinEnrollmentStage.ENTER_NEW_PIN -> "Step 1 of 2: Set New PIN"
+                                    PinEnrollmentStage.CONFIRM_PIN -> "Step 2 of 2: Confirm PIN"
+                                },
                                 style = MaterialTheme.typography.labelSmall.copy(
                                     color = NeonCyan.copy(alpha = 0.85f),
                                     fontWeight = FontWeight.SemiBold,
@@ -446,7 +458,8 @@ fun SecurityLockContent(
                     onDeleteClick = { onEvent(SecurityUiEvent.DeleteDigit) },
                     onBiometricClick = { onEvent(SecurityUiEvent.TriggerBiometric) },
                     enabled = !state.isLockedOut && !state.isSuccess,
-                    showBiometric = state.mode != SecurityLockMode.ENROLL_PIN
+                    showBiometric = state.mode != SecurityLockMode.ENROLL_PIN ||
+                        state.enrollmentStage == PinEnrollmentStage.VERIFY_CURRENT_PIN
                 )
 
                 Spacer(modifier = Modifier.height(20.dp))

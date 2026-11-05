@@ -16,6 +16,7 @@ enum class SecurityLockMode {
  * Sequential stages for mandatory PIN enrollment.
  */
 enum class PinEnrollmentStage {
+    VERIFY_CURRENT_PIN,
     ENTER_NEW_PIN,
     CONFIRM_PIN
 }

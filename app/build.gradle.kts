@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -5,6 +7,28 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt.android)
 }
+
+val signingProperties = Properties().apply {
+    val propertiesFile = rootProject.file("local.properties")
+    if (propertiesFile.isFile) {
+        propertiesFile.inputStream().use { load(it) }
+    }
+}
+
+fun signingValue(environmentName: String, propertyName: String): String? =
+    System.getenv(environmentName)?.takeIf { it.isNotBlank() }
+        ?: signingProperties.getProperty(propertyName)?.takeIf { it.isNotBlank() }
+
+val releaseStoreFile = signingValue("SAFESCREEN_RELEASE_STORE_FILE", "release.storeFile")
+val releaseStorePassword = signingValue("SAFESCREEN_RELEASE_STORE_PASSWORD", "release.storePassword")
+val releaseKeyAlias = signingValue("SAFESCREEN_RELEASE_KEY_ALIAS", "release.keyAlias")
+val releaseKeyPassword = signingValue("SAFESCREEN_RELEASE_KEY_PASSWORD", "release.keyPassword")
+val releaseSigningConfigured = listOf(
+    releaseStoreFile,
+    releaseStorePassword,
+    releaseKeyAlias,
+    releaseKeyPassword
+).all { !it.isNullOrBlank() }
 
 android {
     namespace = "com.safescreen.app"
@@ -23,14 +47,16 @@ android {
         }
     }
 
-    signingConfigs {
-        create("release") {
-            storeFile = file("keystore/safescreen-release.jks")
-            storePassword = "safescreen2026"
-            keyAlias = "safescreen"
-            keyPassword = "safescreen2026"
-            enableV1Signing = true
-            enableV2Signing = true
+    if (releaseSigningConfigured) {
+        signingConfigs {
+            create("release") {
+                storeFile = file(releaseStoreFile!!)
+                storePassword = releaseStorePassword!!
+                keyAlias = releaseKeyAlias!!
+                keyPassword = releaseKeyPassword!!
+                enableV1Signing = true
+                enableV2Signing = true
+            }
         }
     }
 
@@ -41,7 +67,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("release")
+            if (releaseSigningConfigured) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 

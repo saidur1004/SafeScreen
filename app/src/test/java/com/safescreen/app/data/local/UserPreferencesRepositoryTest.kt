@@ -1,55 +1,94 @@
 package com.safescreen.app.data.local
 
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.core.edit
+import com.safescreen.app.data.local.datastore.PreferencesKeys
 import com.safescreen.app.data.local.datastore.UserPreferences
 import com.safescreen.app.data.local.datastore.UserPreferencesRepository
+import java.io.File
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
 
 class UserPreferencesRepositoryTest {
 
-    @Test
-    fun testSha256Hashing() {
-        val pin = "1234"
-        val hash = UserPreferencesRepository.hashSha256(pin)
-        // Standard SHA-256 of "1234"
-        assertEquals("03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4", hash)
+    @get:Rule
+    val temporaryFolder = TemporaryFolder()
 
-        val wrongPin = "4321"
-        val wrongHash = UserPreferencesRepository.hashSha256(wrongPin)
-        assertNotEquals(hash, wrongHash)
+    @Test
+    fun pinCredentialUsesSaltedPbkdf2AndVerifiesConstantly() {
+        val first = UserPreferencesRepository.createPinCredential("2580")
+        val second = UserPreferencesRepository.createPinCredential("2580")
+
+        assertTrue(first.startsWith("pbkdf2_sha256_v1$"))
+        assertTrue(UserPreferencesRepository.verifyPinCredential("2580", first))
+        assertFalse(UserPreferencesRepository.verifyPinCredential("1234", first))
+        assertTrue("Random per-PIN salt should produce distinct credentials", first != second)
     }
 
     @Test
-    fun testDeterministicHashing() {
-        val input = "SafeScreen2026"
-        val hash1 = UserPreferencesRepository.hashSha256(input)
-        val hash2 = UserPreferencesRepository.hashSha256(input)
-        assertEquals(hash1, hash2)
+    fun legacySha256CredentialStillVerifiesForMigration() {
+        val legacy = UserPreferencesRepository.hashSha256("9876")
+
+        assertTrue(UserPreferencesRepository.verifyPinCredential("9876", legacy))
+        assertFalse(UserPreferencesRepository.verifyPinCredential("1234", legacy))
     }
 
     @Test
-    fun testDefaultPinVulnerabilityEliminated() {
-        // When pinHash is blank, isPinSet must be false
-        val defaultPrefs = UserPreferences(pinHash = "")
-        assertFalse("PIN must not be reported as set when hash is blank", defaultPrefs.isPinSet)
+    fun lockoutAttemptsAndExpiryAreStoredInDataStore() = runBlocking {
+        val storeFile = File(temporaryFolder.root, "preferences.preferences_pb")
+        val store = PreferenceDataStoreFactory.create(
+            scope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
+            produceFile = { storeFile }
+        )
+        val repository = UserPreferencesRepository(store)
+        val now = 10_000_000L
 
-        // When pin is enrolled, isPinSet must be true
-        val enrolledPrefs = UserPreferences(pinHash = UserPreferencesRepository.hashSha256("2580"))
-        assertTrue("PIN must be reported as set when valid hash is present", enrolledPrefs.isPinSet)
+        repeat(4) {
+            val state = repository.recordFailedPinAttempt(nowEpochMillis = now)
+            assertEquals(it + 1, state.failedAttempts)
+            assertEquals(0L, state.lockoutUntilEpochMillis)
+        }
+        val locked = repository.recordFailedPinAttempt(nowEpochMillis = now)
+        assertEquals(5, locked.failedAttempts)
+        assertEquals(now + 30_000L, locked.lockoutUntilEpochMillis)
+
+        val restored = repository.getPinLockoutState(nowEpochMillis = now + 1_000L)
+        assertEquals(5, restored.failedAttempts)
+        assertEquals(now + 30_000L, restored.lockoutUntilEpochMillis)
+
+        val expired = repository.getPinLockoutState(nowEpochMillis = now + 30_000L)
+        assertEquals(0, expired.failedAttempts)
+        assertEquals(0L, expired.lockoutUntilEpochMillis)
     }
 
     @Test
-    fun testPinVerificationLogicWithEnrolledAndCustomHash() {
-        val enrolledPin = "9876"
-        val enrolledHash = UserPreferencesRepository.hashSha256(enrolledPin)
+    fun legacyCredentialIsUpgradedAfterSuccessfulRepositoryVerification() = runBlocking {
+        val store = PreferenceDataStoreFactory.create(
+            scope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
+            produceFile = { File(temporaryFolder.root, "legacy.preferences_pb") }
+        )
+        val legacy = UserPreferencesRepository.hashSha256("4321")
+        store.edit { it[PreferencesKeys.PIN_HASH_SHA256] = legacy }
+        val repository = UserPreferencesRepository(store)
 
-        val inputHash = UserPreferencesRepository.hashSha256("9876")
-        val wrongHash = UserPreferencesRepository.hashSha256("1234")
+        assertTrue(repository.verifyPin("4321"))
+        val upgraded = store.data.first()[PreferencesKeys.PIN_HASH_SHA256].orEmpty()
+        assertTrue(upgraded.startsWith("pbkdf2_sha256_v1$"))
+        assertTrue(repository.verifyPin("4321"))
+    }
 
-        assertEquals(enrolledHash, inputHash)
-        assertNotEquals(enrolledHash, wrongHash)
+    @Test
+    fun pinSetDefaultsRemainSecure() {
+        assertFalse(UserPreferences(pinHash = "").isPinSet)
+        assertTrue(UserPreferences(pinHash = "credential").isPinSet)
     }
 }

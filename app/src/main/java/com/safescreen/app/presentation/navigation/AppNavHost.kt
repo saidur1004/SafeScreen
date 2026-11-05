@@ -252,7 +252,10 @@ fun AppNavHost(
                 )
             }
 
-            composable(Screen.Settings.route) {
+            composable(Screen.Settings.route) { settingsEntry ->
+                val enablePinLockAfterAuthentication by settingsEntry.savedStateHandle
+                    .getStateFlow("authenticated_pin_lock_enable", false)
+                    .collectAsStateWithLifecycle()
                 SettingsScreen(
                     onNavigateBack = {
                         navController.popBackStack()
@@ -261,7 +264,14 @@ fun AppNavHost(
                         navController.navigate(Screen.AppWhitelist.route)
                     },
                     onNavigateToSecurityLock = { mode ->
+                        if (mode == SecurityLockMode.SETTINGS) {
+                            settingsEntry.savedStateHandle["pending_pin_lock_enable"] = true
+                        }
                         navController.navigate(Screen.SecurityLock.createRoute(mode))
+                    },
+                    enablePinLockAfterAuthentication = enablePinLockAfterAuthentication,
+                    onPinLockEnableApplied = {
+                        settingsEntry.savedStateHandle["authenticated_pin_lock_enable"] = false
                     }
                 )
             }
@@ -303,7 +313,14 @@ fun AppNavHost(
                                     ?.set("shield_disarm_confirmed", true)
                                 navController.popBackStack()
                             }
-                            SecurityLockMode.SETTINGS,
+                            SecurityLockMode.SETTINGS -> {
+                                val settingsEntry = navController.previousBackStackEntry
+                                if (settingsEntry?.savedStateHandle?.get<Boolean>("pending_pin_lock_enable") == true) {
+                                    settingsEntry.savedStateHandle["authenticated_pin_lock_enable"] = true
+                                    settingsEntry.savedStateHandle["pending_pin_lock_enable"] = false
+                                }
+                                navController.popBackStack()
+                            }
                             SecurityLockMode.ENROLL_PIN -> {
                                 navController.popBackStack()
                             }

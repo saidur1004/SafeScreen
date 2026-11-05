@@ -52,6 +52,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -94,10 +95,19 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit = {},
     onNavigateToWhitelist: () -> Unit = {},
-    onNavigateToSecurityLock: (SecurityLockMode) -> Unit = {}
+    onNavigateToSecurityLock: (SecurityLockMode) -> Unit = {},
+    enablePinLockAfterAuthentication: Boolean = false,
+    onPinLockEnableApplied: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(enablePinLockAfterAuthentication) {
+        if (enablePinLockAfterAuthentication) {
+            viewModel.onEvent(SettingsUiEvent.SetBiometricLock(true))
+            onPinLockEnableApplied()
+        }
+    }
 
     val handleEvent: (SettingsUiEvent) -> Unit = { event ->
         when (event) {
@@ -106,7 +116,7 @@ fun SettingsScreen(
                     if (!uiState.isPinEnrolled) {
                         onNavigateToSecurityLock(SecurityLockMode.ENROLL_PIN)
                     } else {
-                        viewModel.onEvent(event)
+                        onNavigateToSecurityLock(SecurityLockMode.SETTINGS)
                     }
                 } else {
                     viewModel.onEvent(event)
@@ -120,8 +130,7 @@ fun SettingsScreen(
                 onNavigateToWhitelist()
             }
             is SettingsUiEvent.NavigateToSecurityLock -> {
-                val mode = if (uiState.isPinEnrolled) SecurityLockMode.ENROLL_PIN else SecurityLockMode.ENROLL_PIN
-                onNavigateToSecurityLock(mode)
+                onNavigateToSecurityLock(SecurityLockMode.ENROLL_PIN)
             }
             is SettingsUiEvent.NavigateBack -> {
                 onNavigateBack()

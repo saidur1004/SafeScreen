@@ -12,8 +12,13 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.IOException
+import java.security.SecureRandom
 import java.security.MessageDigest
+import javax.crypto.SecretKeyFactory
+import javax.crypto.spec.PBEKeySpec
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -25,6 +30,8 @@ import javax.inject.Singleton
 class UserPreferencesRepository @Inject constructor(
     private val dataStore: DataStore<Preferences>
 ) {
+
+    data class PinLockoutState(val failedAttempts: Int, val lockoutUntilEpochMillis: Long)
 
     /**
      * Unified preferences flow emitting full state updates.
@@ -194,11 +201,13 @@ class UserPreferencesRepository @Inject constructor(
         }
     }
 
-    suspend fun setPin(pin: String) {
-        val hash = hashSha256(pin)
+    suspend fun setPin(pin: String, enableLock: Boolean = true) {
+        val credential = withContext(Dispatchers.Default) { createPinCredential(pin) }
         dataStore.edit { preferences ->
-            preferences[PreferencesKeys.PIN_HASH_SHA256] = hash
-            preferences[PreferencesKeys.IS_PIN_LOCK_ENABLED] = true
+            preferences[PreferencesKeys.PIN_HASH_SHA256] = credential
+            preferences[PreferencesKeys.IS_PIN_LOCK_ENABLED] = enableLock
+            preferences[PreferencesKeys.PIN_FAILED_ATTEMPTS] = 0
+            preferences[PreferencesKeys.PIN_LOCKOUT_UNTIL_EPOCH_MS] = 0L
         }
     }
 
@@ -217,11 +226,12 @@ class UserPreferencesRepository @Inject constructor(
         dataStore.edit { preferences ->
             preferences.remove(PreferencesKeys.PIN_HASH_SHA256)
             preferences[PreferencesKeys.IS_PIN_LOCK_ENABLED] = false
+            preferences[PreferencesKeys.PIN_FAILED_ATTEMPTS] = 0
+            preferences[PreferencesKeys.PIN_LOCKOUT_UNTIL_EPOCH_MS] = 0L
         }
     }
 
     suspend fun verifyPin(pinInput: String, storedPreferences: UserPreferences? = null): Boolean {
-        val hashInput = hashSha256(pinInput)
         val expectedHash = storedPreferences?.pinHash
             ?: dataStore.data.first()[PreferencesKeys.PIN_HASH_SHA256] ?: ""
 
@@ -230,7 +240,54 @@ class UserPreferencesRepository @Inject constructor(
         if (expectedHash.isBlank()) {
             return false
         }
-        return hashInput == expectedHash
+        val valid = withContext(Dispatchers.Default) { verifyPinCredential(pinInput, expectedHash) }
+        if (valid && !expectedHash.startsWith(PIN_CREDENTIAL_PREFIX)) {
+            val upgraded = withContext(Dispatchers.Default) { createPinCredential(pinInput) }
+            dataStore.edit { preferences ->
+                // Avoid overwriting a credential that was changed during verification.
+                if (preferences[PreferencesKeys.PIN_HASH_SHA256] == expectedHash) {
+                    preferences[PreferencesKeys.PIN_HASH_SHA256] = upgraded
+                }
+            }
+        }
+        return valid
+    }
+
+    suspend fun getPinLockoutState(nowEpochMillis: Long = System.currentTimeMillis()): PinLockoutState {
+        val preferences = dataStore.data.first()
+        val attempts = preferences[PreferencesKeys.PIN_FAILED_ATTEMPTS] ?: 0
+        val until = preferences[PreferencesKeys.PIN_LOCKOUT_UNTIL_EPOCH_MS] ?: 0L
+        if (until != 0L && until <= nowEpochMillis) {
+            clearPinLockout()
+            return PinLockoutState(failedAttempts = 0, lockoutUntilEpochMillis = 0L)
+        }
+        return PinLockoutState(attempts, until)
+    }
+
+    suspend fun recordFailedPinAttempt(
+        nowEpochMillis: Long = System.currentTimeMillis(),
+        maxAttempts: Int = 5,
+        lockoutDurationMillis: Long = 30_000L
+    ): PinLockoutState {
+        var result = PinLockoutState(0, 0L)
+        dataStore.edit { preferences ->
+            val oldUntil = preferences[PreferencesKeys.PIN_LOCKOUT_UNTIL_EPOCH_MS] ?: 0L
+            val oldAttempts = preferences[PreferencesKeys.PIN_FAILED_ATTEMPTS] ?: 0
+            val currentAttempts = if (oldUntil != 0L && oldUntil <= nowEpochMillis) 0 else oldAttempts
+            val attempts = currentAttempts + 1
+            val until = if (attempts >= maxAttempts) nowEpochMillis + lockoutDurationMillis else 0L
+            preferences[PreferencesKeys.PIN_FAILED_ATTEMPTS] = attempts
+            preferences[PreferencesKeys.PIN_LOCKOUT_UNTIL_EPOCH_MS] = until
+            result = PinLockoutState(attempts, until)
+        }
+        return result
+    }
+
+    suspend fun clearPinLockout() {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.PIN_FAILED_ATTEMPTS] = 0
+            preferences[PreferencesKeys.PIN_LOCKOUT_UNTIL_EPOCH_MS] = 0L
+        }
     }
 
     suspend fun setBiometricEnabled(enabled: Boolean) {
@@ -326,9 +383,54 @@ class UserPreferencesRepository @Inject constructor(
     }
 
     companion object {
+        private const val PIN_CREDENTIAL_PREFIX = "pbkdf2_sha256_v1"
+        const val PBKDF2_ITERATIONS = 210_000
+        private const val PIN_SALT_BYTES = 16
+        private const val PIN_KEY_BITS = 256
+
         fun hashSha256(input: String): String {
             val bytes = MessageDigest.getInstance("SHA-256").digest(input.toByteArray(Charsets.UTF_8))
             return bytes.joinToString("") { "%02x".format(it) }
+        }
+
+        fun createPinCredential(pin: String, salt: ByteArray = ByteArray(PIN_SALT_BYTES).also(SecureRandom()::nextBytes)): String {
+            val derived = derivePinKey(pin, salt, PBKDF2_ITERATIONS)
+            return "$PIN_CREDENTIAL_PREFIX\$$PBKDF2_ITERATIONS\$${salt.toHex()}\$${derived.toHex()}"
+        }
+
+        fun verifyPinCredential(pin: String, credential: String): Boolean {
+            if (!credential.startsWith("$PIN_CREDENTIAL_PREFIX\$")) {
+                // Compatibility path for existing credentials; successful verification upgrades them.
+                return MessageDigest.isEqual(
+                    hashSha256(pin).toByteArray(Charsets.UTF_8),
+                    credential.toByteArray(Charsets.UTF_8)
+                )
+            }
+            val parts = credential.split('$')
+            if (parts.size != 4) return false
+            val iterations = parts[1].toIntOrNull() ?: return false
+            if (iterations !in 100_000..1_000_000) return false
+            val salt = parts[2].fromHex() ?: return false
+            val expected = parts[3].fromHex() ?: return false
+            val actual = derivePinKey(pin, salt, iterations)
+            return MessageDigest.isEqual(actual, expected)
+        }
+
+        private fun derivePinKey(pin: String, salt: ByteArray, iterations: Int): ByteArray {
+            val spec = PBEKeySpec(pin.toCharArray(), salt, iterations, PIN_KEY_BITS)
+            return try {
+                SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
+                    .generateSecret(spec).encoded
+            } finally {
+                spec.clearPassword()
+            }
+        }
+
+        private fun ByteArray.toHex(): String = joinToString("") { "%02x".format(it) }
+
+        private fun String.fromHex(): ByteArray? {
+            if (length % 2 != 0) return null
+            return runCatching { chunked(2).map { it.toInt(16).toByte() }.toByteArray() }.getOrNull()
         }
     }
 }

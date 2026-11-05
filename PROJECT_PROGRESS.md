@@ -790,3 +790,13 @@ SafeScreen/
 *রিপোর্ট প্রস্তুতকারক: Antigravity AI Pair Programmer*  
 *সর্বশেষ কমিট স্ট্যাটাস:* Clean & Pushed to GitHub  
 *রিপোজিটরি ব্রাঞ্চ:* `main` (সম্পূর্ণ সিঙ্কড)
+
+## Step 1: PIN Security, Persistent Lockout, and Signing Secret Cleanup (2026-11-06)
+
+- PIN changes now require the current PIN or an available OS BiometricPrompt before new PIN enrollment. Enabling the PIN lock for an existing credential also requires authentication; the setting is applied after successful authentication.
+- Persisted failed PIN attempts and the lockout expiry epoch timestamp in DataStore. The existing five-attempt, 30-second policy survives screen and process recreation.
+- Replaced newly stored unsalted SHA-256 PIN hashes with per-PIN random-salt PBKDF2-HMAC-SHA256 (210,000 iterations). Existing SHA-256 credentials remain verifiable and are upgraded after a successful check.
+- Release signing values now load from `local.properties` (`release.storeFile`, `release.storePassword`, `release.keyAlias`, `release.keyPassword`) or environment variables (`SAFESCREEN_RELEASE_STORE_FILE`, `SAFESCREEN_RELEASE_STORE_PASSWORD`, `SAFESCREEN_RELEASE_KEY_ALIAS`, `SAFESCREEN_RELEASE_KEY_PASSWORD`). Without all values, the release variant is unsigned.
+- Added `app/keystore/` to `.gitignore` and removed the keystore file from the Git index; the developer's local file is preserved. Previously committed Git history still contains the old key material, so it must be rotated and history cleanup coordinated before publishing a production release.
+- Added tests for PBKDF2 salt/verification, legacy credential verification and upgrade, and persisted lockout timestamp behavior.
+- Verification: `testDebugUnitTest`, `assembleDebug`, and `assembleRelease` passed with `-x lintVitalAnalyzeRelease`. The normal Release lintVital analysis was excluded after it failed on a Windows file-lock error for a lint-cache JAR. The produced release APK is unsigned because this workspace has no local release signing values; configure private values locally for a signed artifact.

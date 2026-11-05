@@ -3,6 +3,7 @@ package com.safescreen.app.data.local.datastore
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 
 /**
@@ -28,6 +29,8 @@ object PreferencesKeys {
     // Security & App Lock
     val IS_PIN_LOCK_ENABLED = booleanPreferencesKey("is_pin_lock_enabled")
     val PIN_HASH_SHA256 = stringPreferencesKey("pin_hash_sha256")
+    val PIN_FAILED_ATTEMPTS = intPreferencesKey("pin_failed_attempts")
+    val PIN_LOCKOUT_UNTIL_EPOCH_MS = longPreferencesKey("pin_lockout_until_epoch_ms")
     val IS_BIOMETRIC_ENABLED = booleanPreferencesKey("is_biometric_enabled")
     val IS_PREVENT_UNINSTALL_ENABLED = booleanPreferencesKey("is_prevent_uninstall_enabled")
 

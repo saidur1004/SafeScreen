@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -44,11 +45,32 @@ class SecurityLockViewModel @Inject constructor(
             errorMessage = null,
             isSuccess = false,
             failedAttempts = 0,
-            isLockedOut = false,
+            isLockedOut = true,
             lockoutRemainingSeconds = 0,
-            isBiometricHardwareAvailable = true
+            isBiometricHardwareAvailable = true,
+            hasVerifiedCurrentPin = false,
+            enableLockAfterEnrollment = true,
+            isSecurityStateLoaded = false
         )
     )
+
+    init {
+        viewModelScope.launch {
+            val lockout = userPreferencesRepository.getPinLockoutState()
+            val now = System.currentTimeMillis()
+            _inputState.update {
+                it.copy(
+                    failedAttempts = lockout.failedAttempts,
+                    isLockedOut = lockout.lockoutUntilEpochMillis > now,
+                    lockoutRemainingSeconds = secondsRemaining(lockout.lockoutUntilEpochMillis, now),
+                    isSecurityStateLoaded = true
+                )
+            }
+            if (lockout.lockoutUntilEpochMillis > now) {
+                runLockoutCountdown(lockout.lockoutUntilEpochMillis)
+            }
+        }
+    }
 
     val uiState: StateFlow<SecurityUiState> = combine(
         userPreferencesRepository.userPreferencesFlow,
@@ -56,21 +78,30 @@ class SecurityLockViewModel @Inject constructor(
     ) { prefs, input ->
         SecurityUiState(
             mode = mode,
-            enrollmentStage = input.enrollmentStage,
+            enrollmentStage = if (mode == SecurityLockMode.ENROLL_PIN && prefs.isPinSet && !input.hasVerifiedCurrentPin) {
+                PinEnrollmentStage.VERIFY_CURRENT_PIN
+            } else {
+                input.enrollmentStage
+            },
             pinInput = input.pinInput,
             maxPinLength = 4,
             isError = input.isError,
             errorMessage = input.errorMessage,
             isSuccess = input.isSuccess,
             failedAttempts = input.failedAttempts,
-            isBiometricAvailable = prefs.isBiometricEnabled && input.isBiometricHardwareAvailable && mode != SecurityLockMode.ENROLL_PIN,
+            isBiometricAvailable = prefs.isBiometricEnabled && input.isBiometricHardwareAvailable &&
+                (mode != SecurityLockMode.ENROLL_PIN || (prefs.isPinSet && !input.hasVerifiedCurrentPin)),
             isLockedOut = input.isLockedOut,
             lockoutRemainingSeconds = input.lockoutRemainingSeconds
         )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = SecurityUiState(mode = mode)
+        initialValue = SecurityUiState(
+            mode = mode,
+            isLockedOut = true,
+            errorMessage = "Checking security status…"
+        )
     )
 
     fun setBiometricHardwareAvailable(available: Boolean) {
@@ -81,7 +112,7 @@ class SecurityLockViewModel @Inject constructor(
         when (event) {
             is SecurityUiEvent.EnterDigit -> {
                 val current = _inputState.value
-                if (current.isLockedOut || current.isSuccess) return
+                if (!current.isSecurityStateLoaded || current.isLockedOut || current.isSuccess) return
 
                 if (current.pinInput.length < 4) {
                     val newPin = current.pinInput + event.digit
@@ -94,7 +125,7 @@ class SecurityLockViewModel @Inject constructor(
             }
             is SecurityUiEvent.DeleteDigit -> {
                 val current = _inputState.value
-                if (current.isLockedOut || current.isSuccess) return
+                if (!current.isSecurityStateLoaded || current.isLockedOut || current.isSuccess) return
 
                 if (current.pinInput.isNotEmpty()) {
                     _inputState.update {
@@ -114,7 +145,26 @@ class SecurityLockViewModel @Inject constructor(
             is SecurityUiEvent.BiometricSuccess -> {
                 val current = _inputState.value
                 if (!current.isLockedOut) {
-                    _inputState.update { it.copy(isSuccess = true, isError = false, failedAttempts = 0) }
+                    viewModelScope.launch {
+                        val isChangingExistingPin = mode == SecurityLockMode.ENROLL_PIN &&
+                            !current.hasVerifiedCurrentPin && userPreferencesRepository.userPreferencesFlow.first().isPinSet
+                        userPreferencesRepository.clearPinLockout()
+                        if (isChangingExistingPin) {
+                            val prefs = userPreferencesRepository.userPreferencesFlow.first()
+                            _inputState.update {
+                                it.copy(
+                                    hasVerifiedCurrentPin = true,
+                                    enableLockAfterEnrollment = prefs.isPinLockEnabled,
+                                    enrollmentStage = PinEnrollmentStage.ENTER_NEW_PIN,
+                                    pinInput = "",
+                                    isError = false,
+                                    failedAttempts = 0
+                                )
+                            }
+                        } else {
+                            _inputState.update { it.copy(isSuccess = true, isError = false, failedAttempts = 0) }
+                        }
+                    }
                 }
             }
             is SecurityUiEvent.BiometricFailed -> {
@@ -145,7 +195,32 @@ class SecurityLockViewModel @Inject constructor(
 
     private fun handleEnrollmentPin(pin: String) {
         val current = _inputState.value
+        if (!current.hasVerifiedCurrentPin) {
+            viewModelScope.launch {
+                val prefs = userPreferencesRepository.userPreferencesFlow.first()
+                if (!prefs.isPinSet) {
+                    _inputState.update { it.copy(hasVerifiedCurrentPin = true) }
+                    handleEnrollmentPin(pin)
+                } else if (userPreferencesRepository.verifyPin(pin, prefs)) {
+                    userPreferencesRepository.clearPinLockout()
+                    _inputState.update {
+                        it.copy(
+                            hasVerifiedCurrentPin = true,
+                            enableLockAfterEnrollment = prefs.isPinLockEnabled,
+                            enrollmentStage = PinEnrollmentStage.ENTER_NEW_PIN,
+                            pinInput = "",
+                            isError = false,
+                            failedAttempts = 0
+                        )
+                    }
+                } else {
+                    recordFailedAttempt("Incorrect current PIN")
+                }
+            }
+            return
+        }
         when (current.enrollmentStage) {
+            PinEnrollmentStage.VERIFY_CURRENT_PIN -> Unit
             PinEnrollmentStage.ENTER_NEW_PIN -> {
                 firstEnteredEnrollPin = pin
                 viewModelScope.launch {
@@ -162,8 +237,16 @@ class SecurityLockViewModel @Inject constructor(
             PinEnrollmentStage.CONFIRM_PIN -> {
                 if (pin == firstEnteredEnrollPin) {
                     viewModelScope.launch {
-                        userPreferencesRepository.setPin(pin)
-                        _inputState.update { it.copy(isSuccess = true, isError = false) }
+                        userPreferencesRepository.setPin(pin, enableLock = current.enableLockAfterEnrollment)
+                        _inputState.update {
+                            it.copy(
+                                isSuccess = true,
+                                isError = false,
+                                failedAttempts = 0,
+                                isLockedOut = false,
+                                lockoutRemainingSeconds = 0
+                            )
+                        }
                     }
                 } else {
                     viewModelScope.launch {
@@ -192,48 +275,61 @@ class SecurityLockViewModel @Inject constructor(
         viewModelScope.launch {
             val verified = userPreferencesRepository.verifyPin(pin)
             if (verified) {
+                userPreferencesRepository.clearPinLockout()
                 _inputState.update { it.copy(isSuccess = true, isError = false, failedAttempts = 0) }
             } else {
-                val currentAttempts = _inputState.value.failedAttempts + 1
-                if (currentAttempts >= MAX_FAILED_ATTEMPTS) {
-                    triggerLockout()
-                } else {
-                    val remaining = MAX_FAILED_ATTEMPTS - currentAttempts
-                    _inputState.update {
-                        it.copy(
-                            isError = true,
-                            errorMessage = "Incorrect PIN ($remaining attempts remaining)",
-                            failedAttempts = currentAttempts
-                        )
-                    }
-                    delay(650)
-                    _inputState.update { it.copy(pinInput = "", isError = false) }
-                }
+                recordFailedAttempt("Incorrect PIN")
             }
         }
     }
 
-    private fun triggerLockout() {
-        lockoutJob?.cancel()
-        _inputState.update {
-            it.copy(
-                isLockedOut = true,
-                lockoutRemainingSeconds = LOCKOUT_DURATION_SECONDS,
-                isError = true,
-                errorMessage = "Too many failed attempts. Locked for ${LOCKOUT_DURATION_SECONDS}s",
-                pinInput = ""
+    private fun recordFailedAttempt(message: String) {
+        viewModelScope.launch {
+            val status = userPreferencesRepository.recordFailedPinAttempt(
+                maxAttempts = MAX_FAILED_ATTEMPTS,
+                lockoutDurationMillis = LOCKOUT_DURATION_SECONDS * 1000L
             )
+            val lockedOut = status.lockoutUntilEpochMillis > System.currentTimeMillis()
+            _inputState.update {
+                it.copy(
+                    failedAttempts = status.failedAttempts,
+                    isLockedOut = lockedOut,
+                    lockoutRemainingSeconds = secondsRemaining(status.lockoutUntilEpochMillis),
+                    isError = true,
+                    errorMessage = if (lockedOut) {
+                        "Too many failed attempts. Locked for ${LOCKOUT_DURATION_SECONDS}s"
+                    } else {
+                        "$message (${MAX_FAILED_ATTEMPTS - status.failedAttempts} attempts remaining)"
+                    },
+                    pinInput = ""
+                )
+            }
+            if (lockedOut) {
+                runLockoutCountdown(status.lockoutUntilEpochMillis)
+            } else {
+                delay(650)
+                _inputState.update { it.copy(isError = false) }
+            }
         }
+    }
+
+    private fun runLockoutCountdown(lockoutUntilEpochMillis: Long) {
+        lockoutJob?.cancel()
         lockoutJob = viewModelScope.launch {
-            for (sec in LOCKOUT_DURATION_SECONDS downTo 1) {
+            while (true) {
+                val remaining = secondsRemaining(lockoutUntilEpochMillis)
+                if (remaining <= 0) break
                 _inputState.update {
                     it.copy(
-                        lockoutRemainingSeconds = sec,
-                        errorMessage = "Too many failed attempts. Try again in ${sec}s"
+                        isLockedOut = true,
+                        lockoutRemainingSeconds = remaining,
+                        isError = true,
+                        errorMessage = "Too many failed attempts. Try again in ${remaining}s"
                     )
                 }
                 delay(1000)
             }
+            userPreferencesRepository.clearPinLockout()
             _inputState.update {
                 it.copy(
                     isLockedOut = false,
@@ -246,6 +342,9 @@ class SecurityLockViewModel @Inject constructor(
         }
     }
 
+    private fun secondsRemaining(until: Long, now: Long = System.currentTimeMillis()): Int =
+        (((until - now).coerceAtLeast(0L) + 999L) / 1000L).toInt()
+
     private data class InternalSecurityState(
         val enrollmentStage: PinEnrollmentStage,
         val pinInput: String,
@@ -255,7 +354,10 @@ class SecurityLockViewModel @Inject constructor(
         val failedAttempts: Int,
         val isLockedOut: Boolean,
         val lockoutRemainingSeconds: Int,
-        val isBiometricHardwareAvailable: Boolean
+        val isBiometricHardwareAvailable: Boolean,
+        val hasVerifiedCurrentPin: Boolean,
+        val enableLockAfterEnrollment: Boolean,
+        val isSecurityStateLoaded: Boolean
     )
 
     companion object {
