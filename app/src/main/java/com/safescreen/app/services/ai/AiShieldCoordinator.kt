@@ -146,6 +146,7 @@ class AiShieldCoordinator @Inject constructor(
 
                     // Check active foreground application exemption (Whitelist Protection)
                     val currentPkg = foregroundAppTracker.currentPackage ?: ForegroundAppTracker.currentForegroundPackage
+                    // Unknown foreground package is deliberately fail-safe: continue visual inspection.
                     if (currentPkg != null && (exemptedPackages.contains(currentPkg) || currentPkg == context.packageName)) {
                         if (LiveBlurOverlayManager.isShowing()) {
                             LiveBlurOverlayManager.hideOverlay(context)
@@ -191,6 +192,7 @@ class AiShieldCoordinator @Inject constructor(
 
                 // Check active foreground application exemption (Whitelist Protection)
                 val currentPkg = foregroundAppTracker.currentPackage ?: ForegroundAppTracker.currentForegroundPackage
+                // Unknown foreground package is deliberately fail-safe: continue audio inspection.
                 if (currentPkg != null && (exemptedPackages.contains(currentPkg) || currentPkg == context.packageName)) {
                     unmuteAudioIfMuted()
                     return@collect

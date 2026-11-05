@@ -31,9 +31,8 @@ data class SettingsUiState(
     val isPreventUninstallEnabled: Boolean = true,
     val isPinEnrolled: Boolean = false,
     val whitelistCount: Int = 0,
-    val showClearCacheDialog: Boolean = false,
+    val showClearThreatHistoryDialog: Boolean = false,
     val showLicensesDialog: Boolean = false,
-    val isCacheCleared: Boolean = false,
     val appVersion: String = "v1.0.0"
 )
 
@@ -45,9 +44,9 @@ sealed interface SettingsUiEvent {
     data class SetPerformanceProfile(val profile: PerformanceProfile) : SettingsUiEvent
     data class SetBiometricLock(val enabled: Boolean) : SettingsUiEvent
     data class SetPreventUninstall(val enabled: Boolean) : SettingsUiEvent
-    data object RequestClearCache : SettingsUiEvent
-    data object ConfirmClearCache : SettingsUiEvent
-    data object DismissClearCacheDialog : SettingsUiEvent
+    data object RequestClearThreatHistory : SettingsUiEvent
+    data object ConfirmClearThreatHistory : SettingsUiEvent
+    data object DismissClearThreatHistoryDialog : SettingsUiEvent
     data object OpenLicensesDialog : SettingsUiEvent
     data object DismissLicensesDialog : SettingsUiEvent
     data object NavigateToWhitelist : SettingsUiEvent

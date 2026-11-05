@@ -73,7 +73,7 @@ import com.safescreen.app.presentation.theme.TextPrimary
  *
  * Implements Module 06 Prompt 2:
  * - Real-time package search and category filtering
- * - Pre-whitelisted banking applications with FLAG_SECURE badges
+ * - Installed launcher apps with user-controlled whitelist exemptions
  * - Cyberpunk Glassmorphic cards with tactile NeonSwitch toggles
  * - Sticky bottom summary pill showing active exemption count
  */
@@ -487,7 +487,7 @@ private fun WhitelistInfoBanner(
             Spacer(modifier = Modifier.width(12.dp))
 
             Text(
-                text = "Selected apps will bypass all on-device AI scanning, blur overlays, and audio muting. Trusted banking apps are pre-exempted.",
+                text = "Whitelisted apps bypass on-device visual and audio scanning. Installed apps start protected until you choose to exempt them.",
                 style = MaterialTheme.typography.bodySmall.copy(
                     color = Color(0xFF94A3B8),
                     fontSize = 12.sp,
@@ -593,7 +593,7 @@ private fun WhitelistAppCard(
                                     )
                                     Spacer(modifier = Modifier.width(3.dp))
                                     Text(
-                                        text = "BANKING",
+                                        text = "FLAG SECURE",
                                         style = MaterialTheme.typography.labelSmall.copy(
                                             fontSize = 9.sp,
                                             fontWeight = FontWeight.Bold,

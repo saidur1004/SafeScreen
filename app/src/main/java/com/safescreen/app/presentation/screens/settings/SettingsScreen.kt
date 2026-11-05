@@ -87,7 +87,7 @@ import com.safescreen.app.presentation.theme.TextPrimary
  * - AI Detection Engine sensitivity and FPS performance profiles
  * - Security & biometric lock safeguards
  * - App exclusion whitelist navigation
- * - Data & offline database cache clearance
+ * - Threat history management
  * - About, version, and policy links
  */
 @Composable
@@ -122,9 +122,9 @@ fun SettingsScreen(
                     viewModel.onEvent(event)
                 }
             }
-            is SettingsUiEvent.ConfirmClearCache -> {
+            is SettingsUiEvent.ConfirmClearThreatHistory -> {
                 viewModel.onEvent(event)
-                Toast.makeText(context, "Offline ML cache cleared successfully", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Threat history cleared", Toast.LENGTH_SHORT).show()
             }
             is SettingsUiEvent.NavigateToWhitelist -> {
                 onNavigateToWhitelist()
@@ -257,7 +257,7 @@ fun SettingsContent(
             // 5. Section 4: Data & Storage Card
             item {
                 DataAndStorageCard(
-                    onClearCacheClick = { onEvent(SettingsUiEvent.RequestClearCache) }
+                    onClearThreatHistoryClick = { onEvent(SettingsUiEvent.RequestClearThreatHistory) }
                 )
             }
 
@@ -276,11 +276,11 @@ fun SettingsContent(
             }
         }
 
-        // Clear Cache Confirmation Dialog
-        if (state.showClearCacheDialog) {
-            ClearCacheDialog(
-                onConfirm = { onEvent(SettingsUiEvent.ConfirmClearCache) },
-                onDismiss = { onEvent(SettingsUiEvent.DismissClearCacheDialog) }
+        // Clear Threat History Confirmation Dialog
+        if (state.showClearThreatHistoryDialog) {
+            ClearThreatHistoryDialog(
+                onConfirm = { onEvent(SettingsUiEvent.ConfirmClearThreatHistory) },
+                onDismiss = { onEvent(SettingsUiEvent.DismissClearThreatHistoryDialog) }
             )
         }
 
@@ -816,11 +816,11 @@ private fun AppExclusionsCard(
 }
 
 /**
- * Card 4: Data & Storage Card (Clear Offline Database Cache).
+ * Card 4: Data & Storage Card (Clear threat history).
  */
 @Composable
 private fun DataAndStorageCard(
-    onClearCacheClick: () -> Unit,
+    onClearThreatHistoryClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     GlassmorphicCard(
@@ -844,7 +844,7 @@ private fun DataAndStorageCard(
                         )
                     )
                     Text(
-                        text = "Local offline database and threat cache",
+                        text = "Review and clear locally recorded threats",
                         style = MaterialTheme.typography.bodySmall.copy(
                             color = TextMuted,
                             fontSize = 12.sp
@@ -855,7 +855,7 @@ private fun DataAndStorageCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Capsule Button: Clear Cache
+            // Capsule Button: Clear Threat History
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -877,7 +877,7 @@ private fun DataAndStorageCard(
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
-                        onClick = onClearCacheClick
+                        onClick = onClearThreatHistoryClick
                     ),
                 contentAlignment = Alignment.Center
             ) {
@@ -887,13 +887,13 @@ private fun DataAndStorageCard(
                 ) {
                     Icon(
                         imageVector = Icons.Default.DeleteOutline,
-                        contentDescription = "Clear Cache",
+                        contentDescription = "Clear Threat History",
                         tint = Color(0xFFFF6B6B),
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Clear Offline Database Cache",
+                        text = "Clear Threat History",
                         style = MaterialTheme.typography.labelMedium.copy(
                             fontWeight = FontWeight.SemiBold,
                             color = Color(0xFFFF6B6B),
@@ -1042,10 +1042,10 @@ private fun SectionIconBadge(
 }
 
 /**
- * Cyber-Dark Glassmorphic Dialog for Clear Cache confirmation.
+ * Cyber-Dark Glassmorphic Dialog for clearing threat history.
  */
 @Composable
-private fun ClearCacheDialog(
+private fun ClearThreatHistoryDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -1053,7 +1053,7 @@ private fun ClearCacheDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "Clear Threat Cache?",
+                text = "Clear Threat History?",
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontWeight = FontWeight.Bold,
                     color = TextPrimary
@@ -1062,7 +1062,7 @@ private fun ClearCacheDialog(
         },
         text = {
             Text(
-                text = "This will reset all offline threat detection signatures and cached logs. Your protection preferences and whitelist rules will remain unchanged.",
+                text = "This will permanently delete your recorded threat history. Protection preferences and whitelist rules will remain unchanged.",
                 style = MaterialTheme.typography.bodyMedium.copy(
                     color = TextMuted,
                     lineHeight = 20.sp
@@ -1075,7 +1075,7 @@ private fun ClearCacheDialog(
                 colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFFFF6B6B))
             ) {
                 Text(
-                    text = "Clear Cache",
+                    text = "Clear History",
                     fontWeight = FontWeight.Bold
                 )
             }

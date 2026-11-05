@@ -195,7 +195,7 @@ sealed interface PermissionHubUiEvent {
 }
 
 /**
- * Stateful entry point with default internal dummy state handler for preview and prototype testing.
+ * Stateful production entry point backed by the permission hub ViewModel.
  */
 @Composable
 fun PermissionHubScreen(

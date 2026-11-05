@@ -23,6 +23,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -319,9 +321,10 @@ fun SecurityLockContent(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
+                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // 1. Top Bar with back button
             SecurityTopBar(
@@ -479,7 +482,7 @@ fun SecurityLockContent(
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = if (state.mode == SecurityLockMode.ENROLL_PIN) {
-                            "SHA-256 On-Device Cryptographic Key"
+                            "PBKDF2-HMAC-SHA256 On-Device PIN Protection"
                         } else {
                             "Zero-Knowledge On-Device Verification"
                         },

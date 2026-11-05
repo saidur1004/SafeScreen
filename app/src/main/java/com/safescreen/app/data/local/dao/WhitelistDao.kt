@@ -25,10 +25,10 @@ interface WhitelistDao {
     @Update
     suspend fun updateApp(app: WhitelistEntity)
 
-    @Query("SELECT * FROM app_whitelist ORDER BY isBankingDefault DESC, appName ASC")
+    @Query("SELECT * FROM app_whitelist ORDER BY appName ASC")
     fun getAllAppsFlow(): Flow<List<WhitelistEntity>>
 
-    @Query("SELECT * FROM app_whitelist WHERE isExempted = 1 ORDER BY isBankingDefault DESC, appName ASC")
+    @Query("SELECT * FROM app_whitelist WHERE isExempted = 1 ORDER BY appName ASC")
     fun getExemptedAppsFlow(): Flow<List<WhitelistEntity>>
 
     @Query("SELECT packageName FROM app_whitelist WHERE isExempted = 1")
@@ -46,11 +46,17 @@ interface WhitelistDao {
     @Query("UPDATE app_whitelist SET isExempted = :isExempted WHERE packageName = :packageName")
     suspend fun updateExemptionStatus(packageName: String, isExempted: Boolean)
 
+    @Query("UPDATE app_whitelist SET appName = :appName, category = :category, isBankingDefault = 0, isFlagSecure = 0 WHERE packageName = :packageName")
+    suspend fun updateInstalledAppInfo(packageName: String, appName: String, category: String)
+
     @Query("SELECT * FROM app_whitelist WHERE appName LIKE '%' || :query || '%' OR packageName LIKE '%' || :query || '%' ORDER BY appName ASC")
     fun searchAppsFlow(query: String): Flow<List<WhitelistEntity>>
 
     @Delete
     suspend fun deleteApp(app: WhitelistEntity)
+
+    @Delete
+    suspend fun deleteApps(apps: List<WhitelistEntity>)
 
     @Query("SELECT COUNT(*) FROM app_whitelist WHERE isExempted = 1")
     fun getExemptedCountFlow(): Flow<Int>

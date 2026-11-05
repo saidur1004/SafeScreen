@@ -1,6 +1,7 @@
 package com.safescreen.app.data.local
 
 import androidx.room.Database
+import androidx.room.migration.Migration
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.sqlite.db.SupportSQLiteDatabase
@@ -25,7 +26,7 @@ import com.safescreen.app.data.local.entity.WhitelistEntity
         FocusScheduleEntity::class,
         StatEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(RoomConverters::class)
@@ -41,27 +42,13 @@ abstract class AppDatabase : RoomDatabase() {
 
         /**
          * Room lifecycle callback for initial database pre-population.
-         * Automatically seeds the 5 default exempted banking apps and core focus schedules.
+         * Seeds only starter focus schedules. Installed apps sync when the whitelist is opened.
          */
         val PREPOPULATE_CALLBACK = object : RoomDatabase.Callback() {
             override fun onCreate(db: SupportSQLiteDatabase) {
                 super.onCreate(db)
-                val now = System.currentTimeMillis()
 
-                // 1. Pre-populate 5 Default Banking Apps (FLAG_SECURE & Privacy protected)
-                db.execSQL(
-                    """
-                    INSERT INTO app_whitelist (packageName, appName, category, isExempted, isBankingDefault, isFlagSecure, addedTimestamp, accentColorHex)
-                    VALUES 
-                    ('com.paypal.android.p2pmobile', 'PayPal', 'BANKING', 1, 1, 1, $now, 4278250239),
-                    ('com.infonow.bofa', 'Bank of America', 'BANKING', 1, 1, 1, $now, 4278250239),
-                    ('com.google.android.apps.walletnfcrel', 'Google Pay / Wallet', 'BANKING', 1, 1, 1, $now, 4278250239),
-                    ('com.chase.sig.android', 'Chase Mobile', 'BANKING', 1, 1, 1, $now, 4278250239),
-                    ('com.revolut.revolut', 'Revolut', 'BANKING', 1, 1, 1, $now, 4278250239);
-                    """.trimIndent()
-                )
-
-                // 2. Pre-populate Default Focus Schedules
+                // Pre-populate Default Focus Schedules
                 db.execSQL(
                     """
                     INSERT INTO focus_schedules (id, title, startTimeMinutes, endTimeMinutes, startTimeDisplay, endTimeDisplay, repeatSummary, activeDaysBitmask, isEnabled, iconType, accentColorHex)
@@ -70,6 +57,13 @@ abstract class AppDatabase : RoomDatabase() {
                     ('deep_work', 'Deep Work / Study', 540, 1020, '09:00 AM', '05:00 PM', 'Mon – Fri', 31, 1, 'WORK_STUDY', 4288507613);
                     """.trimIndent()
                 )
+            }
+        }
+
+        val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Remove legacy hardcoded banking defaults; only installed apps are synced now.
+                db.execSQL("DELETE FROM app_whitelist WHERE isBankingDefault = 1")
             }
         }
     }

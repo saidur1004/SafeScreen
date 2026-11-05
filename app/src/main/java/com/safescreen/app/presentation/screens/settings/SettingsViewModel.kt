@@ -27,17 +27,15 @@ class SettingsViewModel @Inject constructor(
     private val threatLogDao: ThreatLogDao
 ) : ViewModel() {
 
-    private val _showClearCacheDialog = MutableStateFlow(false)
+    private val _showClearThreatHistoryDialog = MutableStateFlow(false)
     private val _showLicensesDialog = MutableStateFlow(false)
-    private val _isCacheCleared = MutableStateFlow(false)
 
     val uiState: StateFlow<SettingsUiState> = combine(
         userPreferencesRepository.userPreferencesFlow,
         whitelistDao.getExemptedCountFlow().catch { emit(0) },
-        _showClearCacheDialog,
-        _showLicensesDialog,
-        _isCacheCleared
-    ) { prefs, exemptedCount, showDialog, showLicenses, cacheCleared ->
+        _showClearThreatHistoryDialog,
+        _showLicensesDialog
+    ) { prefs, exemptedCount, showDialog, showLicenses ->
         SettingsUiState(
             sensitivityLevel = prefs.aiSensitivity,
             performanceProfile = prefs.performanceProfile,
@@ -45,9 +43,8 @@ class SettingsViewModel @Inject constructor(
             isPreventUninstallEnabled = prefs.isPreventUninstallEnabled,
             isPinEnrolled = prefs.isPinSet,
             whitelistCount = exemptedCount,
-            showClearCacheDialog = showDialog,
+            showClearThreatHistoryDialog = showDialog,
             showLicensesDialog = showLicenses,
-            isCacheCleared = cacheCleared,
             appVersion = "v1.0.0 (On-Device Build)"
         )
     }.catch {
@@ -86,18 +83,16 @@ class SettingsViewModel @Inject constructor(
                     userPreferencesRepository.setPreventUninstallEnabled(event.enabled)
                 }
             }
-            is SettingsUiEvent.RequestClearCache -> {
-                _showClearCacheDialog.value = true
+            is SettingsUiEvent.RequestClearThreatHistory -> {
+                _showClearThreatHistoryDialog.value = true
             }
-            is SettingsUiEvent.DismissClearCacheDialog -> {
-                _showClearCacheDialog.value = false
+            is SettingsUiEvent.DismissClearThreatHistoryDialog -> {
+                _showClearThreatHistoryDialog.value = false
             }
-            is SettingsUiEvent.ConfirmClearCache -> {
-                _showClearCacheDialog.value = false
+            is SettingsUiEvent.ConfirmClearThreatHistory -> {
+                _showClearThreatHistoryDialog.value = false
                 viewModelScope.launch {
                     threatLogDao.clearAllThreatLogs()
-                    userPreferencesRepository.setReelsMinutesUsedToday(0)
-                    _isCacheCleared.value = true
                 }
             }
             is SettingsUiEvent.OpenLicensesDialog,

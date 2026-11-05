@@ -809,3 +809,11 @@ SafeScreen/
 - ShieldProtectionService now requires a valid consent result and successful live capture before setting its running flag or showing the Active notification. Capture failure, projection revocation, stop, and unexpected actions return the persisted/UI state to inactive.
 - The Home screen reports active only when the persisted preference, process-local consent, and service capture-running state all agree; its initial/fallback state is inactive.
 - Verification: `testDebugUnitTest`, `assembleDebug`, and `assembleRelease` passed with `-x lintVitalAnalyzeRelease`; Gradle also completed `lintVitalRelease`. The Release APK is unsigned because this workspace has no local release signing values.
+
+## Step 3: Dynamic Whitelist, Responsive PIN UI, and Threat History Naming (2026-11-06)
+
+- Removed the hardcoded demo whitelist list and initial banking-app inserts. Room version 1 to 2 migration removes the seeded default rows from existing installs while preserving unrelated app data.
+- The whitelist screen now queries installed launcher activities through PackageManager, deduplicates them by package, synchronizes app names/categories into Room, preserves each user's exemption selection, and removes records for apps no longer installed. The manifest declares the matching launcher intent query for Android package visibility. Newly discovered apps are protected by default; null foreground package continues AI scanning.
+- SecurityLockScreen now scrolls vertically on short and landscape displays. Its PIN security footer names PBKDF2-HMAC-SHA256.
+- Renamed Clear Cache to Clear Threat History across Settings UI/state/events. The action only deletes threat logs and no longer resets reels usage.
+- Verification: `assembleDebug` and `assembleRelease` passed with `-x lintVitalAnalyzeRelease`; Gradle completed `lintVitalRelease`. Release APK is unsigned without local release signing values. Runtime installed-app and migration behavior still needs device/emulator validation.
