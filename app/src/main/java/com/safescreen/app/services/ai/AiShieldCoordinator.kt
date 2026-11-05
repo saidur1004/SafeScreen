@@ -136,23 +136,23 @@ class AiShieldCoordinator @Inject constructor(
         // 1. Visual NSFW Frame Pipeline
         frameProcessingJob = coordinatorScope.launch {
             captureEngine.frameFlow.collect { bitmap ->
-                if (!isShieldActive || !isVisualShieldEnabled) {
-                    if (LiveBlurOverlayManager.isShowing()) {
-                        LiveBlurOverlayManager.hideOverlay(context)
-                    }
-                    return@collect
-                }
-
-                // Check active foreground application exemption (Whitelist Protection)
-                val currentPkg = foregroundAppTracker.currentPackage ?: ForegroundAppTracker.currentForegroundPackage
-                if (currentPkg != null && (exemptedPackages.contains(currentPkg) || currentPkg == context.packageName)) {
-                    if (LiveBlurOverlayManager.isShowing()) {
-                        LiveBlurOverlayManager.hideOverlay(context)
-                    }
-                    return@collect
-                }
-
                 try {
+                    if (!isShieldActive || !isVisualShieldEnabled) {
+                        if (LiveBlurOverlayManager.isShowing()) {
+                            LiveBlurOverlayManager.hideOverlay(context)
+                        }
+                        return@collect
+                    }
+
+                    // Check active foreground application exemption (Whitelist Protection)
+                    val currentPkg = foregroundAppTracker.currentPackage ?: ForegroundAppTracker.currentForegroundPackage
+                    if (currentPkg != null && (exemptedPackages.contains(currentPkg) || currentPkg == context.packageName)) {
+                        if (LiveBlurOverlayManager.isShowing()) {
+                            LiveBlurOverlayManager.hideOverlay(context)
+                        }
+                        return@collect
+                    }
+
                     val result = visionClassifier.classifyFrame(bitmap)
 
                     _telemetry.update {
@@ -175,6 +175,8 @@ class AiShieldCoordinator @Inject constructor(
                     }
                 } catch (e: Exception) {
                     Log.e(TAG, "Error in visual frame inference pipeline", e)
+                } finally {
+                    if (!bitmap.isRecycled) bitmap.recycle()
                 }
             }
         }

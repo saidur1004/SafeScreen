@@ -1,6 +1,7 @@
 package com.safescreen.app.services
 
 import android.Manifest
+import android.app.Activity
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -17,6 +18,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleService
+import androidx.lifecycle.lifecycleScope
 import com.safescreen.app.MainActivity
 import com.safescreen.app.R
 import com.safescreen.app.data.local.datastore.UserPreferencesRepository
@@ -26,6 +28,10 @@ import com.safescreen.app.services.permission.PermissionManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
@@ -49,6 +55,7 @@ class ShieldProtectionService : LifecycleService() {
     lateinit var aiShieldCoordinator: com.safescreen.app.services.ai.AiShieldCoordinator
 
     private var isScreenReceiverRegistered = false
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     private val screenStateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -71,6 +78,14 @@ class ShieldProtectionService : LifecycleService() {
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
+        captureEngine.onProjectionStoppedListener = {
+            lifecycleScope.launch(Dispatchers.Main.immediate) {
+                if (_isServiceRunning.value) {
+                    Log.w(TAG, "MediaProjection stopped; stopping shield and clearing active state")
+                    stopForegroundShield()
+                }
+            }
+        }
 
         val filter = IntentFilter().apply {
             addAction(Intent.ACTION_SCREEN_OFF)
@@ -93,9 +108,7 @@ class ShieldProtectionService : LifecycleService() {
 
         if (intent == null || intent.action == null) {
             Log.w(TAG, "ShieldProtectionService restarted with null intent/action (process restart). Gracefully stopping service to prevent MediaProjection token reuse exception.")
-            PermissionManager.clearMediaProjectionConsent()
-            _isServiceRunning.value = false
-            stopSelf()
+            stopForegroundShield()
             return START_NOT_STICKY
         }
 
@@ -119,25 +132,35 @@ class ShieldProtectionService : LifecycleService() {
             ACTION_STOP_SHIELD -> {
                 stopForegroundShield()
             }
+            else -> {
+                Log.w(TAG, "Ignoring unknown service action: ${intent.action}")
+                stopForegroundShield()
+            }
         }
         return START_NOT_STICKY
     }
 
     private fun startForegroundShield() {
-        _isServiceRunning.value = true
-        val notification = createNotification(
-            title = "SafeScreen Active",
-            content = "On-device AI shield is actively guarding your screen & audio."
-        )
+        val resultCode = PermissionManager.mediaProjectionResultCode
+        val resultData = PermissionManager.mediaProjectionResultData
+        if (!PermissionManager.hasMediaProjectionConsent ||
+            resultCode != Activity.RESULT_OK || resultData == null
+        ) {
+            Log.w(TAG, "Cannot activate shield without fresh MediaProjection consent")
+            stopForegroundShield()
+            return
+        }
 
         try {
+            val startingNotification = createNotification(
+                title = "SafeScreen Starting",
+                content = "Waiting for screen capture to initialize."
+            )
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 var fgsType = 0
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                     // Android 14+ FGS Type requirements
-                    if (PermissionManager.hasMediaProjectionConsent) {
-                        fgsType = fgsType or ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
-                    }
+                    fgsType = fgsType or ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
                     if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
                         fgsType = fgsType or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
                     }
@@ -148,35 +171,33 @@ class ShieldProtectionService : LifecycleService() {
                     if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
                         fgsType = fgsType or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
                     }
-                    if (PermissionManager.hasMediaProjectionConsent) {
-                        fgsType = fgsType or ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
-                    }
+                    fgsType = fgsType or ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
                 }
 
                 if (fgsType != 0) {
-                    ServiceCompat.startForeground(this, NOTIFICATION_ID, notification, fgsType)
+                    ServiceCompat.startForeground(this, NOTIFICATION_ID, startingNotification, fgsType)
                 } else {
-                    startForeground(NOTIFICATION_ID, notification)
+                    startForeground(NOTIFICATION_ID, startingNotification)
                 }
             } else {
-                startForeground(NOTIFICATION_ID, notification)
-            }
-            Log.d(TAG, "ShieldProtectionService running in foreground")
-
-            // 1. Start screen capture if MediaProjection consent has been granted
-            var mediaProjectionSession: android.media.projection.MediaProjection? = null
-            if (PermissionManager.hasMediaProjectionConsent) {
-                val resultCode = PermissionManager.mediaProjectionResultCode
-                val resultData = PermissionManager.mediaProjectionResultData
-                if (resultCode != 0 && resultData != null) {
-                    val started = captureEngine.startCapture(resultCode, resultData)
-                    if (started) {
-                        mediaProjectionSession = captureEngine.activeMediaProjection
-                    }
-                }
+                startForeground(NOTIFICATION_ID, startingNotification)
             }
 
-            // 2. Start audio playback capture (16kHz Mono PCM for YAMNet)
+            // Capture must be established before the service advertises itself as active.
+            if (!captureEngine.startCapture(resultCode, resultData) || !captureEngine.isCapturing) {
+                Log.e(TAG, "Screen capture failed to start; refusing active shield state")
+                stopForegroundShield()
+                return
+            }
+            val mediaProjectionSession = captureEngine.activeMediaProjection
+            if (mediaProjectionSession == null) {
+                Log.e(TAG, "MediaProjection session missing after capture startup")
+                stopForegroundShield()
+                return
+            }
+            _isServiceRunning.value = true
+
+            // Start audio playback capture (16kHz Mono PCM for YAMNet) when permission allows.
             val isAudioGranted = ContextCompat.checkSelfPermission(
                 this,
                 Manifest.permission.RECORD_AUDIO
@@ -188,19 +209,28 @@ class ShieldProtectionService : LifecycleService() {
 
             // 3. Start Dual-Engine AI Shield live observation pipeline
             aiShieldCoordinator.startObserving()
+            val activeNotification = createNotification(
+                title = "SafeScreen Active",
+                content = "On-device AI shield is actively guarding your screen & audio."
+            )
+            getSystemService(NotificationManager::class.java)?.notify(NOTIFICATION_ID, activeNotification)
+            serviceScope.launch { userPreferencesRepository.setShieldActive(true) }
+            Log.i(TAG, "ShieldProtectionService active with MediaProjection capture")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to start foreground service: ${e.message}", e)
+            stopForegroundShield()
         }
     }
 
     private fun stopForegroundShield() {
         Log.d(TAG, "Stopping ShieldProtectionService")
+        _isServiceRunning.value = false
         aiShieldCoordinator.stopObserving()
         audioCaptureEngine.stopCapture()
         captureEngine.stopCapture()
         PermissionManager.clearMediaProjectionConsent()
-        _isServiceRunning.value = false
         stopForeground(STOP_FOREGROUND_REMOVE)
+        serviceScope.launch { userPreferencesRepository.setShieldActive(false) }
         stopSelf()
     }
 
@@ -259,11 +289,13 @@ class ShieldProtectionService : LifecycleService() {
                 Log.w(TAG, "Error unregistering ScreenStateReceiver: ${e.message}")
             }
         }
+        captureEngine.onProjectionStoppedListener = null
+        _isServiceRunning.value = false
         aiShieldCoordinator.stopObserving()
         audioCaptureEngine.stopCapture()
         captureEngine.stopCapture()
         PermissionManager.clearMediaProjectionConsent()
-        _isServiceRunning.value = false
+        serviceScope.launch { userPreferencesRepository.setShieldActive(false) }
         Log.d(TAG, "ShieldProtectionService destroyed")
     }
 

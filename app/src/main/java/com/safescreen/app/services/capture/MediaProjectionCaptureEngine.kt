@@ -105,12 +105,13 @@ class MediaProjectionCaptureEngine @Inject constructor(
 
     private val _frameFlow = MutableSharedFlow<Bitmap>(
         replay = 0,
-        extraBufferCapacity = 1,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST
+        extraBufferCapacity = 0,
+        onBufferOverflow = BufferOverflow.SUSPEND
     )
     val frameFlow: SharedFlow<Bitmap> = _frameFlow.asSharedFlow()
 
-    var onFrameCapturedListener: ((Bitmap) -> Unit)? = null
+    @Volatile
+    var onProjectionStoppedListener: (() -> Unit)? = null
 
     val isCapturing: Boolean
         get() = virtualDisplay != null && mediaProjection != null
@@ -166,6 +167,7 @@ class MediaProjectionCaptureEngine @Inject constructor(
                 override fun onStop() {
                     Log.d(TAG, "MediaProjection session stopped by system or user")
                     stopCapture()
+                    onProjectionStoppedListener?.invoke()
                 }
             }, backgroundHandler)
 
@@ -313,9 +315,13 @@ class MediaProjectionCaptureEngine @Inject constructor(
                 Log.d(TAG, "Capture Active: Frame #$totalCapturedFrames ($captureWidth x $captureHeight) @ %.1f FPS (Skipped: $totalSkippedFrames)".format(currentCalculatedFps))
             }
 
-            // Emit frame to downstream subscribers (AI engine) and rotate buffer index
-            _frameFlow.tryEmit(targetBitmap)
-            onFrameCapturedListener?.invoke(targetBitmap)
+            // Give downstream a separately owned bitmap; the capture pool can now rotate safely.
+            if (_frameFlow.subscriptionCount.value > 0) {
+                val snapshot = targetBitmap.copy(Bitmap.Config.ARGB_8888, false)
+                if (!_frameFlow.tryEmit(snapshot)) {
+                    snapshot.recycle()
+                }
+            }
             currentBufferIndex = (currentBufferIndex + 1) % BITMAP_POOL_SIZE
 
         } catch (e: Exception) {

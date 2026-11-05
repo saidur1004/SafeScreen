@@ -800,3 +800,12 @@ SafeScreen/
 - Added `app/keystore/` to `.gitignore` and removed the keystore file from the Git index; the developer's local file is preserved. Previously committed Git history still contains the old key material, so it must be rotated and history cleanup coordinated before publishing a production release.
 - Added tests for PBKDF2 salt/verification, legacy credential verification and upgrade, and persisted lockout timestamp behavior.
 - Verification: `testDebugUnitTest`, `assembleDebug`, and `assembleRelease` passed with `-x lintVitalAnalyzeRelease`. The normal Release lintVital analysis was excluded after it failed on a Windows file-lock error for a lint-cache JAR. The produced release APK is unsigned because this workspace has no local release signing values; configure private values locally for a signed artifact.
+
+## Step 2: Buffer Ownership and Process-Restart State (2026-11-06)
+
+- Screen frames are deep-copied to a separate immutable-for-producer `Bitmap` before emission. The frame flow is rendezvous/no-queue; rejected frames are recycled, and the AI consumer recycles every received snapshot in `finally`.
+- Audio inference windows are copied into independent `ShortArray` snapshots before emission; the producer only reuses its own pool arrays.
+- On process restart, an active preference without an in-process MediaProjection grant is cleared and MainActivity requests a fresh Android screen-capture consent. Cancelled consent leaves the shield inactive.
+- ShieldProtectionService now requires a valid consent result and successful live capture before setting its running flag or showing the Active notification. Capture failure, projection revocation, stop, and unexpected actions return the persisted/UI state to inactive.
+- The Home screen reports active only when the persisted preference, process-local consent, and service capture-running state all agree; its initial/fallback state is inactive.
+- Verification: `testDebugUnitTest`, `assembleDebug`, and `assembleRelease` passed with `-x lintVitalAnalyzeRelease`; Gradle also completed `lintVitalRelease`. The Release APK is unsigned because this workspace has no local release signing values.

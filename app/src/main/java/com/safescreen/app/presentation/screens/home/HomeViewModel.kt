@@ -8,6 +8,7 @@ import com.safescreen.app.data.local.entity.ThreatType
 import com.safescreen.app.domain.usecase.StartShieldUseCase
 import com.safescreen.app.domain.usecase.StopShieldUseCase
 import com.safescreen.app.services.permission.PermissionManager
+import com.safescreen.app.services.ShieldProtectionService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -42,7 +43,7 @@ class HomeViewModel @Inject constructor(
             set(Calendar.MILLISECOND, 0)
         }.timeInMillis
 
-    val uiState: StateFlow<HomeUiState> = combine(
+    private val homeDataFlow = combine(
         userPreferencesRepository.userPreferencesFlow,
         threatLogDao.getTodayThreatCountByTypeFlow(ThreatType.VISUAL_NSFW, startOfDayMillis)
             .catch { emit(0) },
@@ -71,13 +72,23 @@ class HomeViewModel @Inject constructor(
             audioConfidence = telemetry.audioConfidence,
             audioCategory = telemetry.audioCategory
         )
+    }
+
+    val uiState: StateFlow<HomeUiState> = combine(
+        homeDataFlow,
+        ShieldProtectionService.isServiceRunning
+    ) { homeState, serviceRunning ->
+        homeState.copy(
+            isShieldActive = homeState.isShieldActive &&
+                PermissionManager.hasMediaProjectionConsent && serviceRunning
+        )
     }.catch { error ->
         // Graceful fallback to default state on any unexpected flow exception
-        emit(HomeUiState())
+        emit(HomeUiState(isShieldActive = false))
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = HomeUiState()
+        initialValue = HomeUiState(isShieldActive = false)
     )
 
     fun onEvent(event: HomeUiEvent) {

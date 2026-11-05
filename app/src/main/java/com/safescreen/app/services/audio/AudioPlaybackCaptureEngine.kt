@@ -125,8 +125,6 @@ class AudioPlaybackCaptureEngine @Inject constructor(
     )
     val audioFlow: SharedFlow<ShortArray> = _audioFlow.asSharedFlow()
 
-    var onAudioWindowCapturedListener: ((ShortArray) -> Unit)? = null
-
     val isCapturing: Boolean
         get() = isRecording.get() && audioRecord != null
 
@@ -302,8 +300,8 @@ class AudioPlaybackCaptureEngine @Inject constructor(
                     val targetWindow = windowBufferPool[currentWindowIndex]
                     val samplesCopied = ringBuffer.readLatest(targetWindow)
                     if (samplesCopied >= YAMNET_WINDOW_SAMPLES) {
-                        _audioFlow.tryEmit(targetWindow)
-                        onAudioWindowCapturedListener?.invoke(targetWindow)
+                        // The flow receives its own array; the pool slot may be reused immediately.
+                        _audioFlow.tryEmit(targetWindow.copyOf())
                         currentWindowIndex = (currentWindowIndex + 1) % WINDOW_POOL_SIZE
                     }
                 }
