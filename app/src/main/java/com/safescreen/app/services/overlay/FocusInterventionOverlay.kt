@@ -814,7 +814,7 @@ private fun MindfulWalkCard(
 private fun formatSeconds(seconds: Int): String {
     val m = seconds / 60
     val s = seconds % 60
-    return String.format("%02d:%02d", m, s)
+    return String.format(java.util.Locale.US, "%02d:%02d", m, s)
 }
 
 @Preview(showBackground = true)

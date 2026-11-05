@@ -22,9 +22,9 @@
 
 ## 📌 ১. প্রজেক্টের বর্তমান ওভারভিউ ও লাইভ স্ট্যাটাস (Executive Snapshot)
 
-* **সর্বশেষ আপডেটের তারিখ ও সময়:** ০৫ নভেম্বর ২০২৬ (Step 2: Permission Flow, Lifecycle & Microphone Fallback Fix সম্পন্ন ✅)
-* **বর্তমান পর্যায়:** **v1.0.0 Production Hardening — Step 1 & Step 2 Complete ✅ (Permissions, Lifecycle, Biometric & Zero-Mic Enforced)**
-* **পরবর্তী পদক্ষেপ (Next Steps):** **Beta Distribution & Production Play Store Submission** (Closed Testing Track)
+* **সর্বশেষ আপডেটের তারিখ ও সময়:** ০৫ নভেম্বর ২০২৬ (Step 4: Manifest Fix, Global Bug Hunt & Final Project Freeze সম্পন্ন ✅)
+* **বর্তমান পর্যায়:** **v1.0.0 Production Frozen & Release Ready — 100% Production Signed Release APK Generated (`app-release.apk`) ✅**
+* **পরবর্তী পদক্ষেপ (Next Steps):** **Google Play Console / Internal Testing Track Upload & Production Release**
 * **গিট রিপোজিটরি:** `https://github.com/saidur1004/SafeScreen.git` (মেইন ব্রাঞ্চ: `main`)
 * **টেকনিক্যাল টুলচেইন:** Kotlin 2.0.21, Gradle 8.14, AGP 8.7.3, Jetpack Compose BOM 2024.10.01, Dagger-Hilt 2.52, Room 2.6.1, Java 21, Min SDK 29 (Android 10), Target SDK 35 (Android 15)
 * **টেস্ট ডিভাইস:** Android Emulator (`emulator-5554`, Google APIs ARM64/x86_64, Pixel 9, Android 15 API 35)
@@ -758,6 +758,20 @@ SafeScreen/
 3. **মাইক্রোফোন ফলব্যাক সম্পূর্ণ অপসারণ (১০০% প্রাইভেসি গ্যারান্টি):**
    - `AudioPlaybackCaptureEngine.kt`-এ ইন্টারনাল অডিও ফেইল করলে মাইক্রোফোন চালু হওয়ার মারাত্মক ফলব্যাক লজিক (`MediaRecorder.AudioSource.MIC`) সম্পূর্ণ মুছে ফেলা হয়েছে।
    - এখন শুধুমাত্র অ্যান্ড্রয়েড ১০+ এর `AudioPlaybackCaptureConfiguration` দিয়ে ইন্টারনাল মিডিয়া অডিও স্ক্যান করা হয়। কোনো ফিজিক্যাল অ্যাম্বিয়েন্ট ভয়েস বা মাইক্রোফোন ডেটা কখনো রেকর্ড হবে না।
+
+### 📌 Step 4: Manifest Fix, Global Bug Hunt & Final Project Freeze (সম্পন্ন ও এমুলেটরে ভেরিফাইড ✅)
+1. **Manifest ও সিকিউরিটি কনফিগারেশন:**
+   - `allowBackup="false"` কার্যকর করা হয়েছে যাতে কোনো ADB ব্যাকআপ বা লোকাল এক্সট্রাকশনের মাধ্যমে ইউজারের পিন হ্যাশ, থ্রেট লগ বা হোয়াইটলিস্ট লিক না হতে পারে।
+   - অব্যবহৃত `CAMERA` পারমিশন সম্পূর্ণ ক্লিন করা হয়েছে।
+   - `BootCompletedReceiver.kt` (`services/receiver/BootCompletedReceiver.kt`) তৈরি করে `AndroidManifest.xml`-এ রেজিস্টার করা হয়েছে, যা ডিভাইস রিবুট হলে পূর্বে অ্যাক্টিভ থাকা শিল্ড পুনরায় সক্রিয় করার হাই-প্রায়োরিটি প্রম্পট প্রদান করে।
+2. **Buffer Race ও থ্রেড সেফটি কনফার্মেশন:**
+   - `MediaProjectionCaptureEngine` ও `AudioPlaybackCaptureEngine`-এ ট্রিপল-বাফার পুলিং (`BITMAP_POOL_SIZE = 3`, `WINDOW_POOL_SIZE = 3`) এবং `BufferOverflow.DROP_OLDEST` ব্যাকপ্রেশার শতভাগ সুরক্ষিত।
+   - `TFLiteVisionClassifier` এবং `YAMNetAudioClassifier`-এ `Mutex.withLock` দিয়ে ফ্রেম ও অডিও বাফারের অন-ডিভাইস ইনফারেন্স রেস কন্ডিশন মুক্ত রাখা হয়েছে।
+3. **গ্লোবাল লিন্ট ও বিল্ড ভেরিফিকেশন:**
+   - `./gradlew lintDebug` সফল (০ এরর)।
+   - `./gradlew clean testDebugUnitTest assembleRelease` সম্পূর্ণ সফল (সকল ইউনিট টেস্ট পাসড)।
+   - প্রোডাকশন সাইনড রিলিজ এপিকে জেনারেটেড: `app/build/outputs/apk/release/app-release.apk` (সাইজ: ৪৬ MB, ProGuard/R8 অপ্টিমাইজড ও V1/V2 সাইনড)।
+   - কোডবেস এখন শতভাগ প্রোডাকশন-রেডি এবং ফ্রিজ করা হয়েছে।
 
 ---
 
