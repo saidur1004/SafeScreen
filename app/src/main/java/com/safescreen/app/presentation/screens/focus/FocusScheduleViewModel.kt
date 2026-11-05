@@ -43,11 +43,7 @@ class FocusScheduleViewModel @Inject constructor(
         focusScheduleDao.getAllSchedulesFlow().catch { emit(emptyList()) },
         _sheetState
     ) { schedules, sheet ->
-        val items = if (schedules.isEmpty()) {
-            defaultFocusSchedules
-        } else {
-            schedules.map { it.toItem() }
-        }
+        val items = schedules.map { it.toItem() }
         FocusScheduleUiState(
             schedules = items,
             activeDayFilters = sheet.activeDayFilters,
@@ -61,7 +57,7 @@ class FocusScheduleViewModel @Inject constructor(
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = FocusScheduleUiState(isLoading = true)
+        initialValue = FocusScheduleUiState(isLoading = true, schedules = emptyList())
     )
 
     fun onEvent(event: FocusScheduleUiEvent) {
@@ -71,6 +67,11 @@ class FocusScheduleViewModel @Inject constructor(
                 val newEnabled = !(current?.isEnabled ?: false)
                 viewModelScope.launch(Dispatchers.IO) {
                     focusScheduleDao.updateScheduleEnabled(event.id, newEnabled)
+                }
+            }
+            is FocusScheduleUiEvent.DeleteSchedule -> {
+                viewModelScope.launch(Dispatchers.IO) {
+                    focusScheduleDao.deleteScheduleById(event.id)
                 }
             }
             is FocusScheduleUiEvent.ToggleDayFilter -> {

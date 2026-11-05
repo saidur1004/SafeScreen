@@ -31,7 +31,7 @@ class StatsViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _selectedTimeRange = MutableStateFlow(StatsTimeRange.SEVEN_DAYS)
-    private val _selectedDayIndex = MutableStateFlow(3)
+    private val _selectedDayIndex = MutableStateFlow(6)
 
     private val dayNameFormat = SimpleDateFormat("EEE", Locale.getDefault())
 
@@ -91,11 +91,11 @@ class StatsViewModel @Inject constructor(
             isPrivacyShieldVerified = true
         )
     }.catch {
-        emit(StatsUiState())
+        emit(StatsUiState(weeklyActivities = computeWeeklyActivities(emptyList(), 6)))
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = StatsUiState()
+        initialValue = StatsUiState(weeklyActivities = computeWeeklyActivities(emptyList(), 6))
     )
 
     fun onEvent(event: StatsUiEvent) {

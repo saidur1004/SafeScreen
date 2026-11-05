@@ -105,9 +105,7 @@ fun DetailedActivityLogScreen(
                 viewModel.onEvent(event)
             }
         },
-        onResetLogs = {
-            viewModel.seedDemoLogsIfEmpty()
-        },
+        onRefreshLogs = {},
         modifier = modifier
     )
 }
@@ -120,7 +118,7 @@ fun DetailedActivityLogScreen(
     onNavigateBack: () -> Unit,
     state: ActivityLogUiState,
     onEvent: (ActivityLogUiEvent) -> Unit = {},
-    onResetLogs: () -> Unit = {},
+    onRefreshLogs: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     DetailedActivityLogContent(
@@ -132,7 +130,7 @@ fun DetailedActivityLogScreen(
                 onEvent(event)
             }
         },
-        onResetLogs = onResetLogs,
+        onRefreshLogs = onRefreshLogs,
         modifier = modifier
     )
 }
@@ -141,7 +139,7 @@ fun DetailedActivityLogScreen(
 fun DetailedActivityLogContent(
     state: ActivityLogUiState,
     onEvent: (ActivityLogUiEvent) -> Unit,
-    onResetLogs: () -> Unit,
+    onRefreshLogs: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -184,7 +182,7 @@ fun DetailedActivityLogContent(
             // Main Timeline Feed / Empty State
             if (state.isEmpty || state.visibleGroups.isEmpty()) {
                 EmptyActivityLogState(
-                    onResetLogs = onResetLogs,
+                    onRefreshLogs = onRefreshLogs,
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(horizontal = 24.dp)
@@ -881,12 +879,12 @@ private fun GlowingWarningTriangle(
  */
 @Composable
 private fun EmptyActivityLogState(
-    onResetLogs: () -> Unit,
+    onRefreshLogs: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     SafeScreenStateView(
         stateType = SafeScreenStateType.EMPTY_LOG,
-        onActionClick = onResetLogs,
+        onActionClick = onRefreshLogs,
         modifier = modifier
     )
 }

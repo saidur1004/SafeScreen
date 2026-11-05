@@ -37,6 +37,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.HourglassTop
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Schedule
@@ -234,14 +235,51 @@ fun FocusScheduleContent(
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 // 1. Preset & Custom Schedule Cards
-                items(
-                    items = uiState.schedules,
-                    key = { it.id }
-                ) { schedule ->
-                    ScheduleBlockCard(
-                        item = schedule,
-                        onToggle = { onEvent(FocusScheduleUiEvent.ToggleSchedule(schedule.id)) }
-                    )
+                if (uiState.schedules.isEmpty() && !uiState.isLoading) {
+                    item {
+                        GlassmorphicCard(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentPadding = PaddingValues(16.dp),
+                            backgroundColor = Color(0xFF0F1B2C).copy(alpha = 0.6f),
+                            borderColor = Color.White.copy(alpha = 0.12f)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 12.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = "No focus schedules active",
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        color = Color.White,
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 15.sp
+                                    )
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Tap '+ Add Custom Focus Block' below to schedule focused hours.",
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        color = TextSecondary,
+                                        textAlign = TextAlign.Center,
+                                        fontSize = 12.sp
+                                    )
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    items(
+                        items = uiState.schedules,
+                        key = { it.id }
+                    ) { schedule ->
+                        ScheduleBlockCard(
+                            item = schedule,
+                            onToggle = { onEvent(FocusScheduleUiEvent.ToggleSchedule(schedule.id)) },
+                            onDelete = { onEvent(FocusScheduleUiEvent.DeleteSchedule(schedule.id)) }
+                        )
+                    }
                 }
 
                 // 2. Day Selector Pills
@@ -325,7 +363,8 @@ fun FocusScheduleContent(
 @Composable
 private fun ScheduleBlockCard(
     item: FocusScheduleItem,
-    onToggle: () -> Unit
+    onToggle: () -> Unit,
+    onDelete: () -> Unit = {}
 ) {
     val borderColor = if (item.isEnabled) item.accentColor.copy(alpha = 0.85f) else Color.White.copy(alpha = 0.15f)
 
@@ -458,12 +497,26 @@ private fun ScheduleBlockCard(
 
             Spacer(modifier = Modifier.width(8.dp))
 
-            // Glowing Neon Switch
-            NeonSwitch(
-                checked = item.isEnabled,
-                onCheckedChange = { onToggle() },
-                activeColor = item.accentColor
-            )
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Glowing Neon Switch
+                NeonSwitch(
+                    checked = item.isEnabled,
+                    onCheckedChange = { onToggle() },
+                    activeColor = item.accentColor
+                )
+
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Delete Schedule",
+                    tint = TextSecondary.copy(alpha = 0.5f),
+                    modifier = Modifier
+                        .size(18.dp)
+                        .clickable { onDelete() }
+                )
+            }
         }
     }
 }

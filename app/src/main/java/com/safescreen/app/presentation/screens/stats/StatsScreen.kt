@@ -551,6 +551,7 @@ private fun DualBarChartCanvas(
                 .fillMaxSize()
                 .pointerInput(items) {
                     detectTapGestures { offset ->
+                        if (items.isEmpty()) return@detectTapGestures
                         val chartLeft = 24.dp.toPx()
                         val chartRight = size.width - 6.dp.toPx()
                         val totalWidth = chartRight - chartLeft
@@ -561,6 +562,7 @@ private fun DualBarChartCanvas(
                     }
                 }
         ) {
+            if (items.isEmpty()) return@Canvas
             val w = size.width
             val h = size.height
 

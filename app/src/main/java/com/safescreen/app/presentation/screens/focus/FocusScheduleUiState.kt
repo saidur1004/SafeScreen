@@ -69,7 +69,7 @@ val defaultFocusSchedules = listOf(
  * Overall UiState for FocusScheduleScreen.
  */
 data class FocusScheduleUiState(
-    val schedules: List<FocusScheduleItem> = defaultFocusSchedules,
+    val schedules: List<FocusScheduleItem> = emptyList(),
     val activeDayFilters: Set<Int> = setOf(0, 1, 2, 3, 4), // Mon-Fri active by default
     val showAddScheduleSheet: Boolean = false,
     val newScheduleTitle: String = "",
@@ -84,6 +84,7 @@ data class FocusScheduleUiState(
  */
 sealed interface FocusScheduleUiEvent {
     data class ToggleSchedule(val id: String) : FocusScheduleUiEvent
+    data class DeleteSchedule(val id: String) : FocusScheduleUiEvent
     data class ToggleDayFilter(val dayIndex: Int) : FocusScheduleUiEvent
     data object OpenAddScheduleSheet : FocusScheduleUiEvent
     data object DismissAddScheduleSheet : FocusScheduleUiEvent

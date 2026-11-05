@@ -3,7 +3,6 @@ package com.safescreen.app.presentation.screens.stats
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.safescreen.app.data.local.dao.ThreatLogDao
-import com.safescreen.app.data.local.entity.ThreatAction
 import com.safescreen.app.data.local.entity.ThreatLogEntity
 import com.safescreen.app.data.local.entity.ThreatType
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -96,58 +95,6 @@ class DetailedActivityLogViewModel @Inject constructor(
             }
             is ActivityLogUiEvent.LogItemClicked -> Unit
             else -> Unit
-        }
-    }
-
-    /**
-     * Seeds initial sample demo threats into Room DB if empty, for testing & first-run exploration.
-     */
-    fun seedDemoLogsIfEmpty() {
-        viewModelScope.launch {
-            val now = System.currentTimeMillis()
-            val hour = 3600 * 1000L
-            val day = 86400 * 1000L
-
-            threatLogDao.insertThreatLogs(
-                listOf(
-                    ThreatLogEntity(
-                        timestamp = now - (15 * 60 * 1000L),
-                        threatType = ThreatType.VISUAL_NSFW,
-                        appPackageName = "com.android.chrome",
-                        appName = "Chrome",
-                        severity = 0.94f,
-                        actionTaken = ThreatAction.BLURRED,
-                        details = "94% NSFW score"
-                    ),
-                    ThreatLogEntity(
-                        timestamp = now - (2 * hour),
-                        threatType = ThreatType.AUDIO_EXPLICIT,
-                        appPackageName = "com.google.android.youtube",
-                        appName = "YouTube Shorts",
-                        severity = 0.88f,
-                        actionTaken = ThreatAction.MUTED,
-                        details = "45 sec muted"
-                    ),
-                    ThreatLogEntity(
-                        timestamp = now - (5 * hour),
-                        threatType = ThreatType.REELS_LIMIT,
-                        appPackageName = "com.instagram.android",
-                        appName = "Instagram",
-                        severity = 1.0f,
-                        actionTaken = ThreatAction.BLOCKED,
-                        details = "Time limit 30m reached"
-                    ),
-                    ThreatLogEntity(
-                        timestamp = now - day - (3 * hour),
-                        threatType = ThreatType.VISUAL_NSFW,
-                        appPackageName = "com.twitter.android",
-                        appName = "X (Twitter)",
-                        severity = 0.91f,
-                        actionTaken = ThreatAction.BLURRED,
-                        details = "91% NSFW score"
-                    )
-                )
-            )
         }
     }
 
