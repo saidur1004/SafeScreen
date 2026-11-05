@@ -69,8 +69,21 @@ class PermissionHubViewModel @Inject constructor(
         }
         viewModelScope.launch {
             userPreferencesRepository.setBatteryOptimizationAccepted(true)
-            userPreferencesRepository.setCompletedOnboarding(true)
+            // Fix permission bypass: Only mark onboarding complete if all permissions are actually granted
+            if (_uiState.value.areAllGranted) {
+                userPreferencesRepository.setCompletedOnboarding(true)
+            }
         }
+    }
+
+    fun completeOnboardingIfAllGranted(): Boolean {
+        val allGranted = _uiState.value.areAllGranted
+        if (allGranted) {
+            viewModelScope.launch {
+                userPreferencesRepository.setCompletedOnboarding(true)
+            }
+        }
+        return allGranted
     }
 }
 

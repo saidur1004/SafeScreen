@@ -91,7 +91,15 @@ class ShieldProtectionService : LifecycleService() {
         super.onStartCommand(intent, flags, startId)
         Log.d(TAG, "ShieldProtectionService onStartCommand action=${intent?.action}")
 
-        when (intent?.action) {
+        if (intent == null || intent.action == null) {
+            Log.w(TAG, "ShieldProtectionService restarted with null intent/action (process restart). Gracefully stopping service to prevent MediaProjection token reuse exception.")
+            PermissionManager.clearMediaProjectionConsent()
+            _isServiceRunning.value = false
+            stopSelf()
+            return START_NOT_STICKY
+        }
+
+        when (intent.action) {
             ACTION_START_SHIELD -> {
                 val resultCode = intent.getIntExtra(EXTRA_RESULT_CODE, 0)
                 val resultData: Intent? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -112,7 +120,7 @@ class ShieldProtectionService : LifecycleService() {
                 stopForegroundShield()
             }
         }
-        return START_STICKY
+        return START_NOT_STICKY
     }
 
     private fun startForegroundShield() {

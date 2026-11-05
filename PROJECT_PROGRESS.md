@@ -22,8 +22,8 @@
 
 ## 📌 ১. প্রজেক্টের বর্তমান ওভারভিউ ও লাইভ স্ট্যাটাস (Executive Snapshot)
 
-* **সর্বশেষ আপডেটের তারিখ ও সময়:** ০৫ নভেম্বর ২০২৬ (Step 3: PIN Lock Gate Enforcing & Final Polish সম্পন্ন ✅)
-* **বর্তমান পর্যায়:** **v1.0.0 Production & Beta Release Ready — All Development & Hardening Phases 100% Complete ✅ (Clean Release APK Generated)**
+* **সর্বশেষ আপডেটের তারিখ ও সময়:** ০৫ নভেম্বর ২০২৬ (Step 2: Permission Flow, Lifecycle & Microphone Fallback Fix সম্পন্ন ✅)
+* **বর্তমান পর্যায়:** **v1.0.0 Production Hardening — Step 1 & Step 2 Complete ✅ (Permissions, Lifecycle, Biometric & Zero-Mic Enforced)**
 * **পরবর্তী পদক্ষেপ (Next Steps):** **Beta Distribution & Production Play Store Submission** (Closed Testing Track)
 * **গিট রিপোজিটরি:** `https://github.com/saidur1004/SafeScreen.git` (মেইন ব্রাঞ্চ: `main`)
 * **টেকনিক্যাল টুলচেইন:** Kotlin 2.0.21, Gradle 8.14, AGP 8.7.3, Jetpack Compose BOM 2024.10.01, Dagger-Hilt 2.52, Room 2.6.1, Java 21, Min SDK 29 (Android 10), Target SDK 35 (Android 15)
@@ -735,6 +735,29 @@ SafeScreen/
 ├── DESIGN.md                                           # ডিজাইন সিস্টেম স্পেসিফিকেশন
 └── PROJECT_PROGRESS.md                                 # বর্তমান হ্যান্ডওভার ও প্রগ্রেস রিপোর্ট
 ```
+
+---
+
+## 🛡️ ৮. পোস্ট-অডিট সিকিউরিটি ও আর্কিটেকচার হার্ডেনিং (Post-Audit Hardening Status)
+
+### 📌 Step 1: Security, PIN Gate & Biometric Prompt Fix (সম্পন্ন ও এমুলেটরে ভেরিফাইড ✅)
+1. **ডিফল্ট PIN ভালনারেবিলিটি দূরীকরণ:** `UserPreferencesRepository.kt`-এ হার্ডকোডেড ফলব্যাক `1234` সম্পূর্ণ রিমুভ করা হয়েছে। এখন কোনো ইউজার পিন সেট ছাড়া ভেরিফাই করতে পারবে না।
+2. **বাধ্যতামূলক ২-ধাপের PIN এনরোলমেন্ট:** `SecurityLockMode.ENROLL_PIN` যুক্ত করে `ENTER_NEW_PIN` -> `CONFIRM_PIN` ফ্লো কার্যকর করা হয়েছে।
+3. **আসল অ্যান্ড্রয়েড BiometricPrompt ইন্টিগ্রেশন:** `androidx.biometric:biometric:1.2.0-alpha05` ইন্টিগ্রেট করে `FragmentActivity` এর মাধ্যমে রিয়েল ওএস বায়োমেট্রিক ফ্রেমওয়ার্ক কানেক্ট করা হয়েছে।
+4. **৫-অ্যাটেম্পট লকআউট পেনাল্টি ও কাউন্টডাউন টাইমার:** টানা ৫ বার ভুল পিন দিলে ৩০ সেকেন্ডের লকআউট চালু হয় এবং স্ক্রিনে লাইভ কাউন্টডাউন চলে।
+5. **UI ক্লিনআপ:** "Forgot PIN? (Default is 1234)" এবং টেস্টিং পিন লিক সম্পূর্ণ মুছে ফেলা হয়েছে।
+
+### 📌 Step 2: Permission Flow, Lifecycle & Microphone Fallback Fix (সম্পন্ন ও এমুলেটরে ভেরিফাইড ✅)
+1. **পারমিশন বাইপাস ও হার্ডকোডেড স্টেট ফিক্স:**
+   - `PermissionHubScreen.kt`-এ `defaultPermissions`-এ Overlay এবং Notification-এর হার্ডকোডেড `isGranted = true` মুছে `false` করা হয়েছে।
+   - স্ক্রিন ওপেন হওয়া মাত্রই `LaunchedEffect(Unit)` এবং `ON_RESUME`-এ ওএস থেকে রিয়েল স্টেট ফেচ করা হয়।
+   - ব্যাটারি অপ্টিমাইজেশন ডায়ালগের "Allow" চাপলে সব পারমিশন না থাকা পর্যন্ত অ্যাপে প্রবেশের বাইপাস বন্ধ করা হয়েছে; শুধুমাত্র সব পারমিশন গ্রান্টেড হলেই শিল্ড চালু ও হোম স্ক্রিনে যাওয়া সম্ভব।
+2. **MediaProjection লাইফসাইকেল ও রিস্টার্ট রিস্ক সমাধান:**
+   - `ShieldProtectionService.kt`-এ `START_STICKY` রিমুভ করে `START_NOT_STICKY` করা হয়েছে, কারণ মিডিয়া প্রজেকশন টোকেন সিঙ্গল-ইউজ এবং প্রোসেস রিস্টার্টে অকার্যকর।
+   - ওএস সার্ভিস রিস্টার্টে `intent == null || intent.action == null` হলে সুন্দরভাবে `stopSelf()` কল করে এবং `PermissionManager.clearMediaProjectionConsent()` দিয়ে মেমোরি থেকে টোকেন ক্লিয়ার করে সিকিউরিটি এক্সেপশন ও ক্র্যাশ প্রতিরোধ করা হয়েছে।
+3. **মাইক্রোফোন ফলব্যাক সম্পূর্ণ অপসারণ (১০০% প্রাইভেসি গ্যারান্টি):**
+   - `AudioPlaybackCaptureEngine.kt`-এ ইন্টারনাল অডিও ফেইল করলে মাইক্রোফোন চালু হওয়ার মারাত্মক ফলব্যাক লজিক (`MediaRecorder.AudioSource.MIC`) সম্পূর্ণ মুছে ফেলা হয়েছে।
+   - এখন শুধুমাত্র অ্যান্ড্রয়েড ১০+ এর `AudioPlaybackCaptureConfiguration` দিয়ে ইন্টারনাল মিডিয়া অডিও স্ক্যান করা হয়। কোনো ফিজিক্যাল অ্যাম্বিয়েন্ট ভয়েস বা মাইক্রোফোন ডেটা কখনো রেকর্ড হবে না।
 
 ---
 

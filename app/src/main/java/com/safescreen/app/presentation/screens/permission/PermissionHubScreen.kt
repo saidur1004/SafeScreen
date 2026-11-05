@@ -8,6 +8,7 @@ import android.media.projection.MediaProjectionManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.animateColorAsState
@@ -47,6 +48,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -138,7 +140,7 @@ val defaultPermissions = listOf(
         title = "Display Over Other Apps",
         systemCodeName = "SYSTEM_ALERT_WINDOW",
         description = "Allows drawing instant blur overlays over explicit content.",
-        isGranted = true,
+        isGranted = false,
         iconTint = NeonCyan,
         actionLabel = "Grant Access"
     ),
@@ -174,7 +176,7 @@ val defaultPermissions = listOf(
         title = "Foreground Notification",
         systemCodeName = "POST_NOTIFICATIONS",
         description = "Keeps the real-time AI shield persistent without being killed by Android.",
-        isGranted = true,
+        isGranted = false,
         iconTint = NeonGreen,
         actionLabel = "Grant Access"
     )
@@ -244,6 +246,11 @@ fun PermissionHubScreen(
         viewModel.refreshPermissions(context)
     }
 
+    // Query OS for initial real permission status on launch
+    LaunchedEffect(Unit) {
+        viewModel.refreshPermissions(context)
+    }
+
     // Refresh OS permissions when returning to the app
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -301,14 +308,26 @@ fun PermissionHubScreen(
                     )
                     batteryLauncher.launch(intent)
                     viewModel.onAllowUnrestrictedBattery(context)
-                    ShieldProtectionService.startService(
-                        context,
-                        PermissionManager.mediaProjectionResultCode,
-                        PermissionManager.mediaProjectionResultData
-                    )
-                    onAllPermissionsGranted()
+                    viewModel.refreshPermissions(context)
+
+                    // Fix: Check real permissions before allowing app entry
+                    if (state.areAllGranted) {
+                        ShieldProtectionService.startService(
+                            context,
+                            PermissionManager.mediaProjectionResultCode,
+                            PermissionManager.mediaProjectionResultData
+                        )
+                        onAllPermissionsGranted()
+                    } else {
+                        Toast.makeText(
+                            context,
+                            "Battery optimization updated. Please grant remaining permissions to proceed.",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
                 }
                 PermissionHubUiEvent.EnterShieldHub -> {
+                    viewModel.refreshPermissions(context)
                     if (state.areAllGranted) {
                         viewModel.onAllowUnrestrictedBattery(context)
                         ShieldProtectionService.startService(
@@ -318,7 +337,11 @@ fun PermissionHubScreen(
                         )
                         onAllPermissionsGranted()
                     } else {
-                        viewModel.openBatteryDialog()
+                        Toast.makeText(
+                            context,
+                            "Action Required: Please grant all required permissions to activate protection shield.",
+                            Toast.LENGTH_LONG
+                        ).show()
                     }
                 }
                 PermissionHubUiEvent.NavigateBack -> {

@@ -7,7 +7,6 @@ import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioPlaybackCaptureConfiguration
 import android.media.AudioRecord
-import android.media.MediaRecorder
 import android.media.projection.MediaProjection
 import android.os.Build
 import android.os.Process
@@ -37,7 +36,7 @@ import javax.inject.Singleton
  */
 data class AudioCaptureMetrics(
     val isCapturing: Boolean = false,
-    val captureMode: String = "IDLE", // "INTERNAL_PLAYBACK", "MIC_FALLBACK", "IDLE"
+    val captureMode: String = "IDLE", // "INTERNAL_PLAYBACK", "IDLE" (Microphone fallback permanently disabled for privacy)
     val sampleRate: Int = 16000,
     val bufferSizeSamples: Int = 0,
     val currentRmsDb: Float = -100f,
@@ -163,8 +162,13 @@ class AudioPlaybackCaptureEngine @Inject constructor(
             return false
         }
 
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q || mediaProjection == null) {
+            Log.w(TAG, "Internal AudioPlaybackCapture requires Android 10+ and active MediaProjection. Microphone fallback is permanently disabled for user privacy.")
+            return false
+        }
+
         try {
-            Log.d(TAG, "Initializing AudioRecord with 16kHz Mono 16-bit PCM...")
+            Log.d(TAG, "Initializing AudioPlaybackCapture with 16kHz Mono 16-bit PCM...")
 
             val audioFormat = AudioFormat.Builder()
                 .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
@@ -179,56 +183,28 @@ class AudioPlaybackCaptureEngine @Inject constructor(
             )
             val bufferSizeInBytes = maxOf(minBufferSize, SAMPLE_RATE * 2) // at least 1s buffer (32 KB)
 
-            var captureMode = "IDLE"
+            val playbackConfig = AudioPlaybackCaptureConfiguration.Builder(mediaProjection)
+                .addMatchingUsage(AudioAttributes.USAGE_MEDIA)
+                .addMatchingUsage(AudioAttributes.USAGE_GAME)
+                .addMatchingUsage(AudioAttributes.USAGE_UNKNOWN)
+                .build()
 
-            // 1. Attempt AudioPlaybackCapture (Internal system media audio on Android 10+)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && mediaProjection != null) {
-                try {
-                    val playbackConfig = AudioPlaybackCaptureConfiguration.Builder(mediaProjection)
-                        .addMatchingUsage(AudioAttributes.USAGE_MEDIA)
-                        .addMatchingUsage(AudioAttributes.USAGE_GAME)
-                        .addMatchingUsage(AudioAttributes.USAGE_UNKNOWN)
-                        .build()
-
-                    audioRecord = AudioRecord.Builder()
-                        .setAudioFormat(audioFormat)
-                        .setBufferSizeInBytes(bufferSizeInBytes)
-                        .setAudioPlaybackCaptureConfig(playbackConfig)
-                        .build()
-
-                    if (audioRecord?.state == AudioRecord.STATE_INITIALIZED) {
-                        captureMode = "INTERNAL_PLAYBACK"
-                        Log.i(TAG, "AudioPlaybackCapture initialized successfully (Internal media playback)")
-                    } else {
-                        Log.w(TAG, "AudioPlaybackCapture failed to initialize, falling back to MIC")
-                        audioRecord?.release()
-                        audioRecord = null
-                    }
-                } catch (e: Exception) {
-                    Log.w(TAG, "AudioPlaybackCapture configuration error: ${e.message}, falling back to MIC")
-                    audioRecord?.release()
-                    audioRecord = null
-                }
-            }
-
-            // 2. Fallback to standard Microphone recording if playback capture unavailable
-            if (audioRecord == null) {
-                audioRecord = AudioRecord(
-                    MediaRecorder.AudioSource.MIC,
-                    SAMPLE_RATE,
-                    AudioFormat.CHANNEL_IN_MONO,
-                    AudioFormat.ENCODING_PCM_16BIT,
-                    bufferSizeInBytes
-                )
-                captureMode = "MIC_FALLBACK"
-                Log.i(TAG, "AudioRecord initialized in MIC_FALLBACK mode")
-            }
+            audioRecord = AudioRecord.Builder()
+                .setAudioFormat(audioFormat)
+                .setBufferSizeInBytes(bufferSizeInBytes)
+                .setAudioPlaybackCaptureConfig(playbackConfig)
+                .build()
 
             if (audioRecord?.state != AudioRecord.STATE_INITIALIZED) {
-                Log.e(TAG, "AudioRecord failed to reach STATE_INITIALIZED")
+                Log.e(TAG, "AudioPlaybackCapture failed to reach STATE_INITIALIZED. Microphone fallback is permanently disabled for privacy.")
+                audioRecord?.release()
+                audioRecord = null
                 stopCapture()
                 return false
             }
+
+            val captureMode = "INTERNAL_PLAYBACK"
+            Log.i(TAG, "AudioPlaybackCapture initialized successfully (Internal media playback only)")
 
             // Start recording
             audioRecord?.startRecording()
@@ -272,8 +248,8 @@ class AudioPlaybackCaptureEngine @Inject constructor(
      */
     @Synchronized
     fun upgradeToPlaybackCapture(mediaProjection: MediaProjection) {
-        if (_metrics.value.captureMode == "INTERNAL_PLAYBACK") return
-        Log.d(TAG, "Upgrading audio capture engine to INTERNAL_PLAYBACK mode...")
+        if (_metrics.value.captureMode == "INTERNAL_PLAYBACK" && isRecording.get()) return
+        Log.d(TAG, "Starting AudioPlaybackCapture with newly provided MediaProjection...")
         stopCapture()
         startCapture(mediaProjection)
     }
