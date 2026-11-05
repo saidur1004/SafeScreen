@@ -36,3 +36,4 @@ class VisionClassificationResultTest {
         assertEquals(12L, result.inferenceTimeMs)
     }
 }
+

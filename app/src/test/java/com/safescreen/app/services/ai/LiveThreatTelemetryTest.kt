@@ -39,3 +39,4 @@ class LiveThreatTelemetryTest {
         assertEquals(5, telemetry.totalThreatsIntercepted)
     }
 }
+

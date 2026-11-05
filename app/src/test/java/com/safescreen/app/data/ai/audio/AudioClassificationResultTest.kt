@@ -32,3 +32,4 @@ class AudioClassificationResultTest {
         assertEquals(18L, result.inferenceTimeMs)
     }
 }
+
