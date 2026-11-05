@@ -109,6 +109,7 @@ fun HomeScreen(
     onNavigateToStats: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
     onNavigateToFocus: () -> Unit = {},
+    onNavigateToReels: () -> Unit = {},
     onNavigateToBlurPreview: () -> Unit = {},
     onNavigateToStates: () -> Unit = {}
 ) {
@@ -146,6 +147,7 @@ fun HomeScreen(
                 is HomeUiEvent.NavigateToStats -> onNavigateToStats()
                 is HomeUiEvent.NavigateToSettings -> onNavigateToSettings()
                 is HomeUiEvent.NavigateToFocus -> onNavigateToFocus()
+                is HomeUiEvent.NavigateToReels -> onNavigateToReels()
                 is HomeUiEvent.NavigateToBlurPreview -> {
                     viewModel.onEvent(event)
                     onNavigateToBlurPreview()
@@ -271,7 +273,7 @@ fun HomeScreenContent(
                 minutesUsed = uiState.reelsMinutesUsed,
                 minutesLimit = uiState.reelsMinutesLimit,
                 percentage = uiState.reelsPercentage,
-                onClick = { onEvent(HomeUiEvent.NavigateToFocus) }
+                onClick = { onEvent(HomeUiEvent.NavigateToReels) }
             )
 
             Spacer(modifier = Modifier.height(14.dp))

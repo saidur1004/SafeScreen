@@ -127,6 +127,8 @@ object FocusInterventionOverlayManager {
                             ),
                             onTakeWalkClick = {
                                 Log.d(TAG, "User started 5-min mindful walk")
+                                hideOverlay(context)
+                                onDismiss()
                             },
                             onExitToHomeClick = {
                                 exitToHomeScreen(context)
@@ -134,6 +136,8 @@ object FocusInterventionOverlayManager {
                             },
                             onEmergencyPassClick = {
                                 Log.d(TAG, "User requested 2-minute emergency pass")
+                                hideOverlay(context)
+                                onDismiss()
                             },
                             onDismiss = {
                                 hideOverlay(context)

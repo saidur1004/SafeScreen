@@ -40,6 +40,7 @@
 -keep class dagger.hilt.** { *; }
 -keep class * extends dagger.hilt.internal.GeneratedComponent { *; }
 -keep @dagger.hilt.android.AndroidEntryPoint class * { *; }
+-keep @dagger.hilt.android.lifecycle.HiltViewModel class * { *; }
 -keep @dagger.hilt.EntryPoint interface * { *; }
 -keep @dagger.hilt.InstallIn interface * { *; }
 -keepclassmembers class * {
@@ -80,3 +81,4 @@
     public static **[] values();
     public static ** valueOf(java.lang.String);
 }
+

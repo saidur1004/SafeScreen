@@ -37,6 +37,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.HourglassTop
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Button
@@ -108,12 +109,14 @@ import com.safescreen.app.presentation.theme.TextSecondary
 @Composable
 fun FocusScheduleScreen(
     onNavigateBack: () -> Unit = {},
+    onNavigateToReels: () -> Unit = {},
     viewModel: FocusScheduleViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     FocusScheduleContent(
         uiState = state,
+        onNavigateToReels = onNavigateToReels,
         onEvent = { event ->
             if (event is FocusScheduleUiEvent.NavigateBack) {
                 onNavigateBack()
@@ -131,6 +134,7 @@ fun FocusScheduleScreen(
 @Composable
 fun FocusScheduleContent(
     uiState: FocusScheduleUiState,
+    onNavigateToReels: () -> Unit = {},
     onEvent: (FocusScheduleUiEvent) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -188,19 +192,20 @@ fun FocusScheduleContent(
                     )
                 )
 
-                // Right Info Button
+                // Right Reels & Shorts Control Navigation Button
                 Box(
                     modifier = Modifier
                         .size(42.dp)
                         .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.08f))
-                        .border(1.dp, Color.White.copy(alpha = 0.18f), CircleShape),
+                        .background(NeonPurple.copy(alpha = 0.12f))
+                        .border(1.dp, NeonPurple.copy(alpha = 0.40f), CircleShape)
+                        .clickable { onNavigateToReels() },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Info,
-                        contentDescription = "Focus Schedule Info",
-                        tint = Color.White,
+                        imageVector = Icons.Default.HourglassTop,
+                        contentDescription = "Reels & Shorts Control",
+                        tint = NeonPurple,
                         modifier = Modifier.size(20.dp)
                     )
                 }

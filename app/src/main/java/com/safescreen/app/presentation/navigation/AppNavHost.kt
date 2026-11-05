@@ -182,6 +182,9 @@ fun AppNavHost(
                             restoreState = true
                         }
                     },
+                    onNavigateToReels = {
+                        navController.navigate(Screen.ReelsControl.route)
+                    },
                     onNavigateToStates = {
                         navController.navigate(Screen.EmptyAndErrorStates.route)
                     }
@@ -203,6 +206,9 @@ fun AppNavHost(
                 FocusScheduleScreen(
                     onNavigateBack = {
                         navController.popBackStack()
+                    },
+                    onNavigateToReels = {
+                        navController.navigate(Screen.ReelsControl.route)
                     }
                 )
             }

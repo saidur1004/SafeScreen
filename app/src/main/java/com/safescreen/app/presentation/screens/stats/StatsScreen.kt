@@ -543,7 +543,7 @@ private fun DualBarChartCanvas(
     onDayClick: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val maxVal = 45f // Y-axis max matching mockup
+    val maxVal = (items.maxOfOrNull { maxOf(it.blockedFrames, it.mutedAudio) } ?: 15).toFloat().coerceAtLeast(15f)
 
     Box(modifier = modifier) {
         Canvas(
@@ -761,54 +761,84 @@ private fun CategoryBreakdownCard(
                         val arcSize = Size(diameter, diameter)
                         val arcTopLeft = Offset(strokeW / 2f, strokeW / 2f)
 
-                        // Segment 1: Explicit Visuals Blurred (55% = 198 degrees)
-                        drawArc(
-                            brush = Brush.sweepGradient(
-                                listOf(Color(0xFFFF2A85), Color(0xFFFF6584))
-                            ),
-                            startAngle = -90f,
-                            sweepAngle = 360f * 0.55f - 4f, // 4-deg gap
-                            useCenter = false,
-                            topLeft = arcTopLeft,
-                            size = arcSize,
-                            style = Stroke(width = strokeW, cap = StrokeCap.Round)
-                        )
+                        val vRatio = (data.visualPercent / 100f).coerceIn(0f, 1f)
+                        val aRatio = (data.audioPercent / 100f).coerceIn(0f, 1f)
+                        val rRatio = (data.reelsPercent / 100f).coerceIn(0f, 1f)
+                        val hasData = (data.visualPercent + data.audioPercent + data.reelsPercent) > 0
 
-                        // Segment 2: Background Music Muted (30% = 108 degrees)
-                        val start2 = -90f + 360f * 0.55f
-                        drawArc(
-                            brush = Brush.sweepGradient(
-                                listOf(Color(0xFF00E5FF), Color(0xFF00B0FF))
-                            ),
-                            startAngle = start2,
-                            sweepAngle = 360f * 0.30f - 4f,
-                            useCenter = false,
-                            topLeft = arcTopLeft,
-                            size = arcSize,
-                            style = Stroke(width = strokeW, cap = StrokeCap.Round)
-                        )
+                        if (!hasData) {
+                            // Empty state inactive ring
+                            drawArc(
+                                color = Color.White.copy(alpha = 0.08f),
+                                startAngle = 0f,
+                                sweepAngle = 360f,
+                                useCenter = false,
+                                topLeft = arcTopLeft,
+                                size = arcSize,
+                                style = Stroke(width = strokeW, cap = StrokeCap.Round)
+                            )
+                        } else {
+                            var currentAngle = -90f
 
-                        // Segment 3: Reels Sessions Intercepted (15% = 54 degrees)
-                        val start3 = start2 + 360f * 0.30f
-                        drawArc(
-                            brush = Brush.sweepGradient(
-                                listOf(Color(0xFFA855F7), Color(0xFFD946EF))
-                            ),
-                            startAngle = start3,
-                            sweepAngle = 360f * 0.15f - 4f,
-                            useCenter = false,
-                            topLeft = arcTopLeft,
-                            size = arcSize,
-                            style = Stroke(width = strokeW, cap = StrokeCap.Round)
-                        )
+                            // Segment 1: Explicit Visuals Blurred
+                            if (vRatio > 0.02f) {
+                                val sweep = (360f * vRatio - 4f).coerceAtLeast(6f)
+                                drawArc(
+                                    brush = Brush.sweepGradient(
+                                        listOf(Color(0xFFFF2A85), Color(0xFFFF6584))
+                                    ),
+                                    startAngle = currentAngle,
+                                    sweepAngle = sweep,
+                                    useCenter = false,
+                                    topLeft = arcTopLeft,
+                                    size = arcSize,
+                                    style = Stroke(width = strokeW, cap = StrokeCap.Round)
+                                )
+                                currentAngle += 360f * vRatio
+                            }
+
+                            // Segment 2: Background Music Muted
+                            if (aRatio > 0.02f) {
+                                val sweep = (360f * aRatio - 4f).coerceAtLeast(6f)
+                                drawArc(
+                                    brush = Brush.sweepGradient(
+                                        listOf(Color(0xFF00E5FF), Color(0xFF00B0FF))
+                                    ),
+                                    startAngle = currentAngle,
+                                    sweepAngle = sweep,
+                                    useCenter = false,
+                                    topLeft = arcTopLeft,
+                                    size = arcSize,
+                                    style = Stroke(width = strokeW, cap = StrokeCap.Round)
+                                )
+                                currentAngle += 360f * aRatio
+                            }
+
+                            // Segment 3: Reels Sessions Intercepted
+                            if (rRatio > 0.02f) {
+                                val sweep = (360f * rRatio - 4f).coerceAtLeast(6f)
+                                drawArc(
+                                    brush = Brush.sweepGradient(
+                                        listOf(Color(0xFFA855F7), Color(0xFFD946EF))
+                                    ),
+                                    startAngle = currentAngle,
+                                    sweepAngle = sweep,
+                                    useCenter = false,
+                                    topLeft = arcTopLeft,
+                                    size = arcSize,
+                                    style = Stroke(width = strokeW, cap = StrokeCap.Round)
+                                )
+                            }
+                        }
                     }
 
-                    // Center Highlight: 55% Visual Blurred
+                    // Center Highlight
+                    val hasData = (data.visualPercent + data.audioPercent + data.reelsPercent) > 0
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "${data.visualPercent}%",
+                            text = if (hasData) "${data.visualPercent}%" else "0%",
                             style = MaterialTheme.typography.titleLarge.copy(
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 19.sp,
@@ -816,14 +846,14 @@ private fun CategoryBreakdownCard(
                             )
                         )
                         Text(
-                            text = "Visual",
+                            text = if (hasData) "Visual" else "All",
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontSize = 10.sp,
                                 color = Color(0xFF94A3B8)
                             )
                         )
                         Text(
-                            text = "Blurred",
+                            text = if (hasData) "Blurred" else "Clear",
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontSize = 10.sp,
                                 color = Color(0xFF94A3B8)
@@ -965,9 +995,20 @@ private fun TopInterceptedAppsCard(
             Spacer(modifier = Modifier.height(14.dp))
 
             // App Rows List
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                topApps.forEach { app ->
-                    AppInterceptRow(item = app)
+            if (topApps.isEmpty()) {
+                Text(
+                    text = "No intercepted apps yet. Your device is clean & protected!",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = Color(0xFF94A3B8),
+                        fontSize = 13.sp
+                    ),
+                    modifier = Modifier.padding(vertical = 10.dp)
+                )
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    topApps.forEach { app ->
+                        AppInterceptRow(item = app)
+                    }
                 }
             }
         }

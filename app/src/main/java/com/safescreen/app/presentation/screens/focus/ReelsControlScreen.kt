@@ -38,6 +38,8 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.HourglassTop
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.PlayArrow
@@ -107,52 +109,19 @@ import com.safescreen.app.presentation.theme.TextSecondary
 @Composable
 fun ReelsControlScreen(
     onNavigateBack: () -> Unit = {},
-    onNavigateToSchedule: () -> Unit = {}
+    onNavigateToSchedule: () -> Unit = {},
+    viewModel: ReelsControlViewModel = hiltViewModel()
 ) {
-    var state by remember { mutableStateOf(ReelsUiState()) }
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     ReelsControlContent(
         uiState = state,
         onNavigateToSchedule = onNavigateToSchedule,
         onEvent = { event ->
-            when (event) {
-                is ReelsUiEvent.ToggleStrictMode -> {
-                    state = state.copy(isStrictModeEnabled = !state.isStrictModeEnabled)
-                }
-                is ReelsUiEvent.UpdateAppTimeLimit -> {
-                    state = state.copy(
-                        managedApps = state.managedApps.map {
-                            if (it.id == event.appId) it.copy(timeLimitMinutes = event.minutes) else it
-                        }
-                    )
-                }
-                is ReelsUiEvent.ToggleAppEnabled -> {
-                    state = state.copy(
-                        managedApps = state.managedApps.map {
-                            if (it.id == event.appId) it.copy(isEnabled = event.enabled) else it
-                        }
-                    )
-                }
-                is ReelsUiEvent.SelectStrategy -> {
-                    state = state.copy(selectedStrategy = event.strategy)
-                }
-                is ReelsUiEvent.OpenAddAppSheet -> {
-                    state = state.copy(showAddAppSheet = true)
-                }
-                is ReelsUiEvent.DismissAddAppSheet -> {
-                    state = state.copy(showAddAppSheet = false)
-                }
-                is ReelsUiEvent.AddApp -> {
-                    state = state.copy(
-                        managedApps = state.managedApps + event.app,
-                        availableAppsToAdd = state.availableAppsToAdd.filter { it.id != event.app.id },
-                        showAddAppSheet = false
-                    )
-                }
-                is ReelsUiEvent.UpdateSearchQuery -> {
-                    state = state.copy(searchQuery = event.query)
-                }
-                is ReelsUiEvent.NavigateBack -> onNavigateBack()
+            if (event is ReelsUiEvent.NavigateBack) {
+                onNavigateBack()
+            } else {
+                viewModel.onEvent(event)
             }
         }
     )

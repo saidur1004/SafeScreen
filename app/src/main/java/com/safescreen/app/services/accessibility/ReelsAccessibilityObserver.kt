@@ -85,6 +85,15 @@ class ReelsAccessibilityObserver @Inject constructor(
     private var tickerJob: Job? = null
     private var lastInspectionTime = 0L
     private var activeSecondsCount = 0
+    private var snoozeUntilRealtime = 0L
+
+    /**
+     * Snoozes full-screen intervention overlays for a specified duration (e.g. emergency pass or dismiss).
+     */
+    fun snoozeIntervention(durationMillis: Long = 120_000L) {
+        snoozeUntilRealtime = SystemClock.elapsedRealtime() + durationMillis
+        Log.d(TAG, "Focus intervention snoozed for ${durationMillis / 1000}s")
+    }
 
     init {
         // Collect DataStore preferences reactively
@@ -285,6 +294,12 @@ class ReelsAccessibilityObserver @Inject constructor(
     private fun checkAndTriggerIntervention() {
         if (!_isReelActive.value) return
 
+        val now = SystemClock.elapsedRealtime()
+        if (now < snoozeUntilRealtime) {
+            Log.d(TAG, "Focus intervention currently snoozed (${(snoozeUntilRealtime - now) / 1000}s remaining)")
+            return
+        }
+
         if (isBlockerEnabled && minutesUsedToday >= dailyLimitMinutes) {
             val appTitle = _activePlatform.value?.displayName ?: "Reels / Shorts"
             Log.w(
@@ -297,7 +312,8 @@ class ReelsAccessibilityObserver @Inject constructor(
                 appName = appTitle,
                 limitMinutes = dailyLimitMinutes,
                 onDismiss = {
-                    Log.d(TAG, "FocusInterventionOverlay dismissed by user")
+                    Log.d(TAG, "FocusInterventionOverlay dismissed by user, snoozing for 2 minutes")
+                    snoozeIntervention(120_000L)
                 }
             )
         }

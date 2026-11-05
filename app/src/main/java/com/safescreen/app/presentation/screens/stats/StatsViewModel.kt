@@ -62,10 +62,10 @@ class StatsViewModel @Inject constructor(
         val visualCount = filteredLogs.count { it.threatType == ThreatType.VISUAL_NSFW }
         val audioCount = filteredLogs.count { it.threatType == ThreatType.AUDIO_EXPLICIT }
         val reelsCount = filteredLogs.count { it.threatType == ThreatType.REELS_LIMIT }
-        val totalThreats = (visualCount + audioCount + reelsCount).coerceAtLeast(1)
+        val totalThreats = (visualCount + audioCount + reelsCount)
 
-        val breakdown = if (filteredLogs.isEmpty()) {
-            CategoryBreakdownData(visualPercent = 55, audioPercent = 30, reelsPercent = 15)
+        val breakdown = if (totalThreats == 0) {
+            CategoryBreakdownData(visualPercent = 0, audioPercent = 0, reelsPercent = 0)
         } else {
             CategoryBreakdownData(
                 visualPercent = (visualCount * 100) / totalThreats,
@@ -86,8 +86,8 @@ class StatsViewModel @Inject constructor(
             selectedDayIndex = dayIndex,
             categoryBreakdown = breakdown,
             topApps = topApps,
-            totalBlockedToday = if (totalBlockedToday > 0) totalBlockedToday else 38,
-            totalMutedToday = if (totalMutedToday > 0) totalMutedToday else 14,
+            totalBlockedToday = totalBlockedToday,
+            totalMutedToday = totalMutedToday,
             isPrivacyShieldVerified = true
         )
     }.catch {
@@ -111,7 +111,7 @@ class StatsViewModel @Inject constructor(
     }
 
     private fun computeTopApps(logs: List<ThreatLogEntity>): List<InterceptedAppItem> {
-        if (logs.isEmpty()) return defaultTopApps
+        if (logs.isEmpty()) return emptyList()
 
         val appGroups = logs.groupBy { it.appPackageName }
         val maxCount = appGroups.values.maxOfOrNull { it.size } ?: 1
@@ -140,18 +140,11 @@ class StatsViewModel @Inject constructor(
                 )
             }
 
-        return if (list.isNotEmpty()) list else defaultTopApps
+        return list
     }
 
     private fun computeWeeklyActivities(allLogs: List<ThreatLogEntity>, selectedIndex: Int): List<DayActivityItem> {
-        if (allLogs.isEmpty()) {
-            return defaultWeeklyActivities.mapIndexed { index, item ->
-                item.copy(isSelected = (index == selectedIndex))
-            }
-        }
-
         val days = mutableListOf<DayActivityItem>()
-        val calendar = Calendar.getInstance()
 
         // 7 days ending today
         for (i in 6 downTo 0) {
@@ -173,8 +166,8 @@ class StatsViewModel @Inject constructor(
             days.add(
                 DayActivityItem(
                     day = dayName,
-                    blockedFrames = if (blocked > 0) blocked else (15 + (i * 3) % 25),
-                    mutedAudio = if (muted > 0) muted else (8 + (i * 2) % 12),
+                    blockedFrames = blocked,
+                    mutedAudio = muted,
                     isSelected = (days.size == selectedIndex)
                 )
             )

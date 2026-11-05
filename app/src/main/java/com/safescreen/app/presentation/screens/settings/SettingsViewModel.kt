@@ -2,6 +2,7 @@ package com.safescreen.app.presentation.screens.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.safescreen.app.data.local.dao.ThreatLogDao
 import com.safescreen.app.data.local.dao.WhitelistDao
 import com.safescreen.app.data.local.datastore.UserPreferencesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -21,7 +22,8 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val userPreferencesRepository: UserPreferencesRepository,
-    private val whitelistDao: WhitelistDao
+    private val whitelistDao: WhitelistDao,
+    private val threatLogDao: ThreatLogDao
 ) : ViewModel() {
 
     private val _showClearCacheDialog = MutableStateFlow(false)
@@ -81,7 +83,11 @@ class SettingsViewModel @Inject constructor(
             }
             is SettingsUiEvent.ConfirmClearCache -> {
                 _showClearCacheDialog.value = false
-                _isCacheCleared.value = true
+                viewModelScope.launch {
+                    threatLogDao.clearAllThreatLogs()
+                    userPreferencesRepository.setReelsMinutesUsedToday(0)
+                    _isCacheCleared.value = true
+                }
             }
             else -> Unit
         }
