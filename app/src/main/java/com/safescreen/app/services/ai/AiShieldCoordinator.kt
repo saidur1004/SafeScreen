@@ -15,6 +15,7 @@ import com.safescreen.app.data.local.entity.ThreatType
 import com.safescreen.app.services.audio.AudioPlaybackCaptureEngine
 import com.safescreen.app.services.capture.MediaProjectionCaptureEngine
 import com.safescreen.app.services.overlay.LiveBlurOverlayManager
+import com.safescreen.app.services.tracker.ForegroundAppTracker
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -66,7 +67,8 @@ class AiShieldCoordinator @Inject constructor(
     private val audioCaptureEngine: AudioPlaybackCaptureEngine,
     private val threatLogDao: ThreatLogDao,
     private val whitelistDao: WhitelistDao,
-    private val preferencesRepository: UserPreferencesRepository
+    private val preferencesRepository: UserPreferencesRepository,
+    private val foregroundAppTracker: ForegroundAppTracker
 ) {
 
     private val coordinatorScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -80,6 +82,9 @@ class AiShieldCoordinator @Inject constructor(
     private var isVisualShieldEnabled = true
     private var isAudioMuteEnabled = true
 
+    @Volatile
+    private var exemptedPackages: Set<String> = emptySet()
+
     private var frameProcessingJob: Job? = null
     private var audioProcessingJob: Job? = null
 
@@ -88,7 +93,7 @@ class AiShieldCoordinator @Inject constructor(
     private var lastThreatLogTimestamp = 0L
 
     init {
-        // Collect user preference toggles
+        // 1. Collect user preference toggles
         coordinatorScope.launch {
             combine(
                 preferencesRepository.isShieldActiveFlow,
@@ -108,6 +113,14 @@ class AiShieldCoordinator @Inject constructor(
                 }
             }
         }
+
+        // 2. Reactively observe exempted whitelist packages (Zero-GC memory cache)
+        coordinatorScope.launch {
+            whitelistDao.getExemptedPackageNamesFlow().collectLatest { list ->
+                exemptedPackages = list.toSet()
+                Log.d(TAG, "Updated in-memory exempted whitelist packages: $exemptedPackages")
+            }
+        }
     }
 
     /**
@@ -123,6 +136,15 @@ class AiShieldCoordinator @Inject constructor(
         frameProcessingJob = coordinatorScope.launch {
             captureEngine.frameFlow.collect { bitmap ->
                 if (!isShieldActive || !isVisualShieldEnabled) {
+                    if (LiveBlurOverlayManager.isShowing()) {
+                        LiveBlurOverlayManager.hideOverlay(context)
+                    }
+                    return@collect
+                }
+
+                // Check active foreground application exemption (Whitelist Protection)
+                val currentPkg = foregroundAppTracker.currentPackage ?: ForegroundAppTracker.currentForegroundPackage
+                if (currentPkg != null && (exemptedPackages.contains(currentPkg) || currentPkg == context.packageName)) {
                     if (LiveBlurOverlayManager.isShowing()) {
                         LiveBlurOverlayManager.hideOverlay(context)
                     }
@@ -160,6 +182,13 @@ class AiShieldCoordinator @Inject constructor(
         audioProcessingJob = coordinatorScope.launch {
             audioCaptureEngine.audioFlow.collect { audioWindow ->
                 if (!isShieldActive || !isAudioMuteEnabled) {
+                    unmuteAudioIfMuted()
+                    return@collect
+                }
+
+                // Check active foreground application exemption (Whitelist Protection)
+                val currentPkg = foregroundAppTracker.currentPackage ?: ForegroundAppTracker.currentForegroundPackage
+                if (currentPkg != null && (exemptedPackages.contains(currentPkg) || currentPkg == context.packageName)) {
                     unmuteAudioIfMuted()
                     return@collect
                 }
@@ -255,29 +284,56 @@ class AiShieldCoordinator @Inject constructor(
     }
 
     /**
-     * Records incident into SQLite Room DB with 2-second rate-limiting.
+     * Records incident into SQLite Room DB with 2.5-second rate-limiting.
+     * Records the genuine foreground package name and resolved application name.
      */
     private fun logThreatIncident(type: ThreatType, action: ThreatAction, severity: Float, details: String) {
         val now = System.currentTimeMillis()
         if (now - lastThreatLogTimestamp < LOG_DEBOUNCE_MS) return
         lastThreatLogTimestamp = now
 
+        val currentPkg = foregroundAppTracker.currentPackage
+            ?: ForegroundAppTracker.currentForegroundPackage
+            ?: "foreground.active.session"
+        val resolvedAppName = resolveAppName(currentPkg, type)
+
         coordinatorScope.launch(Dispatchers.IO) {
             try {
                 val entity = ThreatLogEntity(
                     timestamp = now,
                     threatType = type,
-                    appPackageName = "foreground.active.session",
-                    appName = if (type == ThreatType.VISUAL_NSFW) "Visual Shield" else "Audio Shield",
+                    appPackageName = currentPkg,
+                    appName = resolvedAppName,
                     severity = severity,
                     actionTaken = action,
                     details = details
                 )
                 threatLogDao.insertThreatLog(entity)
                 _telemetry.update { it.copy(totalThreatsIntercepted = it.totalThreatsIntercepted + 1) }
-                Log.i(TAG, "Recorded threat incident in Room DB: $type, action=$action")
+                Log.i(TAG, "Recorded threat incident in Room DB: $type, app=$resolvedAppName ($currentPkg), action=$action")
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to record threat incident", e)
+            }
+        }
+    }
+
+    private fun resolveAppName(packageName: String, type: ThreatType): String {
+        if (packageName == "foreground.active.session" || packageName.isBlank()) {
+            return if (type == ThreatType.VISUAL_NSFW) "Visual Shield" else "Audio Shield"
+        }
+        return try {
+            val pm = context.packageManager
+            val appInfo = pm.getApplicationInfo(packageName, 0)
+            pm.getApplicationLabel(appInfo).toString()
+        } catch (e: Exception) {
+            when {
+                packageName.contains("chrome", ignoreCase = true) -> "Chrome"
+                packageName.contains("youtube", ignoreCase = true) -> "YouTube"
+                packageName.contains("instagram", ignoreCase = true) -> "Instagram"
+                packageName.contains("tiktok", ignoreCase = true) -> "TikTok"
+                packageName.contains("twitter", ignoreCase = true) -> "X (Twitter)"
+                packageName.contains("facebook", ignoreCase = true) -> "Facebook"
+                else -> packageName.substringAfterLast('.').replaceFirstChar { it.uppercase() }
             }
         }
     }

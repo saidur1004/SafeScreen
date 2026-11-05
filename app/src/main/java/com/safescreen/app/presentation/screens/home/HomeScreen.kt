@@ -135,6 +135,7 @@ fun HomeScreen(
             when (event) {
                 is HomeUiEvent.ToggleShield -> {
                     if (state.isShieldActive) {
+                        PermissionManager.clearMediaProjectionConsent()
                         viewModel.onEvent(event)
                     } else {
                         if (PermissionManager.hasMediaProjectionConsent) {

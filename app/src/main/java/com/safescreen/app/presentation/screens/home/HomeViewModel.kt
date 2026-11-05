@@ -7,6 +7,7 @@ import com.safescreen.app.data.local.datastore.UserPreferencesRepository
 import com.safescreen.app.data.local.entity.ThreatType
 import com.safescreen.app.domain.usecase.StartShieldUseCase
 import com.safescreen.app.domain.usecase.StopShieldUseCase
+import com.safescreen.app.services.permission.PermissionManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -88,6 +89,7 @@ class HomeViewModel @Inject constructor(
                     if (newActive) {
                         startShieldUseCase()
                     } else {
+                        PermissionManager.clearMediaProjectionConsent()
                         stopShieldUseCase()
                     }
                 }

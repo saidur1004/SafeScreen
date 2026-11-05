@@ -22,9 +22,9 @@
 
 ## 📌 ১. প্রজেক্টের বর্তমান ওভারভিউ ও লাইভ স্ট্যাটাস (Executive Snapshot)
 
-* **সর্বশেষ আপডেটের তারিখ ও সময়:** ০৫ নভেম্বর ২০২৬ (Step 1: Production UI Cleanup & Dummy Data Removal সম্পন্ন ✅)
-* **বর্তমান পর্যায়:** **v1.0.0-beta Hardening — Post-Audit Step 1 (Production UI Cleanup & Dummy Data Removal) Complete ✅ (Debug & Release APK Verified)**
-* **পরবর্তী পদক্ষেপ (Next Steps):** **Step 2: Permission Flow & Android 14+ MediaProjection Token Lifecycle Hardening** — *[ইউজারের চূড়ান্ত অনুমোদন সাপেক্ষে]*
+* **সর্বশেষ আপডেটের তারিখ ও সময়:** ০৫ নভেম্বর ২০২৬ (Step 2: Permission, MediaProjection Token Fix & App Package Tracking সম্পন্ন ✅)
+* **বর্তমান পর্যায়:** **v1.0.0-beta Hardening — Post-Audit Step 2 (Token Lifecycle & Whitelist Bridge) Complete ✅ (Debug & Release APK Verified)**
+* **পরবর্তী পদক্ষেপ (Next Steps):** **Step 3: PIN Lock Gate Enforcing & Final Handover Checkout** — *[ইউজারের চূড়ান্ত অনুমোদন সাপেক্ষে]*
 * **গিট রিপোজিটরি:** `https://github.com/saidur1004/SafeScreen.git` (মেইন ব্রাঞ্চ: `main`)
 * **টেকনিক্যাল টুলচেইন:** Kotlin 2.0.21, Gradle 8.14, AGP 8.7.3, Jetpack Compose BOM 2024.10.01, Dagger-Hilt 2.52, Room 2.6.1, Java 21, Min SDK 29 (Android 10), Target SDK 35 (Android 15)
 * **টেস্ট ডিভাইস:** Android Emulator (`emulator-5554`, Google APIs ARM64/x86_64, Pixel 9, Android 15 API 35)
@@ -574,6 +574,30 @@ Senior Android Architect অডিটের পর চিহ্নিত ফে�
    - `./gradlew testDebugUnitTest` সম্পূর্ণ সফল (৩১টি টাস্ক পাসড)।
    - `./gradlew assembleDebug` ও `./gradlew assembleRelease` (R8 Minified) সফল।
    - এমুলেটরে (`emulator-5554`) ইনস্টল ও প্রতিটি স্ক্রিন ইন্টারঅ্যাকশন ভেরিফাইড (AndroidRuntime-এ ০ ক্র্যাশ)।
+
+---
+
+### Post-Audit Hardening — Step 2: Permission, MediaProjection Token Fix & App Package Tracking (100% Completed ✅)
+
+Senior Android Architect অডিটের নির্দেশিকা অনুযায়ী সবচেয়ে ক্রিটিক্যাল সিকিউরিটি এবং আর্কিটেকচারাল বাগগুলো সমাধান করা হয়েছে:
+
+1. **Android 14+ MediaProjection Single-Use Token ক্র্যাশ সমাধান:**
+   - `HomeScreen.kt`, `HomeViewModel.kt`, এবং `ShieldProtectionService.kt`-এ শিল্ড স্টপ ও ডেস্ট্রয় লাইফসাইকেলে `PermissionManager.clearMediaProjectionConsent()` সংযুক্ত করা হয়েছে।
+   - এর ফলে ব্যবহারকারী শিল্ড অফ করে পুনরায় অন করলে সিস্টেম ক্র্যাশ না করে নিরাপদে ফ্রেশ মিডিয়া প্রজেকশন ডায়ালগ প্রদর্শন করে এবং নতুন সেশন টোকেন দিয়ে সুরক্ষিতভাবে ক্যাপচার শুরু করে।
+
+2. **Real-time Foreground App Tracking Bridge (`ForegroundAppTracker.kt`):**
+   - একটি থ্রেড-সেফ সিঙ্গেলটন `ForegroundAppTracker` তৈরি করা হয়েছে, যা `SafeScreenAccessibilityService.kt`-এর `onAccessibilityEvent` (`TYPE_WINDOW_STATE_CHANGED`) থেকে ফোরগ্রাউন্ডে সক্রিয় অ্যাপের প্যাকেজ নাম রিয়েল-টাইমে ট্র্যাক করে।
+   - সিস্টেম UI ও কীবোর্ড/ইনপুট মেথড ওভারলে ফিল্টার আউট করে আসল ফোরগ্রাউন্ড অ্যাপের নাম নির্ধারণ করা হয়েছে।
+
+3. **Whitelist সংযোগ ও থ্রেট লগিং ফিক্স (`AiShieldCoordinator.kt`):**
+   - `AiShieldCoordinator`-এ `ForegroundAppTracker` ইনজেক্ট করে জিরো-জিসি মেমোরি ক্যাশে `whitelistDao.getExemptedPackageNamesFlow()` রিয়েক্টেভিলি অবজার্ভ করা হয়েছে।
+   - ফ্রেম স্ক্যান করার পূর্বে হোয়াইটলিস্ট চেক করা হয়: ব্যবহারকারী যদি ব্যাংকিং বা এক্সিম্পটেড অ্যাপে থাকে, তবে এআই স্ক্যান স্কিপ হয় এবং যেকোনো আগের ব্লার ওভারলে তৎক্ষণাৎ হাইড হয়ে যায়।
+   - থ্রেট ডিটেক্ট হলে হার্ডকোডেড `"foreground.active.session"`-এর বদলে ফোরগ্রাউন্ডের প্রকৃত প্যাকেজ নেম (যেমন `com.android.chrome`) ও রিজলভড অ্যাপ নাম Room SQLite ডাটাবেসে সেভ করা হচ্ছে।
+
+4. **বিল্ড ও লাইভ এমুলেটর ভেরিফিকেশন:**
+   - `./gradlew testDebugUnitTest` সফল (৩১/৩১ টাস্ক পাসড)।
+   - `./gradlew assembleDebug` ও `./gradlew assembleRelease` (R8 Minified) সফল।
+   - Pixel 9 (Android 15) এমুলেটরে শিল্ড অন-অফ-অন লাইভ টেস্ট সম্পন্ন: ক্র্যাশহীনভাবে সিস্টেম প্রম্পট ডায়ালগ প্রদর্শন ও রি-অ্যাক্টিভেশন ভেরিফাইড। লগক্যাটে Chrome ফোরগ্রাউন্ড ট্র্যাকিং সফলভাবে নিশ্চিত করা হয়েছে।
 
 ---
 

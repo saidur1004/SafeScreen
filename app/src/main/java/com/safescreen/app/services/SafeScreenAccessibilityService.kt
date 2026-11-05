@@ -4,6 +4,7 @@ import android.accessibilityservice.AccessibilityService
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import com.safescreen.app.services.accessibility.ReelsAccessibilityObserver
+import com.safescreen.app.services.tracker.ForegroundAppTracker
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.AndroidEntryPoint
@@ -15,6 +16,7 @@ import javax.inject.Inject
  * Accessibility Service for SafeScreen:
  * Performs continuous, on-device detection of short-video scrolling (Instagram Reels,
  * YouTube Shorts, TikTok, Facebook Reels) with zero-cloud exposure and zero UI lag.
+ * Also tracks the real-time active foreground application package name for AI Whitelist protection.
  */
 @AndroidEntryPoint
 class SafeScreenAccessibilityService : AccessibilityService() {
@@ -22,10 +24,14 @@ class SafeScreenAccessibilityService : AccessibilityService() {
     @Inject
     lateinit var reelsObserver: ReelsAccessibilityObserver
 
+    @Inject
+    lateinit var appTracker: ForegroundAppTracker
+
     @EntryPoint
     @InstallIn(SingletonComponent::class)
     interface AccessibilityServiceEntryPoint {
         fun reelsObserver(): ReelsAccessibilityObserver
+        fun appTracker(): ForegroundAppTracker
     }
 
     private fun getObserver(): ReelsAccessibilityObserver? {
@@ -45,8 +51,37 @@ class SafeScreenAccessibilityService : AccessibilityService() {
         }
     }
 
+    private fun getTracker(): ForegroundAppTracker? {
+        if (::appTracker.isInitialized) {
+            return appTracker
+        }
+        return try {
+            val entryPoint = EntryPointAccessors.fromApplication(
+                applicationContext,
+                AccessibilityServiceEntryPoint::class.java
+            )
+            appTracker = entryPoint.appTracker()
+            appTracker
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to resolve ForegroundAppTracker via EntryPoint", e)
+            null
+        }
+    }
+
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event == null) return
+
+        // 1. Extract and track active foreground application package name
+        val packageName = event.packageName?.toString()
+        if (!packageName.isNullOrBlank()) {
+            if (event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED ||
+                ForegroundAppTracker.currentForegroundPackage == null) {
+                getTracker()?.updateForegroundApp(packageName)
+                ForegroundAppTracker.update(packageName)
+            }
+        }
+
+        // 2. Delegate to ReelsAccessibilityObserver for short-video inspection
         val observer = getObserver() ?: return
 
         try {
@@ -72,8 +107,9 @@ class SafeScreenAccessibilityService : AccessibilityService() {
         isRunning = false
         try {
             getObserver()?.stopTracking()
+            getTracker()?.clear()
         } catch (e: Exception) {
-            Log.e(TAG, "Error stopping reels tracking on destroy", e)
+            Log.e(TAG, "Error stopping tracking on destroy", e)
         }
         Log.i(TAG, "SafeScreenAccessibilityService destroyed")
     }

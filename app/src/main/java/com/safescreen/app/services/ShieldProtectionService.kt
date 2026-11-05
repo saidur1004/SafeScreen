@@ -155,6 +155,7 @@ class ShieldProtectionService : LifecycleService() {
         aiShieldCoordinator.stopObserving()
         audioCaptureEngine.stopCapture()
         captureEngine.stopCapture()
+        PermissionManager.clearMediaProjectionConsent()
         _isServiceRunning.value = false
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
@@ -210,6 +211,7 @@ class ShieldProtectionService : LifecycleService() {
         aiShieldCoordinator.stopObserving()
         audioCaptureEngine.stopCapture()
         captureEngine.stopCapture()
+        PermissionManager.clearMediaProjectionConsent()
         _isServiceRunning.value = false
         Log.d(TAG, "ShieldProtectionService destroyed")
     }
