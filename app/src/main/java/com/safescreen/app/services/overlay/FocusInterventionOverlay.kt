@@ -98,7 +98,7 @@ data class FocusInterventionUiState(
  * - Bold headline: "Focus Time Active" with high-contrast dual-tone typography.
  * - Primary Action: "Take a 5-Min Walk" with interactive 5-minute break countdown.
  * - Secondary Action: "Exit to Home Screen" returning user cleanly to Android Launcher.
- * - Micro-Action: "Emergency 2-min pass (Requires PIN)".
+ * - Micro-Action: "Emergency 2-min pass".
  * - Footer: "SafeScreen • Your Focus, Our Priority".
  */
 @Composable
@@ -406,7 +406,7 @@ fun FocusInterventionContent(
 
                                 Spacer(modifier = Modifier.height(18.dp))
 
-                                // Micro-Action: "Emergency 2-min pass (Requires PIN)"
+                                // Micro-Action: "Emergency 2-min pass"
                                 Column(
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     modifier = Modifier
@@ -438,14 +438,6 @@ fun FocusInterventionContent(
                                             )
                                         )
                                     }
-                                    Spacer(modifier = Modifier.height(2.dp))
-                                    Text(
-                                        text = "(Requires PIN)",
-                                        style = MaterialTheme.typography.labelSmall.copy(
-                                            color = TextMuted,
-                                            fontSize = 10.5.sp
-                                        )
-                                    )
                                 }
 
                                 Spacer(modifier = Modifier.height(16.dp))

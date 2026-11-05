@@ -17,6 +17,7 @@ import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.security.SecureRandom
 import java.security.MessageDigest
+import java.time.LocalDate
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.PBEKeySpec
 import javax.inject.Inject
@@ -130,7 +131,7 @@ class UserPreferencesRepository @Inject constructor(
 
     val reelsMinutesUsedTodayFlow: Flow<Int> = dataStore.data
         .catch { if (it is IOException) emit(emptyPreferences()) else throw it }
-        .map { it[PreferencesKeys.REELS_MINUTES_USED_TODAY] ?: 0 }
+        .map { currentReelsUsageMinutes(it) }
         .distinctUntilChanged()
 
     val reelsInterventionStrategyFlow: Flow<String> = dataStore.data
@@ -311,6 +312,7 @@ class UserPreferencesRepository @Inject constructor(
     suspend fun setReelsMinutesUsedToday(minutes: Int) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.REELS_MINUTES_USED_TODAY] = minutes.coerceAtLeast(0)
+            preferences[PreferencesKeys.REELS_USAGE_DATE] = LocalDate.now().toString()
         }
     }
 
@@ -328,7 +330,13 @@ class UserPreferencesRepository @Inject constructor(
 
     suspend fun incrementReelsMinutesUsedToday(minutes: Int = 1) {
         dataStore.edit { preferences ->
-            val current = preferences[PreferencesKeys.REELS_MINUTES_USED_TODAY] ?: 0
+            val today = LocalDate.now().toString()
+            val current = if (preferences[PreferencesKeys.REELS_USAGE_DATE] == today) {
+                preferences[PreferencesKeys.REELS_MINUTES_USED_TODAY] ?: 0
+            } else {
+                0
+            }
+            preferences[PreferencesKeys.REELS_USAGE_DATE] = today
             preferences[PreferencesKeys.REELS_MINUTES_USED_TODAY] = current + minutes
         }
     }
@@ -374,7 +382,7 @@ class UserPreferencesRepository @Inject constructor(
             isBiometricEnabled = preferences[PreferencesKeys.IS_BIOMETRIC_ENABLED] ?: true,
             isPreventUninstallEnabled = preferences[PreferencesKeys.IS_PREVENT_UNINSTALL_ENABLED] ?: true,
             reelsDailyLimitMinutes = preferences[PreferencesKeys.REELS_DAILY_LIMIT_MINUTES] ?: 30,
-            reelsMinutesUsedToday = preferences[PreferencesKeys.REELS_MINUTES_USED_TODAY] ?: 0,
+            reelsMinutesUsedToday = currentReelsUsageMinutes(preferences),
             reelsInterventionStrategy = preferences[PreferencesKeys.REELS_INTERVENTION_STRATEGY] ?: "HARD_LOCKOUT",
             reelsManagedAppsJson = preferences[PreferencesKeys.REELS_MANAGED_APPS_JSON] ?: "",
             hasCompletedOnboarding = preferences[PreferencesKeys.HAS_COMPLETED_ONBOARDING] ?: false,
@@ -433,5 +441,12 @@ class UserPreferencesRepository @Inject constructor(
             return runCatching { chunked(2).map { it.toInt(16).toByte() }.toByteArray() }.getOrNull()
         }
     }
+
+    private fun currentReelsUsageMinutes(preferences: Preferences): Int =
+        if (preferences[PreferencesKeys.REELS_USAGE_DATE] == LocalDate.now().toString()) {
+            preferences[PreferencesKeys.REELS_MINUTES_USED_TODAY] ?: 0
+        } else {
+            0
+        }
 }
 

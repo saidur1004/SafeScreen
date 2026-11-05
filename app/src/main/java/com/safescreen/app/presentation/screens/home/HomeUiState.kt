@@ -6,11 +6,11 @@ import com.safescreen.app.presentation.components.BottomNavDestination
  * UI State for the Main Home Dashboard.
  */
 data class HomeUiState(
-    val isShieldActive: Boolean = true,
+    val isShieldActive: Boolean = false,
     val isPinLockEnabled: Boolean = false,
-    val blurredTodayCount: Int = 38,
-    val mutedTodayCount: Int = 14,
-    val reelsMinutesUsed: Int = 18,
+    val blurredTodayCount: Int = 0,
+    val mutedTodayCount: Int = 0,
+    val reelsMinutesUsed: Int = 0,
     val reelsMinutesLimit: Int = 30,
     val isVisualShieldEnabled: Boolean = true,
     val isAudioMuteEnabled: Boolean = true,

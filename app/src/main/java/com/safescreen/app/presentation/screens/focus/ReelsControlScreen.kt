@@ -35,13 +35,11 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.HourglassTop
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.material.icons.filled.MusicNote
-import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Search
@@ -88,7 +86,6 @@ import com.safescreen.app.presentation.components.formatMinutes
 import com.safescreen.app.presentation.theme.DarkSurfaceElevated
 import com.safescreen.app.presentation.theme.DeepBlack
 import com.safescreen.app.presentation.theme.NeonCyan
-import com.safescreen.app.presentation.theme.NeonGreen
 import com.safescreen.app.presentation.theme.NeonPink
 import com.safescreen.app.presentation.theme.NeonPurple
 import com.safescreen.app.presentation.theme.TextMuted
@@ -359,7 +356,7 @@ fun ReelsControlContent(
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
-                text = "Choose how SafeScreen should respond when time expires.",
+                text = "SafeScreen shows a full-screen break prompt when the daily limit is reached.",
                 style = MaterialTheme.typography.bodySmall.copy(
                     color = TextSecondary,
                     fontSize = 12.sp
@@ -368,36 +365,18 @@ fun ReelsControlContent(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Radio-Style Strategy Selection Cards
+            // Only the full-screen intervention is currently supported by the accessibility service.
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                horizontalArrangement = Arrangement.Start
             ) {
-                InterventionStrategyCard(
-                    strategy = InterventionStrategy.SOFT_WARNING,
-                    icon = Icons.Default.NotificationsActive,
-                    iconTint = NeonCyan,
-                    isSelected = uiState.selectedStrategy == InterventionStrategy.SOFT_WARNING,
-                    onClick = { onEvent(ReelsUiEvent.SelectStrategy(InterventionStrategy.SOFT_WARNING)) },
-                    modifier = Modifier.weight(1f)
-                )
-
                 InterventionStrategyCard(
                     strategy = InterventionStrategy.HARD_LOCKOUT,
                     icon = Icons.Default.Lock,
                     iconTint = NeonPurple,
                     isSelected = uiState.selectedStrategy == InterventionStrategy.HARD_LOCKOUT,
                     onClick = { onEvent(ReelsUiEvent.SelectStrategy(InterventionStrategy.HARD_LOCKOUT)) },
-                    modifier = Modifier.weight(1f)
-                )
-
-                InterventionStrategyCard(
-                    strategy = InterventionStrategy.FRICTION_DELAY,
-                    icon = Icons.Default.HourglassTop,
-                    iconTint = NeonGreen,
-                    isSelected = uiState.selectedStrategy == InterventionStrategy.FRICTION_DELAY,
-                    onClick = { onEvent(ReelsUiEvent.SelectStrategy(InterventionStrategy.FRICTION_DELAY)) },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
 

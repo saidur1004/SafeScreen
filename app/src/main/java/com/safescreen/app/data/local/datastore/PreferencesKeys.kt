@@ -37,6 +37,7 @@ object PreferencesKeys {
     // Reels & Digital Wellbeing
     val REELS_DAILY_LIMIT_MINUTES = intPreferencesKey("reels_daily_limit_minutes")
     val REELS_MINUTES_USED_TODAY = intPreferencesKey("reels_minutes_used_today")
+    val REELS_USAGE_DATE = stringPreferencesKey("reels_usage_date")
     val REELS_INTERVENTION_STRATEGY = stringPreferencesKey("reels_intervention_strategy")
     val REELS_MANAGED_APPS_JSON = stringPreferencesKey("reels_managed_apps_json")
 

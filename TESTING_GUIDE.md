@@ -1,305 +1,134 @@
-# SafeScreen — ফিজিক্যাল ডিভাইস ইনস্টলেশন ও পূর্ণাঙ্গ টেস্টিং গাইড (Physical Device Testing Guide)
+# SafeScreen QA ও ফিজিক্যাল ডিভাইস টেস্টিং গাইড
 
-> **ডকুমেন্ট স্ট্যাটাস:** প্রোডাকশন টেস্ট রেডি (v1.0.0)  
-> **টার্গেট প্ল্যাটফর্ম:** অ্যান্ড্রয়েড ১০ থেকে অ্যান্ড্রয়েড ১৫ (API 29 - API 35)  
-> **প্রয়োজনীয় APK ফাইল:** `app/build/outputs/apk/debug/app-debug.apk`  
-> **সর্বশেষ আপডেট:** নভেম্বর ২০২৬  
+এই গাইডটি Android 10–15 (API 29–35) ফোন বা এমুলেটরে ফিচারগুলো যাচাই করার জন্য। পরীক্ষার সময় নিজের বা অনুমতিপ্রাপ্ত কনটেন্ট ব্যবহার করুন। AI classifier ফলাফল probabilistic; একটি নির্দিষ্ট ছবি বা অডিওতে সবসময় একই ফল হবে—এমন নিশ্চয়তা নেই।
 
-এই গাইডটি অনুসরণ করে যে কেউ (ডেভেলপার, QA টেস্টার বা যেকোনো সাধারণ ব্যবহারকারী) খুব সহজে কোনো ধরনের টেকনিক্যাল ঝামেলা ছাড়াই একটি বাস্তব অ্যান্ড্রয়েড ফোনে SafeScreen অ্যাপটি ইনস্টল করতে পারবেন এবং এর সমস্ত কোর ফিচার (AI শিল্ড, ব্লার ওভারলে, বায়োমেট্রিক ও পিন সিকিউরিটি, রিলস ব্লকার, হোয়াইটলিস্ট এবং লাইভ স্ট্যাটস) ধাপে ধাপে টেস্ট করতে পারবেন।
+## বর্তমান যাচাই-অবস্থা
 
----
+- Debug ও Release variant compile/build করা যায়। Unit test এবং বাস্তব device permission, MediaProjection, overlay, accessibility, biometric ও AI ফলাফল আলাদাভাবে চালিয়ে যাচাই করতে হবে।
+- Release signing তথ্য না থাকলে `assembleRelease` unsigned APK তৈরি করে। Unsigned APK Android-এ install হবে না।
+- পুরোনো signing key material Git history-তে ছিল। Release প্রকাশের আগে key rotate করুন এবং repository history পরিষ্কার করুন। নতুন signing key নিরাপদে configure না করা পর্যন্ত production release দেবেন না।
+- Reels feed detection নির্দিষ্ট supported app/feed-এর accessibility layout-এর ওপর নির্ভরশীল। Social app update হলে selector বদলাতে পারে। বর্তমানে কার্যকর intervention হচ্ছে full-screen Hard Lockout; Soft Warning/Friction Delay দেওয়া হয় না।
+- Settings-এর “Prevent Uninstallation” switch preference সংরক্ষণ করে; Device Owner/MDM ছাড়া এটি Android-এ uninstall আটকায় না।
 
-## 📑 সূচিপত্র (Table of Contents)
-1. [ইনস্টলেশন ও Play Protect / "App Not Installed" বাইপাস গাইড](#১-ইনস্টলেশন-ও-play-protect--app-not-installed-বাইপাস-গাইড)
-2. [ধাপে ধাপে টেস্টিং ফ্লো (Step-by-Step Hands-On Testing Flow)](#২-ধাপে-ধাপে-টেস্টিং-ফ্লো-step-by-step-hands-on-testing-flow)
-   - [ধাপ ১: অনবোর্ডিং ও পারমিশন হাব সেটআপ](#ধাপ-১-অনবোর্ডিং-ও-পারমিশন-হাব-সেটআপ-permissions-setup)
-   - [ধাপ ২: সিকিউরিটি ও পিন লক টেস্ট (Biometrics & Penalty Lockout)](#ধাপ-২-সিকিউরিটি-ও-পিন-লক-টেস্ট-biometrics--penalty-lockout)
-   - [ধাপ ৩: শিল্ড অ্যাক্টিভেশন ও AI রিয়েল-টাইম প্রোটেকশন (Visual Blur & Audio Guard)](#ধাপ-৩-শিল্ড-অ্যাক্টিভেশন-ও-ai-রিয়েল-টাইম-প্রোটেকশন-visual-blur--audio-guard)
-   - [ধাপ ৪: হোয়াইটলিস্ট ম্যানেজমেন্ট টেস্ট (App Whitelist & Privacy)](#ধাপ-৪-হোয়াইটলিস্ট-ম্যানেজমেন্ট-টেস্ট-app-whitelist--privacy)
-   - [ধাপ ৫: রিলস ও শর্টস ব্লকার টেস্ট (Reels & Shorts Blocker)](#ধাপ-৫-রিলস-ও-শর্টস-ব্লকার-টেস্ট-reels--shorts-blocker)
-   - [ধাপ ৬: অ্যানালিটিক্স ও অ্যাক্টিভিটি লগ ভেরিফিকেশন (Activity Log & Stats)](#ধাপ-৬-অ্যানালিটিক্স-ও-অ্যাক্টিভিটি-লগ-ভেরিফিকেশন-activity-log--stats)
-3. [প্রত্যাশা ও ফলাফল চেকলিস্ট (Expected Results & Acceptance Criteria)](#৩-প্রত্যাশা-ও-ফলাফল-চেকলিস্ট-expected-results--acceptance-criteria)
-4. [ডিভাইসভিত্তিক বিশেষ সেটিংস ও ট্রাবলশুটিং (OEM Background Optimization)](#৪-ডিভাইসভিত্তিক-বিশেষ-সেটিংস-ও-ট্রাবলশুটিং-oem-background-optimization)
+## ১. Build ও installation প্রস্তুতি
 
----
+### APK তৈরি
 
-## ১. ইনস্টলেশন ও Play Protect / "App Not Installed" বাইপাস গাইড
+প্রজেক্ট root-এ চালান:
 
-SafeScreen অ্যাপটি যেহেতু সরাসরি সোর্স কোড থেকে বিল্ড করা টেস্ট/ডেবাগ APK এবং এটি এখনো Google Play Store-এ আনুষ্ঠানিকভাবে প্রকাশিত হয়নি, তাই ফোনে ইনস্টল করার সময় অ্যান্ড্রয়েডের সিকিউরিটি সিস্টেম বা Google Play Protect সতর্কতা প্রদর্শন করতে পারে। নিচের নির্দেশিকা অনুযায়ী খুব সহজেই এটি সমাধান করুন:
-
-### ⚠️ সমস্যা ক: Google Play Protect ব্লক করলে ("Blocked by Play Protect" বা "Unrecognized App")
-
-গুগল প্লে প্রোটেক্ট অচেনা ডেভেলপার স্বাক্ষরিত APK দেখলে সতর্কতামূলক ডায়ালগ দেখায়।
-
-#### সমাধান পদ্ধতি ১: ইনস্টলার ডায়ালগ থেকে সরাসরি বাইপাস (সবচেয়ে সহজ)
-1. যখন স্ক্রিনে **"Blocked by Play Protect"** পপ-আপ আসবে, তখন সরাসরি "OK" বা "Don't Install" চাপবেন না।
-2. পপ-আপের নিচে থাকা **"More details"** (বা বাংলায় **"আরও বিবরণ"**) ড্রপডাউনে ট্যাপ করুন।
-3. নিচে ছোট অক্ষরে ভেসে উঠবে **"Install anyway"** (বা **"তবুও ইনস্টল করুন"**); সেখানে ট্যাপ করুন। অ্যাপটি কোনো বাধা ছাড়াই ফোনে ইনস্টল হয়ে যাবে।
-
-#### সমাধান পদ্ধতি ২: Google Play Store থেকে Play Protect সাময়িকভাবে নিষ্ক্রিয় করা
-যদি ফোনে "Install anyway" অপশনটি না আসে, তবে নিচের সহজ ধাপগুলো অনুসরণ করুন:
-1. আপনার ফোনের **Google Play Store** অ্যাপটি ওপেন করুন।
-2. উপরের ডান কোণে থাকা আপনার **প্রোফাইল ছবিতে (Profile Icon)** ট্যাপ করুন।
-3. মেনু থেকে **"Play Protect"** অপশনে যান।
-4. ওপরের ডান কোণে থাকা **Settings (গিয়ার ⚙️ আইকন)**-এ ট্যাপ করুন।
-5. **"Scan apps with Play Protect"** অপশনটি টগল করে সাময়িকভাবে **Turn off (বন্ধ)** করে দিন।
-6. এবার SafeScreen APK ফাইলটিতে ট্যাপ করে ইনস্টল দিন। সফলভাবে ইনস্টল হওয়ার পর আপনি চাইলে Play Protect পুনরায় অন করে দিতে পারেন।
-
----
-
-### ⚠️ সমস্যা খ: "App Not Installed" (অ্যাপ ইনস্টল হয়নি) দেখালে
-
-যদি ইনস্টল করার সময় "App not installed as package appears to be invalid" বা সাধারণ "App Not Installed" ত্রুটি দেখায়, তবে তার মূল কারণ হলো ফোনে পূর্বের কোনো পুরানো বা ভিন্ন সাইনিং কি-র ভার্সন ইনস্টল থাকা।
-
-#### সমাধান পদ্ধতি:
-1. আপনার ফোনে SafeScreen-এর কোনো পুরানো সংস্করণ ইনস্টল করা থাকলে প্রথমে সেটিকে **Uninstall (আনইনস্টল)** করে দিন।
-2. ফোনের ইন্টারনাল স্টোরেজ স্পেস পর্যাপ্ত খালি আছে কি না নিশ্চিত করুন (কমপক্ষে ৫০০ MB ফ্রি স্পেস থাকা বাঞ্ছনীয়)।
-3. ফোনটি একবার **Restart** করে নিন (প্রয়োজনে)।
-4. এবার নতুন `app-debug.apk` ফাইলে ট্যাপ করে ইনস্টল সম্পন্ন করুন।
-
----
-
-### ⚠️ সমস্যা গ: "Install Unknown Apps" পারমিশন চাওয়া হলে
-আপনি যদি WhatsApp, Telegram বা Chrome থেকে APK ফাইল ডাউনলোড করে ট্যাপ করেন, তবে সিস্টেম "For your security, your phone is not allowed to install unknown apps from this source" ডায়ালগ দেখাতে পারে:
-1. ডায়ালগে **"Settings"** অপশনে ট্যাপ করুন।
-2. **"Allow from this source"** টগলটি চালু করে দিন।
-3. ফোনের ব্যাক বাটন চেপে ফিরে এসে **"Install"** বাটনে ট্যাপ করুন।
-
----
-
-### 💻 পিসি থেকে সরাসরি ADB দিয়ে ইনস্টল করার বিকল্প পদ্ধতি (ডেভেলপারদের জন্য)
-যদি ফোনটি ইউএসবি ক্যাবল দিয়ে পিসির সাথে যুক্ত থাকে এবং Developer Options-এ USB Debugging অন থাকে, তবে টার্মিনালে নিচের কমান্ডটি দিলেই অ্যাপটি সরাসরি ফোনে ইনস্টল হয়ে যাবে:
 ```powershell
-adb install -r -d app/build/outputs/apk/debug/app-debug.apk
+.\gradlew.bat assembleDebug
+.\gradlew.bat assembleRelease
 ```
 
----
+সাধারণ output location:
 
-## ২. ধাপে ধাপে টেস্টিং ফ্লো (Step-by-Step Hands-On Testing Flow)
+- Debug: `app/build/outputs/apk/debug/app-debug.apk`
+- Release: `app/build/outputs/apk/release/app-release-unsigned.apk` যখন signing configure করা নেই। Signing configure থাকলে ফাইলের নাম `app-release.apk` হতে পারে।
 
-ইনস্টলেশন সম্পন্ন হওয়ার পর অ্যাপ আইকনে ট্যাপ করে ওপেন করুন। নিচে উল্লেখিত ধাপগুলো ক্রমানুসারে টেস্ট করুন:
+Release APK ইনস্টল করার আগে signing configure করুন। `local.properties`-এ `release.storeFile`, `release.storePassword`, `release.keyAlias`, `release.keyPassword` দিন, অথবা `SAFESCREEN_RELEASE_STORE_FILE`, `SAFESCREEN_RELEASE_STORE_PASSWORD`, `SAFESCREEN_RELEASE_KEY_ALIAS`, `SAFESCREEN_RELEASE_KEY_PASSWORD` environment variable ব্যবহার করুন। Secret কোনো tracked file-এ commit করবেন না। APK signer যাচাই করতে Android SDK-এর `apksigner verify --print-certs <apk>` চালান।
 
+### ফোনে ইনস্টল
+
+1. APK-টি trusted build machine/repository থেকে কপি করুন; অজানা mirror বা re-upload করা APK ব্যবহার করবেন না।
+2. Android prompt এলে যে file manager/browser দিয়ে APK খুলেছেন, কেবল সেই source-এর জন্য **Install unknown apps** অনুমতি দিন। ইনস্টল শেষে অনুমতিটি বন্ধ করুন।
+3. Play Protect সতর্ক করলে ইনস্টল থামিয়ে APK-এর উৎস ও signer fingerprint যাচাই করুন। নিশ্চিতভাবে নিজের team-এর build হলে Android-এর installer যদি per-install **Install anyway** বিকল্প দেয়, তখনই সেটি বিবেচনা করুন। Play Protect পুরোপুরি বন্ধ করে রাখবেন না।
+4. APK unsigned হলে certificate/parse error স্বাভাবিক: private signing config দিয়ে পুনরায় Release build করুন।
+
+### “App not installed” troubleshooting
+
+- পুরোনো SafeScreen ইনস্টল থাকলে update-এর signing certificate একই হতে হবে। Debug ও Release key আলাদা হতে পারে; mismatch হলে Android `INSTALL_FAILED_UPDATE_INCOMPATIBLE` দেখায়। পুরোনো app uninstall করলে local PIN/preferences/log হারাতে পারে—QA data মুছে যাবে ধরে নিন।
+- APK signed কি না `apksigner verify --print-certs <apk>` দিয়ে দেখুন। `INSTALL_PARSE_FAILED_NO_CERTIFICATES` হলে unsigned APK; signing configure করে build করুন।
+- ফোনের Android version `minSdk 29` বা তার বেশি, পর্যাপ্ত storage, এবং device policy install আটকাচ্ছে কি না যাচাই করুন।
+- USB debugging-সহ install error দেখতে:
+
+```powershell
+adb install -r app/build/outputs/apk/release/app-release.apk
 ```
-[SplashScreen] ➡️ [Onboarding] ➡️ [PermissionHub] ➡️ [HomeScreen (Dashboard)]
-                                                          │
-  ┌───────────────────────┬───────────────────────────────┼──────────────────────────────┐
-  ▼                       ▼                               ▼                              ▼
-[Security Lock]    [AI Shield Armor]              [App Whitelist]                 [Reels Blocker]
-(PIN & Biometrics) (Live Blur & Audio Mute)       (Banking & Exemption)           (Doomscroll Intercept)
-```
 
----
+ADB-এর পূর্ণ `INSTALL_FAILED_*` ফল দেখে কারণ আলাদা করুন। `-d` দিয়ে version downgrade জোর করে এড়িয়ে চলবেন না।
 
-### ধাপ ১: অনবোর্ডিং ও পারমিশন হাব সেটআপ (Permissions Setup)
+## ২. প্রথম চালু ও Permission Hub
 
-1. **SplashScreen ও Onboarding:**
-   - অ্যাপ ওপেন করলে সেন্ট্রাল ৩ডি বেভেল্ড শিল্ড ও পালসিং লোডার সহ সাইবার স্প্ল্যাশ স্ক্রিন দেখতে পাবেন।
-   - এরপর অনবোর্ডিং স্ক্রিন আসবে। ৩টি ফিচার স্লাইড দেখে নিচে থাকা নিয়ন সায়ান **"Get Started"** বাটনে ট্যাপ করুন।
+1. App data পরিষ্কার করে SafeScreen চালু করুন। Splash-এর পর onboarding slides দেখে **Get Started** চাপুন।
+2. Permission Hub-এ পাঁচটি permission card দেখুন: **Display Over Other Apps**, **Screen Capture**, **Audio Playback Capture**, **Accessibility Service**, **Foreground Notification**।
+3. প্রতিটি card-এর action চাপুন; OS screen-এ permission দিন, app-এ ফিরে status **Granted** হয়েছে কি না দেখুন। Accessibility-এর জন্য Settings → Accessibility → SafeScreen → Use service চালু করে ফিরে আসুন।
+4. **Screen Capture**-এ Android-এর MediaProjection consent dialog-এ শুরু অনুমোদন করুন। Cancel করলে এটি Granted হওয়া বা Shield Active দেখানো উচিত নয়।
+5. **Allow/Continue** action কেবল প্রয়োজনীয় permission সব Granted হলে Home-এ নেবে। Battery optimization prompt ঐচ্ছিক; এটি screen-capture consent-এর বিকল্প নয়।
 
-2. **Permission Hub স্ক্রিন (সবগুলো পারমিশন প্রদান):**
-   অনবোর্ডিং পার হওয়ার পর আপনি `PermissionHubScreen`-এ প্রবেশ করবেন। SafeScreen-এর অন-ডিভাইস এআই প্রোটেকশন কাজ করার জন্য ৫টি মূল সিস্টেম পারমিশন প্রয়োজন:
-   
-   - **১. Overlay Permission (Display over other apps):**
-     - "Display Over Other Apps" কার্ডে ট্যাপ করুন। 
-     - ফোনের সিস্টেম সেটিংসে নিয়ে যাবে। তালিকায় "SafeScreen" খুঁজে বের করে টগলটি **ON (Allow)** করে দিন এবং ব্যাক বাটন চাপুন।
-     *(উদ্দেশ্য: আপত্তিকর কন্টেন্ট এলে স্ক্রিনের ওপর রিয়েল-টাইম ফ্রস্টেড ব্লার বা আওয়ারগ্লাস দেখানোর জন্য।)*
-   
-   - **২. Screen Capture Permission (MediaProjection):**
-     - "Screen Capture" কার্ডে ট্যাপ করুন।
-     - অ্যান্ড্রয়েডের সিকিউরিটি পপ-আপ আসবে। সেখানে **"A single app"** বা **"Entire screen"** আসলে **"Entire screen"** সিলেক্ট করে **"Start now"** দিন।
-     *(উদ্দেশ্য: অন-ডিভাইস নিউরাল নেটওয়ার্কে স্ক্রিনের ভিডিও ফ্রেম স্ক্যান করার জন্য।)*
-   
-   - **৩. Audio Capture Permission (Record Audio):**
-     - "Audio Capture" কার্ডে ট্যাপ করুন।
-     - সিস্টেম ডায়ালগে **"While using the app"** সিলেক্ট করুন।
-     *(উল্লেখ্য: SafeScreen কোনো পার্সোনাল ভয়েস রেকর্ড করে না; এটি কেবলমাত্র সিস্টেমের অভ্যন্তরীণ স্পিকার অডিও থেকে এক্সপ্লিসিট সাউন্ড ডিটেক্ট করে।)*
-   
-   - **৪. Accessibility Service Permission (অ্যাক্সেসিবিলিটি সার্ভিস):**
-     - "Accessibility Service" কার্ডে ট্যাপ করুন।
-     - সিস্টেম অ্যাক্সেসিবিলিটি সেটিংসে "Downloaded Apps" বা "Installed Services" অপশনে যান।
-     - **SafeScreen** সার্ভিসটিতে ট্যাপ করে সুইচটি **ON** করুন এবং সিস্টেম ওয়ার্নিং ডায়ালগে "Allow" বা "OK" দিন।
-     *(উদ্দেশ্য: ইনস্টাগ্রাম রিলস, ইউটিউব শর্টস বা টিকটকে অতিরিক্ত সময় কাটালে স্ক্রিন-টাইম ট্র্যাকিং ও ইন্টারভেনশন কার্যকর করা।)*
-   
-   - **৫. Notification Permission:**
-     - প্রম্পট আসলে ফোরগ্রাউন্ড সার্ভিসের জন্য নোটিফিকেশন **"Allow"** করুন।
-   
-   - **৬. Battery Optimization (গোল্ডেন ডায়ালগ):**
-     - পারমিশন কার্ডগুলোর নিচে গোল্ডেন ব্যাটারি বটম শিট আসবে ("Unrestricted Battery Access")। 
-     - **"Allow Unrestricted"** বাটনে ট্যাপ করুন এবং সিস্টেম ডায়ালগে **"Allow"** চাপুন।
-     *(উদ্দেশ্য: অ্যান্ড্রয়েড ওএস যাতে মেমোরি সেভিংয়ের নামে ব্যাকগ্রাউন্ড থেকে শিল্ড বন্ধ না করে দেয়।)*
+**Expected:** Permission Hub-এ status ফিরে এসে refresh হবে। Notification tray-তে Shield active না থাকলে “SafeScreen Active” notification থাকবে না। Screen Capture revoke/cancel করলে protection শুরু হবে না।
 
-> 💡 **ভেরিফিকেশন চেক (Security Check):**  
-> সব কয়টি পারমিশন গ্রান্ট না হওয়া পর্যন্ত নিচে থাকা মূল **"Enter Shield Hub"** বাটনটি আনলক হবে না। সবগুলো পারমিশন গ্রান্ট হলে কার্ডগুলোতে নিয়ন গ্রিন চেকমার্ক আসবে এবং আপনি হোম স্ক্রিনে প্রবেশ করবেন।
+## ৩. Shield, Visual Blur ও Blur Style
 
----
+1. Home dashboard-এর বড় shield button চাপুন। Screen capture consent চাইলে অনুমতি দিন।
+2. Home-এর status pill ও foreground notification-এ **AI SHIELD ACTIVE** দেখুন। Notification-এর **Stop Shield** চাপলে Home disarmed হবে এবং notification সরে যাবে।
+3. আবার চালু করে **Visual Shield** switch অন রাখুন। একটি আলাদা app-এ অনুমতিপ্রাপ্ত test image/video দেখান; classifier high-confidence visual threat শনাক্ত করলে Live Blur overlay দেখা উচিত। Safe content-এ overlay না আসা স্বাভাবিক।
+4. Home → **Visual Shield** card / palette button থেকে blur style sheet খুলুন। Frosted/Pixelated/Opaque style, intensity বদলে **Apply** করুন; DataStore-backed selection Home-এ ফিরে বজায় আছে কি না দেখুন।
+5. Settings → **Manage App Whitelist**-এ একই test app exempt করুন। ওই app foreground-এ থাকলে visual scan/blur intervention বন্ধ হওয়া উচিত। Exemption সরিয়ে পুনরায় পরীক্ষা করুন।
+6. Android notification-এর Stop, OS-এর screen-capture stop, এবং process restart আলাদা করে পরীক্ষা করুন। Restart-এর পরে পুরোনো grant ব্যবহার করে service Active হওয়া উচিত নয়; Main screen থেকে fresh screen-capture consent চাইবে।
 
-### ধাপ ২: সিকিউরিটি ও পিন লক টেস্ট (Biometrics & Penalty Lockout)
+**Expected:** Service capture সফল হওয়ার পরেই Active status আসে। Capture failure/revoke-এ service ও Home inactive হয়। App restart-এ fresh system consent প্রয়োজন।
 
-SafeScreen-এর সেটিংস বা শিল্ড যে কেউ যেন হুট করে পরিবর্তন বা বন্ধ না করতে পারে, সেজন্য এতে মিলিটারি-গ্রেড পিন ও বায়োমেট্রিক সিকিউরিটি রয়েছে।
+## ৪. Audio Playback Capture ও Mute
 
-1. **পিন ও বায়োমেট্রিক এনরোলমেন্ট:**
-   - অ্যাপের নিচের ফ্লোটিং বটম বার থেকে **Settings** ট্যাবে যান।
-   - **"PIN & Biometric Lock"** টগলটি অন করুন।
-   - সাথে সাথে ৩ডি প্যাডলক এম্বলম সহ **Security Lock** স্ক্রিন ওপেন হবে (Enrollment Mode)।
-   - পছন্দের যেকোনো ৪-ডিজিটের পিন টাইপ করুন (যেমন: `2580`)।
-   - এবার কনফার্মেশনের জন্য পুনরায় একই পিন টাইপ করুন। পিন সফলভাবে এনরোল হয়ে যাবে।
-   
-2. **বায়োমেট্রিক আনলক টেস্ট:**
-   - স্ক্রিনে ফোনের আসল `BiometricPrompt` ভেসে উঠবে। আপনার ফিঙ্গারপ্রিন্ট সেন্সরে আঙুল ছোঁয়ান। তাৎক্ষণিকভাবে অ্যাপ আনলক হবে।
+1. Permission Hub-এ **Audio Playback Capture**/`RECORD_AUDIO` অনুমতি দিন। Home-এ Shield চালু করুন এবং **Audio Mute** switch অন রাখুন।
+2. এমন media app ব্যবহার করুন যার audio capture policy playback capture অনুমোদন করে। অনুমতিপ্রাপ্ত, classifier-এর জন্য স্পষ্ট test audio চালান; অন্য app-এর audio policy capture আটকালে সেটিকে test failure ধরে নেবেন না।
+3. Classifier audio threat শনাক্ত করলে Home telemetry/notification পরিবর্তন এবং threat log দেখুন। App music stream mute করলে ফোনের media volume indicator/state পর্যবেক্ষণ করুন।
+4. Safe audio, whitelist করা app, Audio Mute switch off, এবং Stop Shield—প্রতিটি অবস্থায় unmute/স্বাভাবিক audio ফিরে আসে কি না দেখুন।
 
-3. **৫-অ্যাটেম্পট লকআউট পেনাল্টি টেস্ট (খুব গুরুত্বপূর্ণ):**
-   - সিকিউরিটি লক স্ক্রিন পুনরায় ওপেন করুন (বা অ্যাপ বন্ধ করে চালু করুন)।
-   - **ইচ্ছাকৃতভাবে ভুল পিন চাপুন (যেমন: `0000`):**
-     - লক্ষ্য করুন: ৪টি ডট লাল রঙে ঝিলিক দেবে, কিপ্যাডে ট্যাকটাইল ভাইব্রেশন হবে এবং স্ক্রিনে হরিজন্টাল শেক (Shake Error) অ্যানিমেশন প্লে হবে।
-   - **টানা ৫ বার ভুল পিন চাপুন:**
-     - ৫ম বার ভুল পিন দেওয়ার পর লক্ষ্য করুন: কিপ্যাড সম্পূর্ণ লক (Disabled) হয়ে যাবে।
-     - স্ক্রিনে লাল অক্ষরে লাইভ কাউন্টডাউন টাইমার ভেসে উঠবে:  
-       `Too many failed attempts. Try again in 30s` (প্রতি সেকেন্ডে ৩০ থেকে কমে শূন্য হবে)।
-     - এই ৩০ সেকেন্ডের মধ্যে কোনো বাটন চাপলেও ইনপুট গ্রহণ করবে না।
-     - ৩০ সেকেন্ড শেষ হলে লক খুলে যাবে এবং সঠিক পিন দিলে আনলক হবে।
+**Expected:** Audio stream কেবল capture-যোগ্য source ও enabled guard-এর ক্ষেত্রে বিশ্লেষিত হবে। Intervention-এর পরে safe state বা shield stop-এ volume restore হওয়া উচিত। অন্য app-এর capture-block policy থাকলে audio event না-ও আসতে পারে।
 
----
+## ৫. PIN, Biometric ও Lockout
 
-### ধাপ ৩: শিল্ড অ্যাক্টিভেশন ও AI রিয়েল-টাইম প্রোটেকশন (Visual Blur & Audio Guard)
+1. Settings খুলে **PIN Lock** enable চাপুন। আগে PIN না থাকলে **Create a 4-Digit PIN** flow-এ PIN লিখে দ্বিতীয়বার confirm করুন। Success হলে ফিরে এসে PIN enabled হয়েছে কি না যাচাই করুন। কোনো default PIN নেই।
+2. **Change PIN** চাপুন। নতুন PIN field আসার আগে বর্তমান PIN দিন, অথবা configured/available হলে AndroidX `BiometricPrompt`-এ authenticate করুন। ভুল পুরোনো PIN দিলে নতুন PIN enrollment শুরু হওয়া চলবে না।
+3. Biometric পরীক্ষার আগে OS Settings-এ fingerprint/face enroll করুন এবং SafeScreen-এর Security Lock screen খুলুন। BiometricPrompt এলে সফল authentication-এর পর unlock/change flow এগোনো উচিত; Cancel বা failed biometric-এ PIN বদলানোর অনুমতি দেওয়া যাবে না।
+4. PIN entry screen-এ 4-digit PIN ভুলভাবে পাঁচবার দিন। পঞ্চম ভুলের পর 30-second countdown দেখা এবং PIN input বন্ধ থাকা উচিত।
+5. Countdown চলাকালে screen থেকে বেরিয়ে আবার খুলুন; QA device-এ process restart করে পুনরায় চেষ্টা করুন। সময় শেষ না হওয়া পর্যন্ত lockout বহাল থাকবে; সময় শেষে সঠিক PIN গ্রহণ হবে।
+6. Security screen-কে ছোট portrait, landscape ও বড় font-এ পরীক্ষা করুন; scroll করে keypad ও footer ব্যবহার করা যায় কি না দেখুন।
 
-1. **শিল্ড সক্রিয়করণ (Arming the Shield):**
-   - **Home** ট্যাবে আসুন।
-   - সেন্ট্রাল বিশাল ৩ডি বেভেল্ড শিল্ড বাটনে ট্যাপ করুন।
-   - বাটনটির স্টেটাস **"DISARMED"** থেকে পরিবর্তন হয়ে উজ্জ্বল **"ARMED"** (নিয়ন গ্রিন) হয়ে যাবে। চারপাশে ইলেকট্রিক পালসিং হ্যালো চালু হবে এবং এআই ফ্রেম রেট কাউন্টার (৫ FPS) সক্রিয় হবে।
-   - ফোনের স্ট্যাটাস বারে পারসিস্টেন্ট প্রোটেকশন নোটিফিকেশন দৃশ্যমান হবে।
+**প্রত্যাশিত ফল:** PIN hash per-PIN salt-সহ PBKDF2-HMAC-SHA256 হিসেবে সংরক্ষিত হয়; পুরোনো PIN যাচাই ছাড়া Change PIN এগোয় না। Restart-এর পরও lockout বহাল থাকে। Biometric hardware/enrollment না থাকলে পরীক্ষাটি N/A হিসেবে চিহ্নিত করুন।
 
-2. **ভিজুয়াল ব্লার টেস্ট (Visual NSFW Detection & Live Blur Overlay):**
-   - SafeScreen হোম বাটন চেপে মিনিমাইজ করে ফোনের **Google Chrome** বা অন্য যেকোনো ওয়েব ব্রাউজার ওপেন করুন।
-   - গুগলে গিয়ে যেকোনো সেনসিটিভ বা এডাল্ট ছবি/কনটেন্ট ওপেন করুন (টেস্টিংয়ের জন্য NSFW আর্ট বা সেনসিটিভ মডেলের ছবি সার্চ করতে পারেন)।
-   - **ম্যাজিক লক্ষ্য করুন:** ছবি স্ক্রিনে রেন্ডার হওয়া মাত্রই মাইক্রোসেকেন্ডের মধ্যে SafeScreen-এর অন-ডিভাইস TensorFlow Lite এআই কন্টেন্টটি শনাক্ত করবে এবং পুরো স্ক্রিনের ওপর ফুল-স্ক্রিন ফ্রস্টেড সাইবার ব্লার ওভারলে (`LiveBlurOverlay`) চেপে বসবে! আপত্তিকর কোনো কিছুই দেখা যাবে না।
-   - **টেম্পোরারি পিক (5-Sec Peek) টেস্ট:** 
-     - ব্লার ওভারলেতে থাকা **"👁 Temporary Peek"** বাটনে ট্যাপ করুন।
-     - ব্লার অপাসিটি কমে যাবে এবং নিচে ৫ সেকেন্ডের রিভার্স কাউন্টডাউন শুরু হবে (`5, 4, 3, 2, 1`)।
-     - ৫ সেকেন্ড শেষ হওয়া মাত্রই কোনো টাচ ছাড়াই স্বয়ংক্রিয়ভাবে আবার ১০০% ওপেসিটিতে ব্লার লক হয়ে যাবে!
-   - **ডিসমিস টেস্ট:** "✕ Dismiss Shield" ট্যাপ করলে ওভারলেটি সরে যাবে।
+## ৬. Dynamic App Whitelist
 
-3. **স্মার্ট অডিও গার্ড টেস্ট (Audio Explicit Detection):**
-   - ব্রাউজার বা কোনো অ্যাপে লাউড এক্সপ্লিসিট অডিও বা সেনসিটিভ সাউন্ড ট্র্যাক প্লে করুন।
-   - SafeScreen-এর YAMNet অডিও ক্লাসিফায়ার সিস্টেম মিডিয়া স্ট্রিম প্রসেস করে স্বয়ংক্রিয়ভাবে অডিও ব্লকিং ফ্ল্যাগ ট্রিগার করবে এবং অ্যাক্টিভিটি লগে রেকর্ড করবে।
+1. Settings → **Manage App Whitelist** খুলুন। তালিকায় PackageManager থেকে পাওয়া launchable installed apps দেখা যাবে; কোনো demo banking app আগে থেকে exempt থাকবে না।
+2. Search field-এ app name/package লিখুন, category chips বদলান, তারপর app-এর switch অন করে count বাড়ে কি না দেখুন।
+3. Screen বন্ধ করে আবার খুলুন—নির্বাচন Room database-এ টিকে থাকতে হবে। নতুন installed launcher app install করে তালিকায় দেখা যায় কি না যাচাই করুন; uninstall করা app-এর row পরের sync-এ সরে যাবে।
+4. একটি app whitelist করে সেটিকে foreground-এ আনুন, তারপর shield test করুন। Whitelisted package AI scan থেকে exempt হবে। Switch off করে আবার দেখুন।
+5. Foreground package অজানা/null হলে সেটিকে exemption ধরা যাবে না; AI scan fail-safe হিসেবে চালু থাকবে।
 
----
+**Expected:** Newly discovered apps default protected (`not whitelisted`); user নিজে যেকোনো তালিকাভুক্ত app exempt করতে পারে। Android package visibility-এর কারণে তালিকাটি launcher-visible apps-এ সীমিত, সব hidden/system package নয়।
 
-### ধাপ ৪: হোয়াইটলিস্ট ম্যানেজমেন্ট টেস্ট (App Whitelist & Privacy)
+## ৭. Reels & Shorts blocker / Focus
 
-আপনি হয়তো আপনার ব্যাংকিং অ্যাপ বা কোনো বিশ্বস্ত সোশ্যাল চ্যাটে ব্লার চান না। SafeScreen-এর ইন্টেলিজেন্ট হোয়াইটলিস্ট এটি নিশ্চিত করে।
+1. Accessibility service enable আছে এবং overlay permission দেওয়া আছে নিশ্চিত করুন। Home-এ **Reels Blocker** অন করুন, অথবা bottom navigation → **Focus** → **Reels & Shorts Control** খুলে **Strict Mode** অন করুন।
+2. Instagram Reels, YouTube Shorts, TikTok-এ target feed খুলুন। Accessibility event/feed signature recognize হলে Home usage count feed active থাকাকালীন প্রতি minute বাড়বে. TikTok detection broad; Instagram/YouTube feed detection app-version/layout-এর ওপর নির্ভরশীল.
+3. Limit control-এর minimum 15 minutes সেট করুন (UI slider-এ 15-minute steps)। Limit পেরোলে full-screen **Focus Time Active** intervention দেখা এবং Activity Timeline-এ `REELS_LIMIT` event আসা উচিত। Facebook-কে Add App দিয়ে যোগ করলে সেটিও পরীক্ষা করা যায়।
+4. Feed থেকে বের হলে usage ticker থামা উচিত। Strategy-তে বর্তমানে **Hard Lockout**-ই কার্যকর; emergency 2-minute pass PIN চায় না, এটি 2 মিনিট snooze দেয়।
+5. স্থানীয় দিন বদলের পর/পরদিন খুললে usage 0-তে ফেরে কি না পরীক্ষা করুন। Force-stop/restart-এর পর অন্যান্য preferences অক্ষত থাকতে হবে।
 
-1. **হোয়াইটলিস্টে অ্যাপ যোগ করা:**
-   - SafeScreen ওপেন করে **Settings** ট্যাবে যান -> **"Manage App Whitelist"** কার্ডে ট্যাপ করুন।
-   - স্ক্রিনের উপরে সার্চ বারে লিখুন **"Chrome"** (অথবা আপনার ব্যবহৃত ব্রাউজার)।
-   - ব্রাউজারের পাশের সুইচটি **ON** করে দিন (Exempted স্ট্যাটাস চালু হবে)।
-   - লক্ষ্য করুন: স্ক্রিনের নিচে স্টিকি সামারি পিল-এ এক্সেম্পটেড অ্যাপ কাউন্ট বেড়ে যাবে।
-   *(উল্লেখ্য: PayPal, Google Pay ইত্যাদি ব্যাংকিং অ্যাপগুলো ডিফল্টভাবেই গোল্ডেন `[ 🔒 BANKING ]` ব্যাজ সহ হোয়াইটলিস্টেড থাকে।)*
+**Expected:** Accessibility permission ছাড়া feed detection/intervention চলবে না। App disabled বা Strict Mode off থাকলে overlay আসবে না। OS/app UI পরিবর্তনে signature detection ব্যর্থ হতে পারে; supported app-এ বারবার ব্যর্থ হলে bug হিসেবে নথিভুক্ত করুন।
 
-2. **হোয়াইটলিস্ট কার্যকারিতা টেস্ট:**
-   - এবার পুনরায় Google Chrome ব্রাউজারে যান এবং পূর্বের সেই একই সেনসিটিভ পেজটি রিলোড করুন।
-   - **ফলাফল দেখুন:** এবার স্ক্রিনে কোনো ব্লার ওভারলে আসবে না! SafeScreen চিহ্নিত করেছে যে Chrome বর্তমানে হোয়াইটলিস্টেড।
-   - SafeScreen-এর সেটিংস থেকে আবার Chrome-এর টগলটি **OFF** করে দিন। Chrome-এ ফিরলে পুনরায় তাৎক্ষণিক ব্লার কার্যকর হবে।
+## ৮. Activity Timeline ও Stats
 
----
+1. উপরের Visual/Audio/Reels পরীক্ষায় অন্তত একটি বাস্তব event তৈরি করুন। Bottom navigation → **Stats** খুলুন; **Today / 7 Days / 30 Days** বেছে chart, counts, category breakdown ও top apps দেখুন।
+2. **Detailed Activity Log**/See All খুলুন। Event category filter (Visual Blur, Audio Guard, Reels Limit) এবং date group expand/collapse পরীক্ষা করুন।
+3. Log item-এ timestamp, source app, category, action/confidence আছে কি না দেখুন। AI log rate-limit-এর কারণে 2.5 seconds-এর মধ্যে হওয়া একাধিক event-এর একটি মাত্র লেখা হতে পারে।
+4. Activity Timeline-এ **Clear Log** চাপুন, confirmation cancel করে আবার খুলুন—data থাকা উচিত। Confirm করলে logs মুছবে; পরে Stats counts শূন্য হবে।
+5. Settings → Data & Storage → **Clear Threat History** পরীক্ষা করুন। Confirm-এর পর log/stats মুছবে; whitelist, PIN, reels usage/preferences অক্ষত থাকবে।
 
-### ধাপ ৫: রিলস ও শর্টস ব্লকার টেস্ট (Reels & Shorts Blocker)
+**প্রত্যাশিত ফল:** Clean install-এ counts 0 ও list খালি থাকবে—demo metrics আশা করবেন না। Stats ও logs local Room data ব্যবহার করে।
 
-ডুমস্ক্রোলিং বন্ধ করার জন্য SafeScreen-এ রয়েছে ফ্ল্যাগশিপ রিলস ও শর্ট-ভিডিও ব্লকার।
+## ৯. Settings, Focus Schedule ও navigation
 
-1. **টাইম লিমিট কনফিগারেশন:**
-   - নিচের ন্যাভিগেশন বার থেকে **Focus** ট্যাবে যান।
-   - **"Reels & Shorts Control"** স্ক্রিন ওপেন করুন।
-   - **"Strict Mode"** টগলটি চালু করুন।
-   - ইনস্টাগ্রাম বা ইউটিউব শর্টসের জন্য দৈনিক লিমিট স্লাইডার টেনে একদম সর্বনিম্নে **১ মিনিট (1 Minute)** নির্ধারণ করুন।
-   - ইন্টারভেনশন স্ট্র্যাটেজি হিসেবে **"Hard Lockout"** বা **"Take a Walk"** সিলেক্ট করুন।
+- Bottom bar-এ Home, Stats, Focus, Settings-এর মধ্যে যাতায়াত এবং Back/forward পরীক্ষা করুন; crash বা ভুল selected tab থাকা চলবে না।
+- Settings-এ AI sensitivity, performance profile, Visual/Audio/Reels toggle বদলে screen আবার খুলুন; নির্বাচন persist হয়েছে কি না দেখুন।
+- **Focus Time Schedules**-এ Add Custom Focus Block চাপুন, title/time/day বদলে Save করুন; schedule তালিকায় দেখা, enable/disable ও delete পরীক্ষা করুন।
+- Privacy Policy/Licenses খুলে Android Back দিয়ে Settings-এ ফিরুন।
+- “Prevent Uninstallation” কেবল preference সংরক্ষণ করে; Device Owner mode ছাড়া সাধারণ app uninstall আটকাতে পারে না। শুধু toggle persistence পরীক্ষা করুন; uninstall আটকানো pass criteria নয়।
 
-2. **ডুমস্ক্রোল ইন্টারভেনশন টেস্ট:**
-   - এবার **Instagram** ওপেন করে **Reels** ফিডে যান অথবা **YouTube** অ্যাপ খুলে **Shorts** ট্যাবে ভিডিও স্ক্রোল করতে থাকুন।
-   - ঠিক ১ মিনিট রিলস দেখার পর ম্যাজিক দেখুন:
-   - অ্যাক্সেসিবিলিটি সার্ভিস রিলস নোড শনাক্ত করে ইনস্ট্যান্ট পুরো স্ক্রিনের ওপর নো-ডিসমিসিবল **"Focus Intervention Overlay"** হাজির করবে!
-   - স্ক্রিনের মাঝখানে ৩ডি সাইবার শিল্ড ও গ্লোয়িং ম্যাজেন্টা আওয়ারগ্লাস দেখা যাবে। হেডিং থাকবে:  
-     `"Deep Breath • Reclaim Your Focus"`।
-   - আপনি ব্যাক বাটন বা হোম বাটন চাপলেও রিলস ফিডে ফিরে যেতে পারবেন না।
-   - **ইমার্জেন্সি পাস টেস্ট:** 
-     - জরুরি প্রয়োজনে স্ক্রিনের **"2-Min Emergency Pass"** বাটনে ট্যাপ করুন।
-     - আপনাকে ২ মিনিটের জন্য রিলস দেখার বিশেষ গ্রেস পিরিয়ড দেওয়া হবে।
-     - ২ মিনিট শেষ হওয়া মাত্রই আবার ফুল লকআউট স্ক্রিন ফেরত আসবে!
+## ১০. Final QA checklist ও bug নথিভুক্তি
 
----
+প্রতিটি flow-এর জন্য device model, Android/API, app version, build type, permission state, steps, expected/actual ফল, logcat excerpt ও screenshot/video লিখে রাখুন। Crash হলে `adb logcat -d -t 2000` সংগ্রহ করুন। Pass, Fail, Blocked, N/A আলাদা করে চিহ্নিত করুন; AI classifier-এর একবারের ভুল detection-কে নিশ্চিত bug বলবেন না—পুনরায় ঘটানোর প্রমাণ যোগ করুন।
 
-### ধাপ ৬: অ্যানালিটিক্স ও অ্যাক্টিভিটি লগ ভেরিফিকেশন (Activity Log & Stats)
-
-টেস্টিং শেষে আপনি জানতে পারবেন SafeScreen আপনার ডিভাইসে কী কী থ্রেট প্রতিহত করেছে।
-
-1. **লাইভ স্ট্যাটস চার্টস:**
-   - নিচের বার থেকে **Stats** ট্যাবে যান।
-   - **আজকের রিয়েল মেট্রিক্স:** আজকের দিনে মোট কয়টি ফ্রেম ব্লার হয়েছে, কয়টি অডিও মিউট হয়েছে এবং কত মিনিট রিলস ব্লক হয়েছে তা কাস্টম ক্যানভাস ডুয়াল-বার চার্ট ও ডোনাট ক্যাটাগরি ব্রেকডাউনে দেখতে পাবেন।
-
-2. **ডিটেইল্ড অ্যাক্টিভিটি টাইমলাইন:**
-   - Stats স্ক্রিন থেকে **"Detailed Activity Log"** বাটনে ট্যাপ করুন।
-   - লক্ষ্য করুন: আপনি কিছুক্ষণ আগে Chrome বা Instagram-এ যে টেস্টগুলো করেছেন, সেগুলোর প্রতিটি ইভেন্ট রিয়েল-টাইমে টাইমলাইনে দেখা যাচ্ছে (যেমন: *Chrome • Visual Blur • Today 11:42 PM*, কনফিডেন্স স্কোর ৯৬%)। কোনো ডামি বা ফেক ডেটা নেই!
-   - উপরে ফিল্টার চিপস (`[All]` `[Visual]` `[Audio]` `[Reels]`) পরিবর্তন করে ক্যাটাগরিভিত্তিক ফিল্টারিং যাচাই করুন।
-
-3. **ক্লিয়ার ডাটাবেস ক্যাশ টেস্ট:**
-   - অ্যাক্টিভিটি লগ স্ক্রিনের ওপরের ট্র্যাশ (ডিলিট) আইকনে চাপুন।
-   - সাইবার-ডার্ক ডায়ালগ আসবে: `"Clear All Activity Logs?"` -> **"Clear"** বাটনে চাপ দিন।
-   - সাথে সাথে সম্পূর্ণ অন-ডিভাইস Room ডাটাবেস সাফ হয়ে যাবে এবং স্ক্রিনে ৩ডি নিয়ন ফোল্ডার সহ **"All Clear! No Threats Found."** ক্লিন এম্পটি স্টেট প্রদর্শিত হবে।
-
----
-
-## ৩. প্রত্যাশা ও ফলাফল চেকলিস্ট (Expected Results & Acceptance Criteria)
-
-যেকোনো টেস্টার নিচের চেকলিস্ট দেখে নিশ্চিত হতে পারবেন যে প্রতিটি ফিচার ১০০% নির্ভুলভাবে কাজ করছে:
-
-| ফিচার / টেস্ট এরিয়া | টেস্টার কী করবেন | স্ক্রিনে কী প্রত্যাশিত (Expected Behavior) | স্ট্যাটাস |
-| :--- | :--- | :--- | :---: |
-| **১. Play Protect & Install** | APK ইনস্টল বাটনে ট্যাপ | "More details" > "Install anyway" চাপলে কোনো ত্রুটি ছাড়া ইনস্টল সম্পন্ন হবে। | [ ] Pass |
-| **২. Permission Gate** | কোনো পারমিশন না দিয়ে অ্যাপে ঢোকার চেষ্টা | "Enter Shield Hub" বাটন লক থাকবে। ৫টি পারমিশন অ্যালাউ করার পরই কেবল আনলক হবে। | [ ] Pass |
-| **৩. PIN Enrollment** | সেটিংস থেকে পিন অন করা | নতুন ৪ সংখ্যার পিন চাইবে এবং কনফার্মেশনের পর সাথে সাথে ডাটা স্টোরে সেভ হবে। | [ ] Pass |
-| **৪. 5-Attempt Lockout** | টানা ৫ বার ইচ্ছাকৃত ভুল পিন টাইপ | ৪টি ডট লাল হবে, শেক অ্যানিমেশন প্লে হবে এবং ৩০ সেকেন্ডের জন্য কিপ্যাড লক হবে। | [ ] Pass |
-| **৫. Biometric Unlock** | ফিঙ্গারপ্রিন্ট বা ফেস ডিটেকশন | ওএস-এর আসল বায়োমেট্রিক ডায়ালগ আসবে এবং আঙুল ছোঁয়ালেই আনলক হবে। | [ ] Pass |
-| **৬. Shield ARMING** | হোমে সেন্ট্রাল শিল্ড বাটনে ট্যাপ | বাটন পালস করবে, কালার সায়ান থেকে নিয়ন গ্রিন ("ARMED") হবে ও নোটিফিকেশন আসবে। | [ ] Pass |
-| **৭. AI NSFW Live Blur** | ব্রাউজারে আপত্তিকর ছবি দেখা | স্ক্রিনে তাৎক্ষণিক ফ্রস্টেড গ্লাস ওভারলে আসবে এবং দৃশ্যটি ১০০% ব্লার করবে। | [ ] Pass |
-| **৮. 5-Sec Peek** | ব্লার স্ক্রিনের Peek বাটনে চাপ | ৫ সেকেন্ডের রিভার্স টাইমার চলবে, ৫ সেকেন্ড পর অটোমেটিক আবার ব্লার লক হবে। | [ ] Pass |
-| **৯. Whitelist Exemption** | ব্রাউজার হোয়াইটলিস্টে যোগ করা | হোয়াইটলিস্টে থাকা অবস্থায় একই সাইটে ব্লার আসবে না। বন্ধ করলে আবার ব্লার আসবে। | [ ] Pass |
-| **১০. Reels Blocker** | রিলসে ১ মিনিট সময় কাটানো | ১ মিনিট পর ৩ডি আওয়ারগ্লাস ইন্টারভেনশন ওভারলে আসবে এবং রিলস লক করে দেবে। | [ ] Pass |
-| **১১. Real Activity Log** | Detailed Activity Log চেক | ব্রাউজার ও ইনস্টাগ্রামের আসল থ্রেট রেকর্ড ও টাইমস্ট্যাম্প থাকবে (কোনো ডামি ডেটা নয়)। | [ ] Pass |
-| **১২. Clear Database** | ক্লিয়ার লগ কনফার্মেশন চাপ | সমস্ত লগ মুছে গিয়ে ৩ডি ফোল্ডার "All Clear! No Threats Found." দেখাবে। | [ ] Pass |
-
----
-
-## ৪. ডিভাইসভিত্তিক বিশেষ সেটিংস ও ট্রাবলশুটিং (OEM Background Optimization)
-
-কিছু কিছু অ্যান্ড্রয়েড ফোনে (যেমন: Xiaomi, Samsung, OnePlus, Vivo, Oppo) প্রস্তুতকারক কোম্পানিগুলো আগ্রাসীভাবে ব্যাটারি বাঁচানোর জন্য ব্যাকগ্রাউন্ড সার্ভিস বন্ধ করে দেয়। SafeScreen যাতে সবসময় ২৪/৭ ব্যাকগ্রাউন্ডে সক্রিয় থাকে, সেজন্য ফোনভেদে নিচের ছোট সেটিংসটি নিশ্চিত করুন:
-
-### ১. Xiaomi / Poco / Redmi (MIUI & HyperOS):
-* **Security অ্যাপ** ওপেন করুন -> **Manage apps** -> **SafeScreen** সিলেক্ট করুন।
-* **Autostart:** টগলটি **ON** করে দিন।
-* **Battery Saver:** অপশনে গিয়ে **"No restrictions"** নির্বাচন করুন।
-* **Permissions:** "Display pop-up windows while running in the background" পারমিশনটি **Always allow** দিন।
-
-### ২. Samsung Galaxy (One UI):
-* ফোনের **Settings** -> **Apps** -> **SafeScreen**-এ যান।
-* **Battery** অপশনে ট্যাপ করে **"Unrestricted"** নির্বাচন করুন।
-* **Settings** -> **Battery and device care** -> **Background usage limits**-এ গিয়ে SafeScreen যেন "Sleeping apps" বা "Deep sleeping apps"-এ না থাকে তা নিশ্চিত করুন (প্রয়োজনে "Never sleeping apps"-এ যোগ করুন)।
-
-### ৩. OnePlus / Oppo / Realme (OxygenOS & ColorOS):
-* **Settings** -> **Apps** -> **SafeScreen** -> **Battery usage**-এ যান।
-* **"Allow background activity"** এবং **"Allow auto-launch"** দুটিই চালু করে দিন।
-
-### ৪. Vivo / iQOO (Funtouch OS):
-* **Settings** -> **Battery** -> **Background power consumption management**-এ গিয়ে SafeScreen সিলেক্ট করে **"Don't restrict background power usage"** দিন।
-
----
-
-## 🔒 প্রাইভেসি ও অন-ডিভাইস সিকিউরিটি নোট (Privacy Guarantee)
-
-* **জিরো ক্লাউড ডাটা ট্রান্সফার:** SafeScreen আপনার কোনো ছবি, স্ক্রিনশট, অডিও বা ব্রাউজিং হিস্ট্রি কোনো সার্ভারে বা ইন্টারনেটে পাঠায় না।
-* **১০০% লোকাল এআই:** সমস্ত ইমেজ ও অডিও ক্লাসিফিকেশন TensorFlow Lite এবং YAMNet নিউরাল নেটওয়ার্কের মাধ্যমে আপনার ফোনের লোকাল প্রসেসর (NPU/CPU)-এ সম্পন্ন হয়।
-* **জিরো পার্সোনাল অডিও লিক:** ফোনে ইন্টারনাল অডিও ছাড়া কোনো রুমের ভয়েস রেকর্ড করা হয় না।
-
----
-
-*গাইড প্রস্তুতকারক: SafeScreen Core Development Team*  
-*প্রজেক্ট রিপোজিটরি:* `https://github.com/saidur1004/SafeScreen.git`  
-*ভার্সন:* v1.0.0 Production Release Ready
+Release acceptance-এর আগে signed APK install/update, v1→v2 Room migration, PIN lockout restart, MediaProjection revoke/restart, overlay, audio capture, accessibility, landscape/large-font UI এবং OEM battery behavior বাস্তব device-এ নথিভুক্ত করে sign-off করুন।

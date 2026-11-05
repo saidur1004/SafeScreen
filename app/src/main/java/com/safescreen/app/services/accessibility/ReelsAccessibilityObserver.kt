@@ -6,13 +6,16 @@ import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import com.safescreen.app.data.local.datastore.UserPreferencesRepository
+import com.safescreen.app.data.local.dao.ThreatLogDao
+import com.safescreen.app.data.local.entity.ThreatAction
+import com.safescreen.app.data.local.entity.ThreatLogEntity
+import com.safescreen.app.data.local.entity.ThreatType
 import com.safescreen.app.services.overlay.FocusInterventionOverlayManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,6 +23,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import org.json.JSONArray
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -67,7 +71,8 @@ enum class ReelPlatform(val displayName: String, val packageNames: Set<String>) 
 @Singleton
 class ReelsAccessibilityObserver @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val preferencesRepository: UserPreferencesRepository
+    private val preferencesRepository: UserPreferencesRepository,
+    private val threatLogDao: ThreatLogDao
 ) {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -81,6 +86,10 @@ class ReelsAccessibilityObserver @Inject constructor(
     private var isBlockerEnabled = false
     private var dailyLimitMinutes = 30
     private var minutesUsedToday = 0
+    private var managedAppPolicies = defaultManagedAppPolicies()
+    private var activePackageName: String? = null
+    private var activeLimitMinutes = 30
+    private var limitLoggedForCurrentFeed = false
 
     private var tickerJob: Job? = null
     private var lastInspectionTime = 0L
@@ -101,15 +110,33 @@ class ReelsAccessibilityObserver @Inject constructor(
             combine(
                 preferencesRepository.isReelsBlockerEnabledFlow,
                 preferencesRepository.reelsDailyLimitMinutesFlow,
-                preferencesRepository.reelsMinutesUsedTodayFlow
-            ) { enabled, limit, used ->
-                Triple(enabled, limit, used)
-            }.collect { (enabled, limit, used) ->
-                isBlockerEnabled = enabled
-                dailyLimitMinutes = limit
-                minutesUsedToday = used
+                preferencesRepository.reelsMinutesUsedTodayFlow,
+                preferencesRepository.reelsManagedAppsJsonFlow
+            ) { enabled, limit, used, managedJson ->
+                ReelsPreferences(enabled, limit, used, parseManagedAppPolicies(managedJson, limit))
+            }.collect { prefs ->
+                val wasActivePackageEnabled = activePackageName?.let {
+                    managedAppPolicies[it]?.isEnabled == true
+                } ?: true
+                isBlockerEnabled = prefs.isBlockerEnabled
+                dailyLimitMinutes = prefs.dailyLimitMinutes
+                minutesUsedToday = prefs.minutesUsedToday
+                managedAppPolicies = prefs.managedAppPolicies
+                activePackageName?.let { managedAppPolicies[it] }?.let {
+                    activeLimitMinutes = it.timeLimitMinutes
+                }
 
-                Log.d(TAG, "Reels prefs updated: blockerEnabled=$enabled, limit=${limit}m, used=${used}m")
+                if (_isReelActive.value && wasActivePackageEnabled &&
+                    activePackageName?.let { managedAppPolicies[it]?.isEnabled != true } == true
+                ) {
+                    setReelState(false, null)
+                    FocusInterventionOverlayManager.hideOverlay(context)
+                }
+                if (_isReelActive.value && !isBlockerEnabled) {
+                    FocusInterventionOverlayManager.hideOverlay(context)
+                }
+
+                Log.d(TAG, "Reels prefs updated: blockerEnabled=$isBlockerEnabled, dailyLimit=${dailyLimitMinutes}m, used=${minutesUsedToday}m")
 
                 // Check intervention condition immediately upon preference update
                 checkAndTriggerIntervention()
@@ -137,6 +164,12 @@ class ReelsAccessibilityObserver @Inject constructor(
             return
         }
 
+        val policy = managedAppPolicies[packageName]
+        if (policy == null || !policy.isEnabled) {
+            if (_isReelActive.value) setReelState(false, null)
+            return
+        }
+
         val eventType = event.eventType
         val isWindowChange = (eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED)
         val isContentChange = (eventType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED)
@@ -156,7 +189,8 @@ class ReelsAccessibilityObserver @Inject constructor(
         if (isReelFeed) {
             if (!_isReelActive.value || _activePlatform.value != platform) {
                 Log.i(TAG, "Detected active short-video feed: ${platform.displayName}")
-                setReelState(true, platform)
+                activeLimitMinutes = policy.timeLimitMinutes
+                setReelState(true, platform, packageName)
             }
         } else {
             if (_isReelActive.value && _activePlatform.value == platform) {
@@ -197,7 +231,12 @@ class ReelsAccessibilityObserver @Inject constructor(
         val childCount = node.childCount
         for (i in 0 until childCount) {
             val child = node.getChild(i) ?: continue
-            val found = searchHierarchy(child, platform, depth + 1, counter)
+            val found = try {
+                searchHierarchy(child, platform, depth + 1, counter)
+            } finally {
+                @Suppress("DEPRECATION")
+                child.recycle()
+            }
             if (found) return true
         }
 
@@ -247,15 +286,20 @@ class ReelsAccessibilityObserver @Inject constructor(
     /**
      * Updates active reel state and toggles the screen-time ticker.
      */
-    private fun setReelState(active: Boolean, platform: ReelPlatform?) {
+    private fun setReelState(active: Boolean, platform: ReelPlatform?, packageName: String? = null) {
+        if (active && packageName != activePackageName) {
+            limitLoggedForCurrentFeed = false
+        }
         _isReelActive.value = active
         _activePlatform.value = platform
+        activePackageName = packageName
 
         if (active) {
             startTicker()
             checkAndTriggerIntervention()
         } else {
             stopTicker()
+            limitLoggedForCurrentFeed = false
         }
     }
 
@@ -300,17 +344,39 @@ class ReelsAccessibilityObserver @Inject constructor(
             return
         }
 
-        if (isBlockerEnabled && minutesUsedToday >= dailyLimitMinutes) {
+        if (isBlockerEnabled && minutesUsedToday >= activeLimitMinutes) {
             val appTitle = _activePlatform.value?.displayName ?: "Reels / Shorts"
             Log.w(
                 TAG,
-                "Focus Intervention Alert: $appTitle limit reached ($minutesUsedToday/$dailyLimitMinutes min). Showing overlay!"
+                "Focus Intervention Alert: $appTitle limit reached ($minutesUsedToday/$activeLimitMinutes min). Showing overlay!"
             )
+
+            if (!limitLoggedForCurrentFeed) {
+                limitLoggedForCurrentFeed = true
+                val packageName = activePackageName ?: return
+                val usedAtIntervention = minutesUsedToday
+                val limitAtIntervention = activeLimitMinutes
+                scope.launch(Dispatchers.IO) {
+                    runCatching {
+                        threatLogDao.insertThreatLog(
+                            ThreatLogEntity(
+                                timestamp = System.currentTimeMillis(),
+                                threatType = ThreatType.REELS_LIMIT,
+                                appPackageName = packageName,
+                                appName = appTitle,
+                                severity = 1f,
+                                actionTaken = ThreatAction.BLOCKED,
+                                details = "Daily limit reached ($usedAtIntervention/$limitAtIntervention min)"
+                            )
+                        )
+                    }.onFailure { Log.e(TAG, "Failed to log Reels limit event", it) }
+                }
+            }
 
             FocusInterventionOverlayManager.showOverlay(
                 context = context,
                 appName = appTitle,
-                limitMinutes = dailyLimitMinutes,
+                limitMinutes = activeLimitMinutes,
                 onDismiss = {
                     Log.d(TAG, "FocusInterventionOverlay dismissed by user, snoozing for 2 minutes")
                     snoozeIntervention(120_000L)
@@ -324,7 +390,7 @@ class ReelsAccessibilityObserver @Inject constructor(
      */
     fun stopTracking() {
         setReelState(false, null)
-        scope.cancel()
+        FocusInterventionOverlayManager.hideOverlay(context)
     }
 
     companion object {
@@ -332,5 +398,43 @@ class ReelsAccessibilityObserver @Inject constructor(
         private const val DEBOUNCE_INTERVAL_MS = 300L
         private const val MAX_INSPECTION_DEPTH = 5
         private const val MAX_INSPECTION_NODES = 45
+    }
+
+    private data class ManagedAppPolicy(val isEnabled: Boolean, val timeLimitMinutes: Int)
+
+    private data class ReelsPreferences(
+        val isBlockerEnabled: Boolean,
+        val dailyLimitMinutes: Int,
+        val minutesUsedToday: Int,
+        val managedAppPolicies: Map<String, ManagedAppPolicy>
+    )
+
+    private fun defaultManagedAppPolicies(limitMinutes: Int = 30) = mapOf(
+        "com.instagram.android" to ManagedAppPolicy(true, limitMinutes),
+        "com.google.android.youtube" to ManagedAppPolicy(true, limitMinutes),
+        "com.zhiliaoapp.musically" to ManagedAppPolicy(true, limitMinutes)
+    )
+
+    private fun parseManagedAppPolicies(json: String, fallbackLimit: Int): Map<String, ManagedAppPolicy> {
+        if (json.isBlank()) return defaultManagedAppPolicies(fallbackLimit)
+        return runCatching {
+            val array = JSONArray(json)
+            buildMap {
+                for (index in 0 until array.length()) {
+                    val app = array.getJSONObject(index)
+                    val packageName = app.optString("pkg").takeIf { it.isNotBlank() } ?: continue
+                    put(
+                        packageName,
+                        ManagedAppPolicy(
+                            isEnabled = app.optBoolean("enabled", true),
+                            timeLimitMinutes = app.optInt("limit", fallbackLimit).coerceIn(5, 240)
+                        )
+                    )
+                }
+            }.ifEmpty { defaultManagedAppPolicies(fallbackLimit) }
+        }.getOrElse {
+            Log.e(TAG, "Invalid managed-app settings; using supported defaults", it)
+            defaultManagedAppPolicies(fallbackLimit)
+        }
     }
 }
