@@ -123,7 +123,17 @@ class UserPreferencesRepository @Inject constructor(
 
     val reelsMinutesUsedTodayFlow: Flow<Int> = dataStore.data
         .catch { if (it is IOException) emit(emptyPreferences()) else throw it }
-        .map { it[PreferencesKeys.REELS_MINUTES_USED_TODAY] ?: 18 }
+        .map { it[PreferencesKeys.REELS_MINUTES_USED_TODAY] ?: 0 }
+        .distinctUntilChanged()
+
+    val reelsInterventionStrategyFlow: Flow<String> = dataStore.data
+        .catch { if (it is IOException) emit(emptyPreferences()) else throw it }
+        .map { it[PreferencesKeys.REELS_INTERVENTION_STRATEGY] ?: "HARD_LOCKOUT" }
+        .distinctUntilChanged()
+
+    val reelsManagedAppsJsonFlow: Flow<String> = dataStore.data
+        .catch { if (it is IOException) emit(emptyPreferences()) else throw it }
+        .map { it[PreferencesKeys.REELS_MANAGED_APPS_JSON] ?: "" }
         .distinctUntilChanged()
 
     val hasCompletedOnboardingFlow: Flow<Boolean> = dataStore.data
@@ -247,6 +257,18 @@ class UserPreferencesRepository @Inject constructor(
         }
     }
 
+    suspend fun setReelsInterventionStrategy(strategy: String) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.REELS_INTERVENTION_STRATEGY] = strategy
+        }
+    }
+
+    suspend fun setReelsManagedAppsJson(json: String) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.REELS_MANAGED_APPS_JSON] = json
+        }
+    }
+
     suspend fun incrementReelsMinutesUsedToday(minutes: Int = 1) {
         dataStore.edit { preferences ->
             val current = preferences[PreferencesKeys.REELS_MINUTES_USED_TODAY] ?: 0
@@ -295,7 +317,9 @@ class UserPreferencesRepository @Inject constructor(
             isBiometricEnabled = preferences[PreferencesKeys.IS_BIOMETRIC_ENABLED] ?: true,
             isPreventUninstallEnabled = preferences[PreferencesKeys.IS_PREVENT_UNINSTALL_ENABLED] ?: true,
             reelsDailyLimitMinutes = preferences[PreferencesKeys.REELS_DAILY_LIMIT_MINUTES] ?: 30,
-            reelsMinutesUsedToday = preferences[PreferencesKeys.REELS_MINUTES_USED_TODAY] ?: 18,
+            reelsMinutesUsedToday = preferences[PreferencesKeys.REELS_MINUTES_USED_TODAY] ?: 0,
+            reelsInterventionStrategy = preferences[PreferencesKeys.REELS_INTERVENTION_STRATEGY] ?: "HARD_LOCKOUT",
+            reelsManagedAppsJson = preferences[PreferencesKeys.REELS_MANAGED_APPS_JSON] ?: "",
             hasCompletedOnboarding = preferences[PreferencesKeys.HAS_COMPLETED_ONBOARDING] ?: false,
             hasAcceptedBatteryOptimization = preferences[PreferencesKeys.HAS_ACCEPTED_BATTERY_OPTIMIZATION] ?: false
         )

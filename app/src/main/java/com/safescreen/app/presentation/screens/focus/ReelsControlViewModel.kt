@@ -9,46 +9,53 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.json.JSONArray
+import org.json.JSONObject
 import javax.inject.Inject
 
 /**
  * Presentation ViewModel for Reels & Shorts Control Screen (Module 04 / Screen 07).
  * Connects directly to [UserPreferencesRepository] for persistent screen-time policies.
+ * Persists custom added apps and intervention strategies across application restarts.
  */
 @HiltViewModel
 class ReelsControlViewModel @Inject constructor(
     private val preferencesRepository: UserPreferencesRepository
 ) : ViewModel() {
 
-    private val _managedApps = MutableStateFlow(defaultManagedApps)
-    private val _availableApps = MutableStateFlow(defaultAvailableApps)
-    private val _selectedStrategy = MutableStateFlow(InterventionStrategy.HARD_LOCKOUT)
     private val _showAddAppSheet = MutableStateFlow(false)
     private val _searchQuery = MutableStateFlow("")
 
     val uiState: StateFlow<ReelsUiState> = combine(
         preferencesRepository.isReelsBlockerEnabledFlow,
         preferencesRepository.reelsDailyLimitMinutesFlow,
-        _managedApps,
-        _availableApps,
-        _selectedStrategy
-    ) { blockerEnabled, dailyLimit, managed, available, strategy ->
+        preferencesRepository.reelsInterventionStrategyFlow,
+        preferencesRepository.reelsManagedAppsJsonFlow
+    ) { blockerEnabled, dailyLimit, strategyStr, managedAppsJson ->
+        val strategy = runCatching {
+            InterventionStrategy.valueOf(strategyStr)
+        }.getOrDefault(InterventionStrategy.HARD_LOCKOUT)
+
+        val restoredManaged = deserializeManagedApps(managedAppsJson) ?: defaultManagedApps
+
+        val managedWithLimit = restoredManaged.map {
+            if (it.id == "instagram" || it.id == "tiktok" || it.id == "youtube") {
+                it.copy(timeLimitMinutes = dailyLimit)
+            } else {
+                it
+            }
+        }
+
+        val available = defaultAvailableApps.filter { avail ->
+            managedWithLimit.none { it.id == avail.id }
+        }
+
         ReelsUiState(
             isStrictModeEnabled = blockerEnabled,
-            managedApps = managed.map {
-                // Keep the primary daily limit synchronized with user preferences
-                if (it.id == "instagram" || it.id == "tiktok" || it.id == "youtube") {
-                    it.copy(timeLimitMinutes = dailyLimit)
-                } else {
-                    it
-                }
-            },
+            managedApps = managedWithLimit,
             selectedStrategy = strategy,
-            showAddAppSheet = _showAddAppSheet.value,
-            availableAppsToAdd = available,
-            searchQuery = _searchQuery.value
+            availableAppsToAdd = available
         )
     }.combine(_showAddAppSheet) { state, showSheet ->
         state.copy(showAddAppSheet = showSheet)
@@ -69,24 +76,28 @@ class ReelsControlViewModel @Inject constructor(
                 }
             }
             is ReelsUiEvent.UpdateAppTimeLimit -> {
-                _managedApps.update { list ->
-                    list.map {
-                        if (it.id == event.appId) it.copy(timeLimitMinutes = event.minutes) else it
-                    }
+                val currentList = uiState.value.managedApps
+                val updated = currentList.map {
+                    if (it.id == event.appId) it.copy(timeLimitMinutes = event.minutes) else it
                 }
                 viewModelScope.launch {
+                    preferencesRepository.setReelsManagedAppsJson(serializeManagedApps(updated))
                     preferencesRepository.setReelsDailyLimitMinutes(event.minutes)
                 }
             }
             is ReelsUiEvent.ToggleAppEnabled -> {
-                _managedApps.update { list ->
-                    list.map {
-                        if (it.id == event.appId) it.copy(isEnabled = event.enabled) else it
-                    }
+                val currentList = uiState.value.managedApps
+                val updated = currentList.map {
+                    if (it.id == event.appId) it.copy(isEnabled = event.enabled) else it
+                }
+                viewModelScope.launch {
+                    preferencesRepository.setReelsManagedAppsJson(serializeManagedApps(updated))
                 }
             }
             is ReelsUiEvent.SelectStrategy -> {
-                _selectedStrategy.value = event.strategy
+                viewModelScope.launch {
+                    preferencesRepository.setReelsInterventionStrategy(event.strategy.name)
+                }
             }
             ReelsUiEvent.OpenAddAppSheet -> {
                 _showAddAppSheet.value = true
@@ -95,9 +106,12 @@ class ReelsControlViewModel @Inject constructor(
                 _showAddAppSheet.value = false
             }
             is ReelsUiEvent.AddApp -> {
-                _managedApps.update { it + event.app }
-                _availableApps.update { it.filter { item -> item.id != event.app.id } }
+                val currentList = uiState.value.managedApps
+                val updated = currentList + event.app
                 _showAddAppSheet.value = false
+                viewModelScope.launch {
+                    preferencesRepository.setReelsManagedAppsJson(serializeManagedApps(updated))
+                }
             }
             is ReelsUiEvent.UpdateSearchQuery -> {
                 _searchQuery.value = event.query
@@ -105,5 +119,46 @@ class ReelsControlViewModel @Inject constructor(
             else -> Unit
         }
     }
-}
 
+    private fun serializeManagedApps(apps: List<ManagedAppItem>): String {
+        val array = JSONArray()
+        for (app in apps) {
+            val obj = JSONObject().apply {
+                put("id", app.id)
+                put("name", app.name)
+                put("pkg", app.packageName)
+                put("limit", app.timeLimitMinutes)
+                put("enabled", app.isEnabled)
+                put("brand", app.brandType.name)
+            }
+            array.put(obj)
+        }
+        return array.toString()
+    }
+
+    private fun deserializeManagedApps(json: String?): List<ManagedAppItem>? {
+        if (json.isNullOrBlank()) return null
+        return try {
+            val array = JSONArray(json)
+            val list = mutableListOf<ManagedAppItem>()
+            for (i in 0 until array.length()) {
+                val obj = array.getJSONObject(i)
+                list.add(
+                    ManagedAppItem(
+                        id = obj.getString("id"),
+                        name = obj.getString("name"),
+                        packageName = obj.getString("pkg"),
+                        timeLimitMinutes = obj.optInt("limit", 60),
+                        isEnabled = obj.optBoolean("enabled", true),
+                        brandType = runCatching {
+                            AppBrandType.valueOf(obj.optString("brand", "GENERIC"))
+                        }.getOrDefault(AppBrandType.GENERIC)
+                    )
+                )
+            }
+            if (list.isEmpty()) null else list
+        } catch (e: Exception) {
+            null
+        }
+    }
+}

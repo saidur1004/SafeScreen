@@ -21,7 +21,9 @@ data class UserPreferences(
     val isBiometricEnabled: Boolean = true,
     val isPreventUninstallEnabled: Boolean = true,
     val reelsDailyLimitMinutes: Int = 30,
-    val reelsMinutesUsedToday: Int = 18,
+    val reelsMinutesUsedToday: Int = 0,
+    val reelsInterventionStrategy: String = "HARD_LOCKOUT",
+    val reelsManagedAppsJson: String = "",
     val hasCompletedOnboarding: Boolean = false,
     val hasAcceptedBatteryOptimization: Boolean = false
 ) {

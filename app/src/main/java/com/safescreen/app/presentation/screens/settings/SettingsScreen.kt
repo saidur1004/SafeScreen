@@ -1,5 +1,7 @@
 package com.safescreen.app.presentation.screens.settings
 
+import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -18,11 +20,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -123,10 +127,18 @@ fun SettingsScreen(
                 onNavigateBack()
             }
             is SettingsUiEvent.OpenPrivacyPolicy -> {
-                Toast.makeText(context, "Opening Privacy Policy...", Toast.LENGTH_SHORT).show()
+                val privacyUrl = "https://github.com/saidur1004/SafeScreen/blob/main/PROJECT_CONTEXT_BN.md"
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(privacyUrl)).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                }
+                try {
+                    context.startActivity(intent)
+                } catch (e: Exception) {
+                    Toast.makeText(context, "Privacy Policy: $privacyUrl", Toast.LENGTH_LONG).show()
+                }
             }
             is SettingsUiEvent.OpenLicenses -> {
-                Toast.makeText(context, "SafeScreen Open-Source Licenses", Toast.LENGTH_SHORT).show()
+                viewModel.onEvent(event)
             }
             else -> viewModel.onEvent(event)
         }
@@ -157,8 +169,17 @@ fun SettingsScreen(
                 is SettingsUiEvent.NavigateToWhitelist -> onNavigateToWhitelist()
                 is SettingsUiEvent.NavigateToSecurityLock -> onNavigateToSecurityLock(SecurityLockMode.ENROLL_PIN)
                 is SettingsUiEvent.NavigateBack -> onNavigateBack()
-                is SettingsUiEvent.OpenPrivacyPolicy -> Toast.makeText(context, "Opening Privacy Policy...", Toast.LENGTH_SHORT).show()
-                is SettingsUiEvent.OpenLicenses -> Toast.makeText(context, "SafeScreen Open-Source Licenses", Toast.LENGTH_SHORT).show()
+                is SettingsUiEvent.OpenPrivacyPolicy -> {
+                    val privacyUrl = "https://github.com/saidur1004/SafeScreen/blob/main/PROJECT_CONTEXT_BN.md"
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(privacyUrl)).apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    }
+                    try {
+                        context.startActivity(intent)
+                    } catch (e: Exception) {
+                        Toast.makeText(context, "Privacy Policy: $privacyUrl", Toast.LENGTH_LONG).show()
+                    }
+                }
                 else -> onEvent(event)
             }
         }
@@ -251,6 +272,13 @@ fun SettingsContent(
             ClearCacheDialog(
                 onConfirm = { onEvent(SettingsUiEvent.ConfirmClearCache) },
                 onDismiss = { onEvent(SettingsUiEvent.DismissClearCacheDialog) }
+            )
+        }
+
+        // Open Source Licenses Dialog
+        if (state.showLicensesDialog) {
+            OpenSourceLicensesDialog(
+                onDismiss = { onEvent(SettingsUiEvent.DismissLicensesDialog) }
             )
         }
     }
@@ -1058,5 +1086,119 @@ private fun ClearCacheDialog(
             Color.White.copy(alpha = 0.15f),
             RoundedCornerShape(20.dp)
         )
+    )
+}
+
+/**
+ * Cyber-Dark Dialog presenting SafeScreen's open-source dependencies and licenses.
+ */
+@Composable
+private fun OpenSourceLicensesDialog(
+    onDismiss: () -> Unit
+) {
+    val licenses = listOf(
+        Pair("TensorFlow Lite", "Apache License 2.0 • Google DeepMind"),
+        Pair("YAMNet Audio Model", "Apache License 2.0 • Manny et al. / AudioSet"),
+        Pair("Jetpack Compose & BOM", "Apache License 2.0 • Google LLC"),
+        Pair("Room Persistence Library", "Apache License 2.0 • Google LLC"),
+        Pair("Dagger Hilt", "Apache License 2.0 • Google LLC"),
+        Pair("KotlinX Coroutines", "Apache License 2.0 • JetBrains s.r.o."),
+        Pair("AndroidX Biometric", "Apache License 2.0 • Google LLC")
+    )
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Color(0xFF0F1726),
+        shape = RoundedCornerShape(20.dp),
+        modifier = Modifier.border(
+            1.dp,
+            Color.White.copy(alpha = 0.15f),
+            RoundedCornerShape(20.dp)
+        ),
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.Info,
+                    contentDescription = null,
+                    tint = NeonCyan,
+                    modifier = Modifier.size(22.dp)
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+                Text(
+                    text = "Open-Source Licenses",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary,
+                        fontSize = 18.sp
+                    )
+                )
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 280.dp)
+            ) {
+                Text(
+                    text = "SafeScreen is proudly built with open-source software under the Apache 2.0 license:",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = TextMuted,
+                        fontSize = 12.sp
+                    )
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    items(licenses) { (name, license) ->
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color.White.copy(alpha = 0.04f))
+                                .padding(horizontal = 12.dp, vertical = 8.dp)
+                        ) {
+                            Column {
+                                Text(
+                                    text = name,
+                                    style = MaterialTheme.typography.labelMedium.copy(
+                                        color = TextPrimary,
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 13.sp
+                                    )
+                                )
+                                Text(
+                                    text = license,
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        color = NeonCyan.copy(alpha = 0.8f),
+                                        fontSize = 11.sp
+                                    )
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(NeonCyan)
+                    .clickable(onClick = onDismiss)
+                    .padding(horizontal = 18.dp, vertical = 8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Close",
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        color = Color.Black,
+                        fontWeight = FontWeight.Bold
+                    )
+                )
+            }
+        }
     )
 }

@@ -759,6 +759,18 @@ SafeScreen/
    - `AudioPlaybackCaptureEngine.kt`-এ ইন্টারনাল অডিও ফেইল করলে মাইক্রোফোন চালু হওয়ার মারাত্মক ফলব্যাক লজিক (`MediaRecorder.AudioSource.MIC`) সম্পূর্ণ মুছে ফেলা হয়েছে।
    - এখন শুধুমাত্র অ্যান্ড্রয়েড ১০+ এর `AudioPlaybackCaptureConfiguration` দিয়ে ইন্টারনাল মিডিয়া অডিও স্ক্যান করা হয়। কোনো ফিজিক্যাল অ্যাম্বিয়েন্ট ভয়েস বা মাইক্রোফোন ডেটা কখনো রেকর্ড হবে না।
 
+### 📌 Step 3: Final Dummy Data Removal & Persistence Fix (সম্পন্ন ও এমুলেটরে ভেরিফাইড ✅)
+1. **রিলস কন্ট্রোল পারসিস্টেন্স (Reels Control Persistence):**
+   - `ReelsControlViewModel.kt`-এ ইউজারের যোগ করা কাস্টম অ্যাপস, ইন্ডিভিজুয়াল টাইম লিমিট এবং ইন্টারভেনশন স্ট্র্যাটেজি (`InterventionStrategy`) Jetpack DataStore-এ পারসিস্টেন্ট করা হয়েছে (`reels_managed_apps_json` ও `reels_intervention_strategy`)।
+   - অ্যাপ রিস্টার্ট বা প্রসেস ডেথ হলেও ব্যবহারকারীর কাস্টম রিলস অ্যাপ তালিকা ও স্ট্র্যাটেজি অবিকল সংরক্ষিত থাকে।
+2. **চূড়ান্ত ডামি ডেটা সম্পূর্ণ অপসারণ:**
+   - `ActivityLogUiState.kt`-এর হার্ডকোডেড "Oct 31, 2026" স্যাম্পল ডেটা রিমুভ করে ক্লিন `emptyList()` এবং `isEmpty = true` করা হয়েছে; এখন কেবলমাত্র Room Database-এর রিয়েল থ্রেট লগ প্রদর্শিত হয়।
+   - `SettingsViewModel.kt`-এ ডাটাবেস এরর হলে ফলব্যাক `5` এর পরিবর্তে রিয়েল এরর স্টেট `0` হ্যান্ডেল করা হয়েছে।
+   - DataStore ও `UserPreferences.kt`-এ Reels usage-এর প্রাথমিক ডিফল্ট `18` মিনিট থেকে পরিবর্তন করে প্রোপার `0` মিনিট করা হয়েছে।
+3. **সেটিংস স্ক্রিনের ডেড বাটন ফিক্স:**
+   - "Privacy Policy" বাটনে রিয়েল ব্রাউজার Intent (`Intent.ACTION_VIEW`) কানেক্ট করা হয়েছে।
+   - "Licenses" বাটনে ক্লিক করলে অন-ডিভাইস সাইবার-ডার্ক `OpenSourceLicensesDialog` ওপেন হয়ে TensorFlow Lite, YAMNet, Jetpack Compose, Room এবং Dagger Hilt-এর Apache 2.0 ওপেন সোর্স লাইসেন্স প্রদর্শিত হয়।
+
 ### 📌 Step 4: Manifest Fix, Global Bug Hunt & Final Project Freeze (সম্পন্ন ও এমুলেটরে ভেরিফাইড ✅)
 1. **Manifest ও সিকিউরিটি কনফিগারেশন:**
    - `allowBackup="false"` কার্যকর করা হয়েছে যাতে কোনো ADB ব্যাকআপ বা লোকাল এক্সট্রাকশনের মাধ্যমে ইউজারের পিন হ্যাশ, থ্রেট লগ বা হোয়াইটলিস্ট লিক না হতে পারে।

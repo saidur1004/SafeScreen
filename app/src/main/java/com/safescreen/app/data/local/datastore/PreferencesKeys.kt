@@ -34,6 +34,8 @@ object PreferencesKeys {
     // Reels & Digital Wellbeing
     val REELS_DAILY_LIMIT_MINUTES = intPreferencesKey("reels_daily_limit_minutes")
     val REELS_MINUTES_USED_TODAY = intPreferencesKey("reels_minutes_used_today")
+    val REELS_INTERVENTION_STRATEGY = stringPreferencesKey("reels_intervention_strategy")
+    val REELS_MANAGED_APPS_JSON = stringPreferencesKey("reels_managed_apps_json")
 
     // Onboarding & Permissions Onboarding State
     val HAS_COMPLETED_ONBOARDING = booleanPreferencesKey("has_completed_onboarding")

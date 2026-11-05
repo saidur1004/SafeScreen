@@ -28,14 +28,16 @@ class SettingsViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _showClearCacheDialog = MutableStateFlow(false)
+    private val _showLicensesDialog = MutableStateFlow(false)
     private val _isCacheCleared = MutableStateFlow(false)
 
     val uiState: StateFlow<SettingsUiState> = combine(
         userPreferencesRepository.userPreferencesFlow,
-        whitelistDao.getExemptedCountFlow().catch { emit(5) },
+        whitelistDao.getExemptedCountFlow().catch { emit(0) },
         _showClearCacheDialog,
+        _showLicensesDialog,
         _isCacheCleared
-    ) { prefs, exemptedCount, showDialog, cacheCleared ->
+    ) { prefs, exemptedCount, showDialog, showLicenses, cacheCleared ->
         SettingsUiState(
             sensitivityLevel = prefs.aiSensitivity,
             performanceProfile = prefs.performanceProfile,
@@ -44,6 +46,7 @@ class SettingsViewModel @Inject constructor(
             isPinEnrolled = prefs.isPinSet,
             whitelistCount = exemptedCount,
             showClearCacheDialog = showDialog,
+            showLicensesDialog = showLicenses,
             isCacheCleared = cacheCleared,
             appVersion = "v1.0.0 (On-Device Build)"
         )
@@ -96,6 +99,13 @@ class SettingsViewModel @Inject constructor(
                     userPreferencesRepository.setReelsMinutesUsedToday(0)
                     _isCacheCleared.value = true
                 }
+            }
+            is SettingsUiEvent.OpenLicensesDialog,
+            is SettingsUiEvent.OpenLicenses -> {
+                _showLicensesDialog.value = true
+            }
+            is SettingsUiEvent.DismissLicensesDialog -> {
+                _showLicensesDialog.value = false
             }
             else -> Unit
         }
