@@ -187,6 +187,12 @@ class UserPreferencesRepository @Inject constructor(
         }
     }
 
+    suspend fun setPinLockEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.IS_PIN_LOCK_ENABLED] = enabled
+        }
+    }
+
     suspend fun clearPin() {
         dataStore.edit { preferences ->
             preferences.remove(PreferencesKeys.PIN_HASH_SHA256)

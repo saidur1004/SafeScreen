@@ -53,6 +53,7 @@ class HomeViewModel @Inject constructor(
     ) { prefs, visualCount, audioCount, telemetry, showSheet ->
         HomeUiState(
             isShieldActive = prefs.isShieldActive,
+            isPinLockEnabled = prefs.isPinLockEnabled,
             blurredTodayCount = visualCount,
             mutedTodayCount = audioCount,
             reelsMinutesUsed = prefs.reelsMinutesUsedToday,
@@ -92,6 +93,13 @@ class HomeViewModel @Inject constructor(
                         PermissionManager.clearMediaProjectionConsent()
                         stopShieldUseCase()
                     }
+                }
+            }
+            is HomeUiEvent.ConfirmDisarmShield -> {
+                viewModelScope.launch {
+                    PermissionManager.clearMediaProjectionConsent()
+                    userPreferencesRepository.setShieldActive(false)
+                    stopShieldUseCase()
                 }
             }
             is HomeUiEvent.SetVisualShield -> {

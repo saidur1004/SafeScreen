@@ -38,7 +38,7 @@ class SettingsViewModel @Inject constructor(
         SettingsUiState(
             sensitivityLevel = prefs.aiSensitivity,
             performanceProfile = prefs.performanceProfile,
-            isBiometricLockEnabled = prefs.isBiometricEnabled,
+            isBiometricLockEnabled = prefs.isPinLockEnabled,
             isPreventUninstallEnabled = prefs.isPreventUninstallEnabled,
             whitelistCount = exemptedCount,
             showClearCacheDialog = showDialog,
@@ -67,6 +67,7 @@ class SettingsViewModel @Inject constructor(
             }
             is SettingsUiEvent.SetBiometricLock -> {
                 viewModelScope.launch {
+                    userPreferencesRepository.setPinLockEnabled(event.enabled)
                     userPreferencesRepository.setBiometricEnabled(event.enabled)
                 }
             }

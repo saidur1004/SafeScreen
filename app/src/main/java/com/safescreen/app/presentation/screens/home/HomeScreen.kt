@@ -56,6 +56,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -106,15 +107,25 @@ import com.safescreen.app.services.overlay.LiveBlurOverlayManager
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
+    disarmConfirmed: Boolean = false,
+    onDisarmHandled: () -> Unit = {},
     onNavigateToStats: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
     onNavigateToFocus: () -> Unit = {},
     onNavigateToReels: () -> Unit = {},
     onNavigateToBlurPreview: () -> Unit = {},
-    onNavigateToStates: () -> Unit = {}
+    onNavigateToStates: () -> Unit = {},
+    onNavigateToSecurityLock: (com.safescreen.app.presentation.screens.settings.SecurityLockMode) -> Unit = {}
 ) {
     val context = LocalContext.current
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(disarmConfirmed) {
+        if (disarmConfirmed) {
+            viewModel.onEvent(HomeUiEvent.ConfirmDisarmShield)
+            onDisarmHandled()
+        }
+    }
 
     val mediaProjectionManager = remember {
         context.getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
@@ -135,8 +146,12 @@ fun HomeScreen(
             when (event) {
                 is HomeUiEvent.ToggleShield -> {
                     if (state.isShieldActive) {
-                        PermissionManager.clearMediaProjectionConsent()
-                        viewModel.onEvent(event)
+                        if (state.isPinLockEnabled) {
+                            onNavigateToSecurityLock(com.safescreen.app.presentation.screens.settings.SecurityLockMode.SHIELD_DISARM)
+                        } else {
+                            PermissionManager.clearMediaProjectionConsent()
+                            viewModel.onEvent(event)
+                        }
                     } else {
                         if (PermissionManager.hasMediaProjectionConsent) {
                             viewModel.onEvent(event)

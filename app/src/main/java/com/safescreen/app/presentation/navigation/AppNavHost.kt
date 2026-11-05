@@ -13,10 +13,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.safescreen.app.presentation.components.BottomNavDestination
 import com.safescreen.app.presentation.components.GlobalFloatingBottomBar
 import com.safescreen.app.presentation.screens.focus.FocusScheduleScreen
@@ -25,6 +28,7 @@ import com.safescreen.app.presentation.screens.home.HomeScreen
 import com.safescreen.app.presentation.screens.onboarding.OnboardingScreen
 import com.safescreen.app.presentation.screens.permission.PermissionHubScreen
 import com.safescreen.app.presentation.screens.settings.AppWhitelistScreen
+import com.safescreen.app.presentation.screens.settings.SecurityLockMode
 import com.safescreen.app.presentation.screens.settings.SecurityLockScreen
 import com.safescreen.app.presentation.screens.settings.SettingsScreen
 import com.safescreen.app.presentation.screens.splash.SplashScreen
@@ -40,7 +44,8 @@ fun AppNavHost(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
     startDestination: String = Screen.Splash.route,
-    hasCompletedOnboarding: () -> Boolean = { false }
+    hasCompletedOnboarding: () -> Boolean = { false },
+    isPinLockEnabled: () -> Boolean = { false }
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -124,7 +129,11 @@ fun AppNavHost(
             composable(Screen.Splash.route) {
                 SplashScreen(
                     onNavigateNext = {
-                        val destination = if (hasCompletedOnboarding()) Screen.Home.route else Screen.Onboarding.route
+                        val destination = when {
+                            !hasCompletedOnboarding() -> Screen.Onboarding.route
+                            isPinLockEnabled() -> Screen.SecurityLock.createRoute(SecurityLockMode.APP_UNLOCK)
+                            else -> Screen.Home.route
+                        }
                         navController.navigate(destination) {
                             popUpTo(Screen.Splash.route) { inclusive = true }
                         }
@@ -153,8 +162,16 @@ fun AppNavHost(
                 )
             }
 
-            composable(Screen.Home.route) {
+            composable(Screen.Home.route) { backStackEntry ->
+                val disarmConfirmed by backStackEntry.savedStateHandle
+                    .getStateFlow("shield_disarm_confirmed", false)
+                    .collectAsStateWithLifecycle()
+
                 HomeScreen(
+                    disarmConfirmed = disarmConfirmed,
+                    onDisarmHandled = {
+                        backStackEntry.savedStateHandle["shield_disarm_confirmed"] = false
+                    },
                     onNavigateToStats = {
                         navController.navigate(Screen.Stats.route) {
                             popUpTo(navController.graph.findStartDestination().id) {
@@ -187,6 +204,9 @@ fun AppNavHost(
                     },
                     onNavigateToStates = {
                         navController.navigate(Screen.EmptyAndErrorStates.route)
+                    },
+                    onNavigateToSecurityLock = { mode ->
+                        navController.navigate(Screen.SecurityLock.createRoute(mode))
                     }
                 )
             }
@@ -241,7 +261,7 @@ fun AppNavHost(
                         navController.navigate(Screen.AppWhitelist.route)
                     },
                     onNavigateToSecurityLock = {
-                        navController.navigate(Screen.SecurityLock.route)
+                        navController.navigate(Screen.SecurityLock.createRoute(SecurityLockMode.SETTINGS))
                     }
                 )
             }
@@ -254,10 +274,39 @@ fun AppNavHost(
                 )
             }
 
-            composable(Screen.SecurityLock.route) {
+            composable(
+                route = Screen.SecurityLock.route,
+                arguments = listOf(
+                    navArgument(Screen.SecurityLock.ARG_MODE) {
+                        type = NavType.StringType
+                        defaultValue = SecurityLockMode.APP_UNLOCK.name
+                    }
+                )
+            ) { backStackEntry ->
+                val modeStr = backStackEntry.arguments?.getString(Screen.SecurityLock.ARG_MODE)
+                val mode = runCatching {
+                    SecurityLockMode.valueOf(modeStr ?: "")
+                }.getOrDefault(SecurityLockMode.APP_UNLOCK)
+
                 SecurityLockScreen(
+                    mode = mode,
                     onUnlockSuccess = {
-                        navController.popBackStack()
+                        when (mode) {
+                            SecurityLockMode.APP_UNLOCK -> {
+                                navController.navigate(Screen.Home.route) {
+                                    popUpTo(Screen.SecurityLock.route) { inclusive = true }
+                                }
+                            }
+                            SecurityLockMode.SHIELD_DISARM -> {
+                                navController.previousBackStackEntry
+                                    ?.savedStateHandle
+                                    ?.set("shield_disarm_confirmed", true)
+                                navController.popBackStack()
+                            }
+                            SecurityLockMode.SETTINGS -> {
+                                navController.popBackStack()
+                            }
+                        }
                     },
                     onNavigateBack = {
                         navController.popBackStack()

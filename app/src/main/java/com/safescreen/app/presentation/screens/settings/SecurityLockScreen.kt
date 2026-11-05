@@ -1,6 +1,8 @@
 package com.safescreen.app.presentation.screens.settings
 
+import android.app.Activity
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
@@ -76,13 +78,28 @@ import kotlinx.coroutines.launch
  */
 @Composable
 fun SecurityLockScreen(
+    mode: SecurityLockMode = SecurityLockMode.APP_UNLOCK,
     onUnlockSuccess: () -> Unit = {},
     onNavigateBack: () -> Unit = {},
     viewModel: SecurityLockViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val activity = context as? Activity
     val haptic = LocalHapticFeedback.current
+
+    // Prevent security bypass on system back gesture or button
+    BackHandler {
+        when (mode) {
+            SecurityLockMode.APP_UNLOCK -> {
+                activity?.finish()
+            }
+            SecurityLockMode.SHIELD_DISARM,
+            SecurityLockMode.SETTINGS -> {
+                onNavigateBack()
+            }
+        }
+    }
 
     LaunchedEffect(state.isSuccess) {
         if (state.isSuccess) {
@@ -93,7 +110,7 @@ fun SecurityLockScreen(
     }
 
     SecurityLockContent(
-        state = state,
+        state = state.copy(mode = mode),
         onEvent = { event ->
             when (event) {
                 is SecurityUiEvent.EnterDigit -> {
@@ -116,7 +133,11 @@ fun SecurityLockScreen(
                     Toast.makeText(context, "Default testing PIN is 1234", Toast.LENGTH_LONG).show()
                 }
                 is SecurityUiEvent.NavigateBack -> {
-                    onNavigateBack()
+                    when (mode) {
+                        SecurityLockMode.APP_UNLOCK -> activity?.finish()
+                        SecurityLockMode.SHIELD_DISARM,
+                        SecurityLockMode.SETTINGS -> onNavigateBack()
+                    }
                 }
             }
         }
@@ -125,13 +146,14 @@ fun SecurityLockScreen(
 
 @Composable
 fun SecurityLockScreen(
+    mode: SecurityLockMode = SecurityLockMode.APP_UNLOCK,
     onUnlockSuccess: () -> Unit = {},
     onNavigateBack: () -> Unit = {},
     state: SecurityUiState,
     onEvent: (SecurityUiEvent) -> Unit
 ) {
     SecurityLockContent(
-        state = state,
+        state = state.copy(mode = mode),
         onEvent = onEvent
     )
 }
@@ -156,6 +178,27 @@ fun SecurityLockContent(
         }
     }
 
+    val (titleText, subtitleText) = when (state.mode) {
+        SecurityLockMode.APP_UNLOCK -> Pair(
+            "SafeScreen Locked",
+            "Enter your 4-digit PIN or use Biometrics to unlock SafeScreen"
+        )
+        SecurityLockMode.SHIELD_DISARM -> Pair(
+            "Disarm Protection Shield",
+            "Enter your 4-digit PIN or use Biometrics to turn OFF shield protection"
+        )
+        SecurityLockMode.SETTINGS -> Pair(
+            "Security Authentication",
+            "Enter your 4-digit PIN or use Biometrics to access security settings"
+        )
+    }
+
+    val badgeText = when (state.mode) {
+        SecurityLockMode.APP_UNLOCK -> "SECURE"
+        SecurityLockMode.SHIELD_DISARM -> "ARMED"
+        SecurityLockMode.SETTINGS -> "CONFIG"
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -174,6 +217,7 @@ fun SecurityLockContent(
         ) {
             // 1. Top Bar with back button
             SecurityTopBar(
+                badgeText = badgeText,
                 onBackClick = { onEvent(SecurityUiEvent.NavigateBack) }
             )
 
@@ -192,7 +236,7 @@ fun SecurityLockContent(
 
                 // Title & Subtitle
                 Text(
-                    text = "SafeScreen Locked",
+                    text = titleText,
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontWeight = FontWeight.ExtraBold,
                         color = TextPrimary,
@@ -204,7 +248,7 @@ fun SecurityLockContent(
                 Spacer(modifier = Modifier.height(6.dp))
 
                 Text(
-                    text = "Enter your 4-digit PIN to modify settings or disarm shield",
+                    text = subtitleText,
                     style = MaterialTheme.typography.bodySmall.copy(
                         color = TextMuted,
                         fontSize = 13.sp,
@@ -306,6 +350,7 @@ fun SecurityLockContent(
  */
 @Composable
 private fun SecurityTopBar(
+    badgeText: String = "ARMED",
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -354,7 +399,7 @@ private fun SecurityTopBar(
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = "ARMED",
+                    text = badgeText,
                     style = MaterialTheme.typography.labelSmall.copy(
                         color = NeonCyan,
                         fontWeight = FontWeight.Bold,

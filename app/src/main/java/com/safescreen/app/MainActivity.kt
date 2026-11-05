@@ -70,7 +70,8 @@ class MainActivity : ComponentActivity() {
                     color = DeepBlack
                 ) {
                     AppNavHost(
-                        hasCompletedOnboarding = { userPrefs?.hasCompletedOnboarding ?: false }
+                        hasCompletedOnboarding = { userPrefs?.hasCompletedOnboarding ?: false },
+                        isPinLockEnabled = { userPrefs?.isPinLockEnabled ?: false }
                     )
                 }
             }

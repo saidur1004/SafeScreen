@@ -99,7 +99,9 @@ fun SettingsScreen(
         when (event) {
             is SettingsUiEvent.SetBiometricLock -> {
                 viewModel.onEvent(event)
-                onNavigateToSecurityLock()
+                if (event.enabled) {
+                    onNavigateToSecurityLock()
+                }
             }
             is SettingsUiEvent.ConfirmClearCache -> {
                 viewModel.onEvent(event)

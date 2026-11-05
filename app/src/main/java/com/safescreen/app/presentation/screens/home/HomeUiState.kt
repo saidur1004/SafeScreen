@@ -7,6 +7,7 @@ import com.safescreen.app.presentation.components.BottomNavDestination
  */
 data class HomeUiState(
     val isShieldActive: Boolean = true,
+    val isPinLockEnabled: Boolean = false,
     val blurredTodayCount: Int = 38,
     val mutedTodayCount: Int = 14,
     val reelsMinutesUsed: Int = 18,
@@ -36,6 +37,7 @@ data class HomeUiState(
  */
 sealed interface HomeUiEvent {
     data object ToggleShield : HomeUiEvent
+    data object ConfirmDisarmShield : HomeUiEvent
     data class SetVisualShield(val enabled: Boolean) : HomeUiEvent
     data class SetAudioMute(val enabled: Boolean) : HomeUiEvent
     data class SetReelsBlocker(val enabled: Boolean) : HomeUiEvent

@@ -3,10 +3,20 @@ package com.safescreen.app.presentation.screens.settings
 import androidx.compose.runtime.Immutable
 
 /**
+ * Operating mode for SecurityLockScreen.
+ */
+enum class SecurityLockMode {
+    APP_UNLOCK,
+    SHIELD_DISARM,
+    SETTINGS
+}
+
+/**
  * UI State for SecurityLockScreen.
  */
 @Immutable
 data class SecurityUiState(
+    val mode: SecurityLockMode = SecurityLockMode.APP_UNLOCK,
     val pinInput: String = "",
     val maxPinLength: Int = 4,
     val isError: Boolean = false,

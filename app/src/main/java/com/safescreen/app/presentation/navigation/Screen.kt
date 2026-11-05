@@ -30,7 +30,11 @@ sealed class Screen(val route: String) {
     // Module 06: Settings & Security
     data object Settings : Screen("settings")
     data object AppWhitelist : Screen("app_whitelist")
-    data object SecurityLock : Screen("security_lock")
+    data object SecurityLock : Screen("security_lock?mode={mode}") {
+        const val ARG_MODE = "mode"
+        fun createRoute(mode: com.safescreen.app.presentation.screens.settings.SecurityLockMode = com.safescreen.app.presentation.screens.settings.SecurityLockMode.APP_UNLOCK): String =
+            "security_lock?mode=${mode.name}"
+    }
 
     // Module 07: System Overlays (WindowManager Views)
     data object LiveBlurOverlay : Screen("live_blur_overlay")

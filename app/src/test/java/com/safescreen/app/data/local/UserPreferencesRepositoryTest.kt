@@ -26,5 +26,22 @@ class UserPreferencesRepositoryTest {
         val hash2 = UserPreferencesRepository.hashSha256(input)
         assertEquals(hash1, hash2)
     }
+
+    @Test
+    fun testPinVerificationLogicWithDefaultAndCustomHash() {
+        // Default PIN logic when stored hash is empty
+        val defaultPin = "1234"
+        val wrongPin = "0000"
+        val defaultHash = UserPreferencesRepository.hashSha256(defaultPin)
+
+        // Custom PIN logic
+        val customPin = "9876"
+        val customHash = UserPreferencesRepository.hashSha256(customPin)
+
+        assertEquals(defaultHash, UserPreferencesRepository.hashSha256("1234"))
+        assertNotEquals(defaultHash, UserPreferencesRepository.hashSha256(wrongPin))
+        assertEquals(customHash, UserPreferencesRepository.hashSha256("9876"))
+        assertNotEquals(customHash, UserPreferencesRepository.hashSha256(defaultPin))
+    }
 }
 

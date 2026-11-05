@@ -1,8 +1,10 @@
 package com.safescreen.app.presentation.screens.settings
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.safescreen.app.data.local.datastore.UserPreferencesRepository
+import com.safescreen.app.presentation.navigation.Screen
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,8 +22,14 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class SecurityLockViewModel @Inject constructor(
-    private val userPreferencesRepository: UserPreferencesRepository
+    private val userPreferencesRepository: UserPreferencesRepository,
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
+
+    val mode: SecurityLockMode = runCatching {
+        val arg = savedStateHandle.get<String>(Screen.SecurityLock.ARG_MODE)
+        SecurityLockMode.valueOf(arg ?: "")
+    }.getOrDefault(SecurityLockMode.APP_UNLOCK)
 
     private val _inputState = MutableStateFlow(
         InternalSecurityState(
@@ -38,6 +46,7 @@ class SecurityLockViewModel @Inject constructor(
         _inputState
     ) { prefs, input ->
         SecurityUiState(
+            mode = mode,
             pinInput = input.pinInput,
             maxPinLength = 4,
             isError = input.isError,
@@ -51,7 +60,7 @@ class SecurityLockViewModel @Inject constructor(
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = SecurityUiState()
+        initialValue = SecurityUiState(mode = mode)
     )
 
     fun onEvent(event: SecurityUiEvent) {
