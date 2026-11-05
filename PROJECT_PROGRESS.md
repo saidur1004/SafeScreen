@@ -22,9 +22,9 @@
 
 ## 📌 ১. প্রজেক্টের বর্তমান ওভারভিউ ও লাইভ স্ট্যাটাস (Executive Snapshot)
 
-* **সর্বশেষ আপডেটের তারিখ ও সময়:** ০৪ নভেম্বর ২০২৬ (Phase 4.2: AudioPlaybackCapture Engine ১০০% সম্পন্ন ও এমুলেটরে ভেরিফাইড ✅)
-* **বর্তমান পর্যায়:** **Phase 4: Android OS System Services (Phase 4.0, 4.1 ও 4.2 সম্পন্ন ✅ | Phase 4.3: Reels Accessibility এর অপেক্ষায় ⏳)**
-* **পরবর্তী তাৎক্ষণিক কাজ (Immediate Next Task):** **Phase 4.3: Reels Accessibility Observer (Shorts/Reels Node Interception & Screen-time Limits)** — *[ইউজারের স্পষ্ট "Go ahead" অনুমতির অপেক্ষায়]*
+* **সর্বশেষ আপডেটের তারিখ ও সময়:** ০৫ নভেম্বর ২০২৬ (Phase 4.3: Reels Accessibility Observer ১০০% সম্পন্ন ও এমুলেটরে ভেরিফাইড ✅)
+* **বর্তমান পর্যায়:** **Phase 4: Android OS System Services ১০০% সম্পন্ন ✅ (Phase 4.0, 4.1, 4.2 ও 4.3 ভেরিফাইড)**
+* **পরবর্তী তাৎক্ষণিক কাজ (Immediate Next Task):** **Phase 5: On-Device AI Engines (TFLite NSFW & YAMNet Audio INT8 Quantized)** — *[ইউজারের স্পষ্ট "Go ahead" অনুমতির অপেক্ষায়]*
 * **গিট রিপোজিটরি:** `https://github.com/saidur1004/SafeScreen.git` (মেইন ব্রাঞ্চ: `main`)
 * **টেকনিক্যাল টুলচেইন:** Kotlin 2.0.21, Gradle 8.14, AGP 8.7.3, Jetpack Compose BOM 2024.10.01, Dagger-Hilt 2.52, Room 2.6.1, Java 21, Min SDK 29 (Android 10), Target SDK 35 (Android 15)
 * **টেস্ট ডিভাইস:** Android Emulator (`emulator-5554`, Google APIs ARM64/x86_64, Pixel 9, Android 15 API 35)
@@ -54,7 +54,9 @@
 | **Phase 3: DataStore (P2)** | Jetpack DataStore Preferences Repository (Shield, AI Config, PIN Hash, Hilt Module) | ✅ **100% Verified** | `UserPreferencesRepository.kt`, `PreferencesKeys.kt`, `DataStoreModule.kt` |
 | **Phase 3: ViewModels (P3)** | ViewModels Integration (Home, Settings, Whitelist, Stats, Log, Focus, Security) | ✅ **100% Verified** | `HomeViewModel.kt`, `SettingsViewModel.kt`, `AppWhitelistViewModel.kt`, `DetailedActivityLogViewModel.kt`, `StatsViewModel.kt`, `FocusScheduleViewModel.kt`, `SecurityLockViewModel.kt` |
 | **Phase 4.0: Services & Perms** | System Services Skeleton & Real Permission Bridging (MediaProjection, A11y, Audio, Overlay, FGS) | ✅ **100% Verified** | `ShieldProtectionService.kt`, `PermissionManager.kt`, `SafeScreenAccessibilityService.kt`, `PermissionHubViewModel.kt` |
-| **Phase 4.1: MediaProjection** | MediaProjection Capture Engine (VirtualDisplay, ImageReader Buffer, Zero-GC Decimation) | ⏳ **Next Up (P4.1)** | `services/capture/MediaProjectionCaptureEngine.kt` |
+| **Phase 4.1: MediaProjection** | MediaProjection Capture Engine (VirtualDisplay, ImageReader Buffer, Zero-GC Decimation) | ✅ **100% Verified** | `services/capture/MediaProjectionCaptureEngine.kt` |
+| **Phase 4.2: Audio Capture** | AudioPlaybackCapture Engine (AudioRecord, Zero-GC AudioRingBuffer, 16kHz PCM Mono) | ✅ **100% Verified** | `services/audio/AudioPlaybackCaptureEngine.kt` |
+| **Phase 4.3: Reels Observer** | Reels Accessibility Observer (Debounced Node Inspection, Screen-Time Ticker, Overlay Trigger) | ✅ **100% Verified** | `services/accessibility/ReelsAccessibilityObserver.kt` |
 | **Phase 5: On-Device AI** | INT8 Quantized TFLite NSFW Filter & YAMNet Audio Classifier Integration | ⏳ Planned (Phase 5) | `domain/ml/TFLiteClassifier.kt` |
 
 ---
@@ -463,11 +465,19 @@ flowchart TD
 - [x] সার্ভিস ইন্টিগ্রেশন: `ShieldProtectionService`-এর সাথে ডুয়াল-ইঞ্জিন (স্ক্রিন ও অডিও) একসাথে কানেক্টেড এবং শিল্ড বন্ধ হলে `audioRecord.stop()` ও `release()` নিখুঁতভাবে সম্পাদিত।
 - [x] লাইভ এমুলেটর ভেরিফিকেশন: Pixel 9 (Android 15) এমুলেটরে ১.৪৭ মিলিয়নেরও বেশি অডিও স্যাম্পল স্ক্রিন ক্যাপচারের সাথে সমান্তরালভাবে ব্যাকগ্রাউন্ডে ক্যাপচার হয়েছে (`INTERNAL_PLAYBACK` মোডে), কোনো ক্র্যাশ, মেমোরি লিক বা UI ফ্রিল্যাগ পরিলক্ষিত হয়নি।
 
-#### ধাপ ৪ (Phase 4.3): Reels Accessibility Observer (পরবর্তী কাজ — ইউজারের "Go ahead" অনুমতির অপেক্ষায় ⏳)
+#### ধাপ ৪ (Phase 4.3): Reels Accessibility Observer (১০০% সম্পন্ন ও এমুলেটরে ভেরিফাইড ✅)
 *টার্গেট ডিরেক্টরি:* `app/src/main/java/com/safescreen/app/services/accessibility/`
-- [ ] `ReelsAccessibilityObserver.kt`:
-  - শর্ট-ভিডিও প্ল্যাটফর্মস (Instagram Reels, YouTube Shorts, TikTok) ভিউ আইডি ও নোড ইন্টারসেপশন।
-  - ডুয়াল-লেয়ার স্ক্রিন-টাইম ট্র্যাকিং ও দৈনিক লিমিট এক্সিড হলে FocusInterventionOverlay ট্রিগার।
+- [x] `ReelsAccessibilityObserver.kt`:
+  - প্ল্যাটফর্ম ডিটেকশন (`ReelPlatform`): Instagram Reels (`com.instagram.android`), YouTube Shorts (`com.google.android.youtube`), TikTok (`com.zhiliaoapp.musically`, `com.ss.android.ugc.trill`), Facebook Reels (`com.facebook.katana`), এবং Web Shorts (`com.android.chrome`)।
+  - Zero-GC Debounced Tree Traversal: UI থ্রেডে ০ ল্যাগ নিশ্চিত করতে ৩০০ms ডেবউন্সিং এবং ম্যাক্সিমাম ৫ লেয়ার ডেপথ ও ৪৫ নোড ভিজিট বাউন্ডিং। কোনো অপ্রয়োজনীয় অবজেক্ট অ্যালোকেশন ছাড়াই `IntArray` কাউন্টার ব্যবহার করে নোড ট্রাভার্সাল।
+  - রিঅ্যাক্টিভ স্ক্রিন-টাইম ট্র্যাকিং: ইউজার যতক্ষণ রিলস/শর্টস দেখবে, ব্যাকগ্রাউন্ড কোরুটিন প্রতি সেকেন্ডে হিসাব রাখবে এবং প্রতি ৬০ সেকেন্ডে `preferencesRepository.incrementReelsMinutesUsedToday(1)` কল করে DataStore-এ সিঙ্ক করবে।
+  - অটোনোমাস ওভারলে ইন্টারভেনশন: ব্যবহারকারীর দৈনিক লিমিট অতিক্রম করলে (`isReelsBlockerEnabled == true` এবং `reelsMinutesUsedToday >= reelsDailyLimitMinutes`), সাথে সাথে `FocusInterventionOverlayManager.showOverlay` ট্রিগার হয়ে স্ক্রিনে ব্রেকার লকআউট প্রদর্শন করে।
+- [x] `SafeScreenAccessibilityService.kt`:
+  - Hilt `@AndroidEntryPoint` এবং `@EntryPoint` ফলব্যাক দিয়ে `ReelsAccessibilityObserver`-এর ডিপেনডেন্সি রেজোলিউশন।
+  - লাইফসাইকেল বাইন্ডিং: `onAccessibilityEvent` থেকে ইভেন্ট ও উইন্ডো রুট নোড ডেসপ্যাচ এবং সার্ভিস ডেস্ট্রয়ে ট্র্যাকিং ক্লিনআপ।
+- [x] ইউনিট টেস্ট ও এমুলেটর ভেরিফিকেশন:
+  - `ReelsAccessibilityObserverTest.kt` লিখে প্ল্যাটফর্ম ম্যাপিং ও টেস্ট কেস সফলভাবে ভেরিফাইড (`BUILD SUCCESSFUL in 4s`)।
+  - Android 15 এমুলেটরে (`emulator-5554`, Pixel 9) সার্ভিস কানেক্টেড এবং DataStore থেকে লাইভ প্রিফারেন্স আপডেট ভেরিফাইড (`Reels prefs updated: blockerEnabled=true, limit=30m, used=18m`)।
 
 ---
 
