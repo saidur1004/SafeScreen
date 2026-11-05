@@ -26,6 +26,7 @@ import javax.inject.Inject
 class HomeViewModel @Inject constructor(
     private val userPreferencesRepository: UserPreferencesRepository,
     private val threatLogDao: ThreatLogDao,
+    private val aiShieldCoordinator: com.safescreen.app.services.ai.AiShieldCoordinator,
     private val startShieldUseCase: StartShieldUseCase,
     private val stopShieldUseCase: StopShieldUseCase
 ) : ViewModel() {
@@ -46,8 +47,9 @@ class HomeViewModel @Inject constructor(
             .catch { emit(0) },
         threatLogDao.getTodayThreatCountByTypeFlow(ThreatType.AUDIO_EXPLICIT, startOfDayMillis)
             .catch { emit(0) },
+        aiShieldCoordinator.telemetry,
         _showBlurPreviewSheet
-    ) { prefs, visualCount, audioCount, showSheet ->
+    ) { prefs, visualCount, audioCount, telemetry, showSheet ->
         HomeUiState(
             isShieldActive = prefs.isShieldActive,
             blurredTodayCount = visualCount,
@@ -59,7 +61,13 @@ class HomeViewModel @Inject constructor(
             isReelsBlockerEnabled = prefs.isReelsBlockerEnabled,
             showBlurPreviewSheet = showSheet,
             currentBlurStyle = prefs.blurStyle,
-            currentBlurIntensity = prefs.blurIntensity
+            currentBlurIntensity = prefs.blurIntensity,
+            isAiVisualThreat = telemetry.isVisualThreat,
+            visualConfidence = telemetry.visualConfidence,
+            visualLabel = telemetry.visualLabel,
+            isAiAudioThreat = telemetry.isAudioThreat,
+            audioConfidence = telemetry.audioConfidence,
+            audioCategory = telemetry.audioCategory
         )
     }.catch { error ->
         // Graceful fallback to default state on any unexpected flow exception

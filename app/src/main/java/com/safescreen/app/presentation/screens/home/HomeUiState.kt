@@ -17,7 +17,13 @@ data class HomeUiState(
     val activeBottomNav: BottomNavDestination = BottomNavDestination.Home,
     val showBlurPreviewSheet: Boolean = false,
     val currentBlurStyle: BlurStyle = BlurStyle.FROSTED_GLASS,
-    val currentBlurIntensity: Float = 0.85f
+    val currentBlurIntensity: Float = 0.85f,
+    val isAiVisualThreat: Boolean = false,
+    val visualConfidence: Float = 0f,
+    val visualLabel: String = "Clean",
+    val isAiAudioThreat: Boolean = false,
+    val audioConfidence: Float = 0f,
+    val audioCategory: String = "Clean"
 ) {
     val reelsPercentage: Float
         get() = if (reelsMinutesLimit > 0) {

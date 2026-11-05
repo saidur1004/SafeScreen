@@ -41,3 +41,4 @@ class ReelsAccessibilityObserverTest {
         assertTrue(tiktokPackages.contains("com.ss.android.ugc.trill"))
     }
 }
+

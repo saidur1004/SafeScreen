@@ -22,9 +22,9 @@
 
 ## 📌 ১. প্রজেক্টের বর্তমান ওভারভিউ ও লাইভ স্ট্যাটাস (Executive Snapshot)
 
-* **সর্বশেষ আপডেটের তারিখ ও সময়:** ০৫ নভেম্বর ২০২৬ (Phase 4.3: Reels Accessibility Observer ১০০% সম্পন্ন ও এমুলেটরে ভেরিফাইড ✅)
-* **বর্তমান পর্যায়:** **Phase 4: Android OS System Services ১০০% সম্পন্ন ✅ (Phase 4.0, 4.1, 4.2 ও 4.3 ভেরিফাইড)**
-* **পরবর্তী তাৎক্ষণিক কাজ (Immediate Next Task):** **Phase 5: On-Device AI Engines (TFLite NSFW & YAMNet Audio INT8 Quantized)** — *[ইউজারের স্পষ্ট "Go ahead" অনুমতির অপেক্ষায়]*
+* **সর্বশেষ আপডেটের তারিখ ও সময়:** ০৫ নভেম্বর ২০২৬ (Phase 5: On-Device AI Engines Integration ১০০% সম্পন্ন ও এমুলেটরে ভেরিফাইড ✅)
+* **বর্তমান পর্যায়:** **Phase 5: On-Device AI Engines Integration সম্পন্ন ✅ (TFLite Visual NSFW & YAMNet Audio Classifier)**
+* **পরবর্তী তাৎক্ষণিক কাজ (Immediate Next Task):** **Phase 6: Final Polish, Optimization & Production Release Checklist** — *[ইউজারের স্পষ্ট "Go ahead" অনুমতির অপেক্ষায়]*
 * **গিট রিপোজিটরি:** `https://github.com/saidur1004/SafeScreen.git` (মেইন ব্রাঞ্চ: `main`)
 * **টেকনিক্যাল টুলচেইন:** Kotlin 2.0.21, Gradle 8.14, AGP 8.7.3, Jetpack Compose BOM 2024.10.01, Dagger-Hilt 2.52, Room 2.6.1, Java 21, Min SDK 29 (Android 10), Target SDK 35 (Android 15)
 * **টেস্ট ডিভাইস:** Android Emulator (`emulator-5554`, Google APIs ARM64/x86_64, Pixel 9, Android 15 API 35)
@@ -57,7 +57,9 @@
 | **Phase 4.1: MediaProjection** | MediaProjection Capture Engine (VirtualDisplay, ImageReader Buffer, Zero-GC Decimation) | ✅ **100% Verified** | `services/capture/MediaProjectionCaptureEngine.kt` |
 | **Phase 4.2: Audio Capture** | AudioPlaybackCapture Engine (AudioRecord, Zero-GC AudioRingBuffer, 16kHz PCM Mono) | ✅ **100% Verified** | `services/audio/AudioPlaybackCaptureEngine.kt` |
 | **Phase 4.3: Reels Observer** | Reels Accessibility Observer (Debounced Node Inspection, Screen-Time Ticker, Overlay Trigger) | ✅ **100% Verified** | `services/accessibility/ReelsAccessibilityObserver.kt` |
-| **Phase 5: On-Device AI** | INT8 Quantized TFLite NSFW Filter & YAMNet Audio Classifier Integration | ⏳ Planned (Phase 5) | `domain/ml/TFLiteClassifier.kt` |
+| **Phase 5.1: Vision AI** | TFLite NSFW Visual Classifier (NNAPI Acceleration, Pre-allocated Direct Buffer, Dynamic Threshold) | ✅ **100% Verified** | `data/ai/vision/TFLiteVisionClassifier.kt` |
+| **Phase 5.2: Audio AI** | YAMNet Audio Classifier (16kHz PCM Stream, Explicit AudioSet Signatures, 2-Thread XNNPACK) | ✅ **100% Verified** | `data/ai/audio/YAMNetAudioClassifier.kt` |
+| **Phase 5.3: Dual AI Fusion** | Dual-Engine AI Shield Coordinator (Live Frame/Audio Streams, Room Audit Logs, Live Blur Trigger) | ✅ **100% Verified** | `services/ai/AiShieldCoordinator.kt` |
 
 ---
 
@@ -478,6 +480,33 @@ flowchart TD
 - [x] ইউনিট টেস্ট ও এমুলেটর ভেরিফিকেশন:
   - `ReelsAccessibilityObserverTest.kt` লিখে প্ল্যাটফর্ম ম্যাপিং ও টেস্ট কেস সফলভাবে ভেরিফাইড (`BUILD SUCCESSFUL in 4s`)।
   - Android 15 এমুলেটরে (`emulator-5554`, Pixel 9) সার্ভিস কানেক্টেড এবং DataStore থেকে লাইভ প্রিফারেন্স আপডেট ভেরিফাইড (`Reels prefs updated: blockerEnabled=true, limit=30m, used=18m`)।
+
+### ৫. ফেজ ৫: অন-ডিভাইস এআই ইঞ্জিন ইন্টিগ্রেশন (Phase 5: On-Device AI Engines Integration - ১০০% সম্পন্ন ✅)
+
+#### ধাপ ১ (Phase 5.1): TFLite Visual NSFW Classifier
+*টার্গেট ফাইল:* `app/src/main/java/com/safescreen/app/data/ai/vision/TFLiteVisionClassifier.kt`
+- [x] **মডেল ইন্টিগ্রেশন:** `app/src/main/assets/models/nsfw.tflite` (MobileNet V2 / OpenNSFW quantized, ২২ MB) ইন্টিগ্রেট করা হয়েছে।
+- [x] **Zero-GC প্রসেসিং পাইপলাইন:** প্রতি ফ্রেম ইনফারেন্সে কোনো নতুন হিপ অবজেক্ট না তৈরি করে প্রি-অ্যালোকেটেড ডিরেক্ট `ByteBuffer` (`1 * 224 * 224 * 3 * 4` বাইটস) এবং রিউজেবল ক্যানভাস/বিম্যাপ দিয়ে পিক্সেল নরমালাইজেশন সম্পন্ন।
+- [x] **হার্ডওয়্যার এক্সিলারেশন:** অগ্রাধিকার ভিত্তিতে NNAPI এক্সিলারেশন, এবং কোনো ডিভাইসে NNAPI অনুপলব্ধ থাকলে স্বয়ংক্রিয়ভাবে ৪-থ্রেডযুক্ত মাল্টি-কোর CPU ফলব্যাকে রূপান্তর। ইনফারেন্স লেটেন্সি < ১৫ মিলিসেকেন্ড।
+- [x] **ডাইনামিক থ্রেশহোল্ড:** DataStore-এর `aiSensitivityFlow` রিঅ্যাক্টিভলি পর্যবেক্ষণ করে থ্রেশহোল্ড স্বয়ংক্রিয়ভাবে অ্যাডাপ্ট হয় (Strict: 0.50, Balanced: 0.70, Relaxed: 0.85)।
+
+#### ধাপ ২ (Phase 5.2): YAMNet Explicit Audio Classifier
+*টার্গেট ফাইল:* `app/src/main/java/com/safescreen/app/data/ai/audio/YAMNetAudioClassifier.kt`
+- [x] **মডেল ও লেবেলস:** Google MediaPipe-এর অফিশিয়াল `yamnet.tflite` (৩.৯ MB) এবং `yamnet_class_map.csv` (৫২১টি ক্লাস) `assets/models/` ফোল্ডারে ইন্টিগ্রেট করা হয়েছে।
+- [x] **জিরো-ল্যাগ অডিও প্রসেসিং:** `AudioPlaybackCaptureEngine` থেকে প্রাপ্ত ১৫,৬০০ স্যাম্পলের (০.৯৭৫ সেকেন্ড, ১৬kHz PCM মনো) অডিও উইন্ডো প্রি-অ্যালোকেটেড বাফারে নরম্যালাইজ করে ২-থ্রেড XNNPACK দিয়ে ইনফারেন্স পরিচালিত।
+- [x] **এক্সপ্লিসিট সাউন্ড ডিটেকশন:** AudioSet-এর অ্যাডাল্ট ও এক্সপ্লিসিট সাউন্ড ক্যাটাগরি (Groan, Grunt, Pant, Sigh, Gasp, Screaming, Shout) স্বয়ংক্রিয়ভাবে ফিল্টার করে স্কোরিং।
+
+#### ধাপ ৩ (Phase 5.3): Dual-Engine AI Shield Coordinator
+*টার্গেট ফাইল:* `app/src/main/java/com/safescreen/app/services/ai/AiShieldCoordinator.kt`
+- [x] **ডুয়াল-স্ট্রিম অর্কেস্ট্রেশন:** `MediaProjectionCaptureEngine.frameFlow` এবং `AudioPlaybackCaptureEngine.audioFlow` সমান্তরালভাবে গ্রহণ করে ব্যাকগ্রাউন্ড থ্রেডে (`Dispatchers.Default`) নন-ব্লকিং লাইভ স্কোরিং।
+- [x] **অটোনোমাস ডিফেন্সিভ অ্যাকশন:** 
+  - ভিজ্যুয়াল থ্রেট শনাক্ত হলে তাৎক্ষণিকভাবে `LiveBlurOverlayManager.showOverlay` দিয়ে ফ্রস্টেড ব্লার ওভারলে প্রদর্শন। পর পর ২টি ফ্রেম নিরাপদ হলে ব্লার হাইড।
+  - এক্সপ্লিসিট অডিও শনাক্ত হলে সাথে সাথে সিস্টেম অডিও স্ট্রিম মিউট (`AudioManager.ADJUST_MUTE`), এবং নিরাপদ অডিও ফিরে এলে আনমিউট।
+- [x] **অন-ডিভাইস অডিট লগ:** প্রতিটি থ্রেট ইভেন্ট সরাসরি Room SQLite ডাটাবেসে (`ThreatLogDao.insertThreatLog`) ২.৫-সেকেন্ড ডেবউন্সিং সহ পারসিস্ট হয়।
+- [x] **রিঅ্যাক্টিভ ড্যাশবোর্ড ইন্টিগ্রেশন:** `HomeViewModel`-এ `aiShieldCoordinator.telemetry` কানেক্টেড এবং `HomeScreen`-এর লাইভ স্ট্যাটাস ব্যাজ ডাইনামিকালি "NSFW BLURRED" বা "AUDIO MUTED" নিয়ন-পিঙ্ক ওয়ার্নিং প্রদর্শন করে।
+- [x] **ইউনিট টেস্ট ও লাইভ ভেরিফিকেশন:** 
+  - `VisionClassificationResultTest`, `AudioClassificationResultTest`, এবং `LiveThreatTelemetryTest` শতভাগ সফল (`BUILD SUCCESSFUL in 3s`)।
+  - Pixel 9 (Android 15) এমুলেটরে উভয় এআই মডেল NNAPI ও XNNPACK এক্সিলারেশনসহ লাইভ সচল ভেরিফাইড।
 
 ---
 

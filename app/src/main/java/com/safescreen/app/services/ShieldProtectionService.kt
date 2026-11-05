@@ -43,6 +43,9 @@ class ShieldProtectionService : LifecycleService() {
     @Inject
     lateinit var audioCaptureEngine: AudioPlaybackCaptureEngine
 
+    @Inject
+    lateinit var aiShieldCoordinator: com.safescreen.app.services.ai.AiShieldCoordinator
+
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
@@ -139,6 +142,9 @@ class ShieldProtectionService : LifecycleService() {
             if (isAudioGranted) {
                 audioCaptureEngine.startCapture(mediaProjectionSession)
             }
+
+            // 3. Start Dual-Engine AI Shield live observation pipeline
+            aiShieldCoordinator.startObserving()
         } catch (e: Exception) {
             Log.e(TAG, "Failed to start foreground service: ${e.message}", e)
         }
@@ -146,6 +152,7 @@ class ShieldProtectionService : LifecycleService() {
 
     private fun stopForegroundShield() {
         Log.d(TAG, "Stopping ShieldProtectionService")
+        aiShieldCoordinator.stopObserving()
         audioCaptureEngine.stopCapture()
         captureEngine.stopCapture()
         _isServiceRunning.value = false
@@ -200,6 +207,7 @@ class ShieldProtectionService : LifecycleService() {
 
     override fun onDestroy() {
         super.onDestroy()
+        aiShieldCoordinator.stopObserving()
         audioCaptureEngine.stopCapture()
         captureEngine.stopCapture()
         _isServiceRunning.value = false

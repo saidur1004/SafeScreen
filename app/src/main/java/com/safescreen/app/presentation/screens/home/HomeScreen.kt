@@ -220,6 +220,8 @@ fun HomeScreenContent(
             // A. Top Bar
             HomeTopBar(
                 isShieldActive = uiState.isShieldActive,
+                isVisualThreat = uiState.isAiVisualThreat,
+                isAudioThreat = uiState.isAiAudioThreat,
                 onCustomizeBlurClick = { onEvent(HomeUiEvent.OpenBlurStyleSheet) },
                 onSettingsClick = { onEvent(HomeUiEvent.NavigateToSettings) }
             )
@@ -357,6 +359,8 @@ fun HomeScreenContent(
 @Composable
 private fun HomeTopBar(
     isShieldActive: Boolean,
+    isVisualThreat: Boolean = false,
+    isAudioThreat: Boolean = false,
     onCustomizeBlurClick: () -> Unit = {},
     onSettingsClick: () -> Unit = {}
 ) {
@@ -435,6 +439,19 @@ private fun HomeTopBar(
         }
 
         // Live Status Pill & Settings Button
+        val isThreatDetected = isShieldActive && (isVisualThreat || isAudioThreat)
+        val pillColor = when {
+            !isShieldActive -> TextMuted
+            isThreatDetected -> NeonPink
+            else -> NeonGreen
+        }
+        val pillText = when {
+            !isShieldActive -> "DISARMED"
+            isVisualThreat -> "NSFW BLURRED"
+            isAudioThreat -> "AUDIO MUTED"
+            else -> "AI SHIELD ACTIVE"
+        }
+
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -445,7 +462,7 @@ private fun HomeTopBar(
                     .background(Color(0xCC0D1726))
                     .border(
                         width = 1.dp,
-                        color = if (isShieldActive) NeonGreen.copy(alpha = 0.45f) else Color.White.copy(alpha = 0.12f),
+                        color = pillColor.copy(alpha = 0.45f),
                         shape = CircleShape
                     )
                     .padding(horizontal = 12.dp, vertical = 6.dp),
@@ -460,18 +477,18 @@ private fun HomeTopBar(
                             .size(7.dp)
                             .scale(if (isShieldActive) dotPulseScale else 1.0f)
                             .clip(CircleShape)
-                            .background(if (isShieldActive) NeonGreen else TextMuted)
+                            .background(pillColor)
                     )
 
                     Spacer(modifier = Modifier.width(6.dp))
 
                     Text(
-                        text = if (isShieldActive) "SHIELD ACTIVE" else "DISARMED",
+                        text = pillText,
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 0.8.sp,
                             fontSize = 10.5.sp,
-                            color = if (isShieldActive) NeonGreen else TextMuted
+                            color = pillColor
                         )
                     )
                 }

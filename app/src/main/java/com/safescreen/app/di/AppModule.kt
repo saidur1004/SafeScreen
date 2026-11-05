@@ -32,6 +32,7 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideTFLiteClassifier(): TFLiteClassifier = TFLiteClassifier()
+    fun provideTFLiteClassifier(visionClassifier: com.safescreen.app.data.ai.vision.TFLiteVisionClassifier): TFLiteClassifier =
+        TFLiteClassifier(visionClassifier)
 }
 
