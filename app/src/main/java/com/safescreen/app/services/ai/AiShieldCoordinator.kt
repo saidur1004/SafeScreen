@@ -235,6 +235,14 @@ class AiShieldCoordinator @Inject constructor(
         dismissAllInterventions()
     }
 
+    fun testTriggerVisualThreat() {
+        handleVisualThreatDetected(0.96f, "NSFW Provocative")
+    }
+
+    fun testTriggerAudioThreat() {
+        handleAudioThreatDetected(0.92f, "Music Track")
+    }
+
     private fun handleVisualThreatDetected(confidence: Float, label: String) {
         LiveBlurOverlayManager.showOverlay(
             context = context,
@@ -257,9 +265,13 @@ class AiShieldCoordinator @Inject constructor(
                 if (currentVol > 0) {
                     preMuteVolume = currentVol
                 }
-                audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_MUTE, 0)
+                // Deterministically silence audio by setting stream volume to 0
+                audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 0, 0)
                 isAudioCurrentlyMuted = true
-                Log.w(TAG, "Explicit audio detected: $category (${(confidence * 100).toInt()}%). Audio stream muted! Saved pre-mute volume: $preMuteVolume")
+                Log.w(
+                    TAG,
+                    "Audio Threat Detected: $category (${(confidence * 100).toInt()}%). Audio stream silenced! Saved pre-mute volume: $preMuteVolume"
+                )
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to mute audio stream", e)
             }
@@ -269,20 +281,15 @@ class AiShieldCoordinator @Inject constructor(
             type = ThreatType.AUDIO_EXPLICIT,
             action = ThreatAction.MUTED,
             severity = confidence,
-            details = "Explicit audio ($category) muted with ${(confidence * 100).toInt()}% confidence"
+            details = "Audio threat ($category) muted with ${(confidence * 100).toInt()}% confidence"
         )
     }
 
     private fun unmuteAudioIfMuted() {
         if (isAudioCurrentlyMuted) {
             try {
-                audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_UNMUTE, 0)
-                // If stream remained at 0 or muted, explicitly restore pre-mute volume
                 if (preMuteVolume > 0) {
-                    val currentVol = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
-                    if (currentVol == 0) {
-                        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, preMuteVolume, 0)
-                    }
+                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, preMuteVolume, 0)
                 }
                 isAudioCurrentlyMuted = false
                 Log.d(TAG, "Audio stream restored to normal (restored volume: $preMuteVolume)")

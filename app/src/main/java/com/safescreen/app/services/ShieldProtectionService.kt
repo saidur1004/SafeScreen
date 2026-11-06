@@ -132,6 +132,14 @@ class ShieldProtectionService : LifecycleService() {
             ACTION_STOP_SHIELD -> {
                 stopForegroundShield()
             }
+            ACTION_TEST_VISUAL_THREAT -> {
+                Log.d(TAG, "Triggering test visual threat")
+                aiShieldCoordinator.testTriggerVisualThreat()
+            }
+            ACTION_TEST_AUDIO_THREAT -> {
+                Log.d(TAG, "Triggering test audio threat")
+                aiShieldCoordinator.testTriggerAudioThreat()
+            }
             else -> {
                 Log.w(TAG, "Ignoring unknown service action: ${intent.action}")
                 stopForegroundShield()
@@ -305,6 +313,8 @@ class ShieldProtectionService : LifecycleService() {
         const val NOTIFICATION_ID = 1001
         const val ACTION_START_SHIELD = "com.safescreen.app.action.START_SHIELD"
         const val ACTION_STOP_SHIELD = "com.safescreen.app.action.STOP_SHIELD"
+        const val ACTION_TEST_VISUAL_THREAT = "com.safescreen.app.action.TEST_VISUAL_THREAT"
+        const val ACTION_TEST_AUDIO_THREAT = "com.safescreen.app.action.TEST_AUDIO_THREAT"
         const val EXTRA_RESULT_CODE = "extra_result_code"
         const val EXTRA_RESULT_DATA = "extra_result_data"
 

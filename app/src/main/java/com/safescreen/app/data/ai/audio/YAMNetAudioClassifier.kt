@@ -54,13 +54,21 @@ class YAMNetAudioClassifier @Inject constructor(
     private var interpreter: Interpreter? = null
     private var isInitialized = false
 
-    private var explicitThreshold = 0.50f
+    private var explicitThreshold = 0.35f
     private val classLabels = mutableMapOf<Int, String>()
 
     // Explicit AudioSet sound signature class indices
     // 6: Shout, 11: Screaming, 12: Whispering, 23: Sigh, 33: Groan, 34: Grunt, 39: Gasp, 40: Pant
     private val adultMoanIndices = setOf(23, 33, 34, 39, 40)
     private val highIntensityVocalIndices = setOf(6, 11, 12)
+
+    // Music & Singing AudioSet indices for muting music tracks
+    private val musicAndSingingIndices = setOf(
+        24, 29, 30, 107, 132, 133, 135, 136, 137, 138, 139, 140, 147, 148, 149,
+        211, 212, 214, 222, 225, 228, 229, 232, 234, 235, 240, 241, 242, 243,
+        244, 247, 248, 249, 251, 253, 254, 255, 256, 257, 259, 260, 261, 262,
+        263, 264, 265, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276
+    )
 
     // Pre-allocated Zero-GC buffers
     private val inputBuffer: ByteBuffer = ByteBuffer.allocateDirect(
@@ -77,9 +85,9 @@ class YAMNetAudioClassifier @Inject constructor(
         preferencesRepository.aiSensitivityFlow
             .onEach { level ->
                 explicitThreshold = when (level) {
-                    SensitivityLevel.STRICT -> 0.35f
-                    SensitivityLevel.BALANCED -> 0.50f
-                    SensitivityLevel.RELAXED -> 0.65f
+                    SensitivityLevel.STRICT -> 0.25f
+                    SensitivityLevel.BALANCED -> 0.35f
+                    SensitivityLevel.RELAXED -> 0.50f
                 }
                 Log.d(TAG, "YAMNetAudioClassifier sensitivity updated to $level (threshold=$explicitThreshold)")
             }
@@ -184,6 +192,7 @@ class YAMNetAudioClassifier @Inject constructor(
 
                 var maxMoanScore = 0f
                 var maxVocalScore = 0f
+                var maxMusicScore = 0f
 
                 for (i in 0 until minOf(scores.size, NUM_CLASSES)) {
                     val score = scores[i]
@@ -198,18 +207,33 @@ class YAMNetAudioClassifier @Inject constructor(
                     if (highIntensityVocalIndices.contains(i) && score > maxVocalScore) {
                         maxVocalScore = score
                     }
+                    if (musicAndSingingIndices.contains(i) && score > maxMusicScore) {
+                        maxMusicScore = score
+                    }
                 }
 
-                // Effective explicit score calculation
-                val explicitScore = maxOf(maxMoanScore, (maxVocalScore * 0.85f))
+                // Effective threat score calculation (both explicit vocal/moan and background music/song)
+                val explicitScore = maxOf(maxMoanScore, (maxVocalScore * 0.85f), maxMusicScore)
                 val isExplicit = explicitScore >= explicitThreshold
 
-                val topCategoryName = classLabels[topCategoryIndex] ?: "Audio Class $topCategoryIndex"
+                val threatCategoryName = when {
+                    maxMusicScore >= explicitThreshold -> classLabels[topCategoryIndex]?.takeIf { musicAndSingingIndices.contains(topCategoryIndex) } ?: "Music Track"
+                    maxMoanScore >= explicitThreshold -> "Explicit Audio"
+                    maxVocalScore >= explicitThreshold -> "High Intensity Vocal"
+                    else -> classLabels[topCategoryIndex] ?: "Clean"
+                }
+
+                if (isExplicit) {
+                    Log.d(
+                        TAG,
+                        "Audio Threat Intercepted: $threatCategoryName (${(explicitScore * 100).toInt()}%), threshold=$explicitThreshold"
+                    )
+                }
 
                 AudioClassificationResult(
                     isExplicit = isExplicit,
                     confidence = explicitScore,
-                    topCategory = topCategoryName,
+                    topCategory = threatCategoryName,
                     explicitScore = explicitScore,
                     inferenceTimeMs = inferenceTime
                 )

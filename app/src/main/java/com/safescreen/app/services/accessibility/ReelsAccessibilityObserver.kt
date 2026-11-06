@@ -250,34 +250,43 @@ class ReelsAccessibilityObserver @Inject constructor(
         val viewId = node.viewIdResourceName?.lowercase() ?: ""
         val contentDesc = node.contentDescription?.toString()?.lowercase() ?: ""
         val text = node.text?.toString()?.lowercase() ?: ""
+        val className = node.className?.toString()?.lowercase() ?: ""
 
         return when (platform) {
             ReelPlatform.INSTAGRAM -> {
-                viewId.contains("clips_video_container") ||
-                        viewId.contains("reel_viewer") ||
-                        viewId.contains("clips_media_component") ||
-                        viewId.contains("clips_video_surface_layout") ||
-                        viewId.contains("clips_viewer") ||
-                        viewId.contains("reel_video_container")
+                viewId.contains("clips") ||
+                        viewId.contains("reel") ||
+                        contentDesc.contains("reels") ||
+                        contentDesc.contains("reel by") ||
+                        text == "reels"
             }
             ReelPlatform.YOUTUBE -> {
-                viewId.contains("shorts_player_container") ||
-                        viewId.contains("reel_player") ||
-                        viewId.contains("reel_recycler") ||
-                        viewId.contains("shorts_video") ||
-                        viewId.contains("shorts_container")
+                viewId.contains("shorts") ||
+                        viewId.contains("reel") ||
+                        contentDesc.contains("shorts") ||
+                        contentDesc.contains("short") ||
+                        contentDesc.contains("remix") ||
+                        className.contains("reel") ||
+                        text == "shorts"
             }
             ReelPlatform.FACEBOOK -> {
-                viewId.contains("fb_shorts") ||
-                        viewId.contains("reels_root") ||
-                        viewId.contains("reel_viewer") ||
-                        viewId.contains("reels_video_container")
+                viewId.contains("reels") ||
+                        viewId.contains("reel") ||
+                        viewId.contains("fb_shorts") ||
+                        contentDesc.contains("reels") ||
+                        contentDesc.contains("reel") ||
+                        text.contains("reels") ||
+                        text.contains("watch reels")
             }
             ReelPlatform.CHROME -> {
                 text.contains("youtube.com/shorts") ||
                         text.contains("instagram.com/reels") ||
+                        text.contains("facebook.com/reel") ||
+                        text.contains("tiktok.com") ||
                         contentDesc.contains("youtube.com/shorts") ||
-                        contentDesc.contains("instagram.com/reels")
+                        contentDesc.contains("instagram.com/reels") ||
+                        contentDesc.contains("facebook.com/reel") ||
+                        contentDesc.contains("tiktok.com")
             }
             ReelPlatform.TIKTOK -> true
         }
@@ -395,9 +404,9 @@ class ReelsAccessibilityObserver @Inject constructor(
 
     companion object {
         private const val TAG = "SafeScreenReels"
-        private const val DEBOUNCE_INTERVAL_MS = 300L
-        private const val MAX_INSPECTION_DEPTH = 5
-        private const val MAX_INSPECTION_NODES = 45
+        private const val DEBOUNCE_INTERVAL_MS = 250L
+        private const val MAX_INSPECTION_DEPTH = 25
+        private const val MAX_INSPECTION_NODES = 300
     }
 
     private data class ManagedAppPolicy(val isEnabled: Boolean, val timeLimitMinutes: Int)
@@ -412,7 +421,10 @@ class ReelsAccessibilityObserver @Inject constructor(
     private fun defaultManagedAppPolicies(limitMinutes: Int = 30) = mapOf(
         "com.instagram.android" to ManagedAppPolicy(true, limitMinutes),
         "com.google.android.youtube" to ManagedAppPolicy(true, limitMinutes),
-        "com.zhiliaoapp.musically" to ManagedAppPolicy(true, limitMinutes)
+        "com.facebook.katana" to ManagedAppPolicy(true, limitMinutes),
+        "com.zhiliaoapp.musically" to ManagedAppPolicy(true, limitMinutes),
+        "com.ss.android.ugc.trill" to ManagedAppPolicy(true, limitMinutes),
+        "com.android.chrome" to ManagedAppPolicy(true, limitMinutes)
     )
 
     private fun parseManagedAppPolicies(json: String, fallbackLimit: Int): Map<String, ManagedAppPolicy> {

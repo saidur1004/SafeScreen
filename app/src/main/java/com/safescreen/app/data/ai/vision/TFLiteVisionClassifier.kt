@@ -59,7 +59,7 @@ class TFLiteVisionClassifier @Inject constructor(
     private var isInitialized = false
 
     // Sensitivity threshold dynamically loaded from DataStore
-    private var nsfwThreshold = 0.70f
+    private var nsfwThreshold = 0.45f
 
     // Zero-GC pre-allocated reusable scaling canvas & buffers
     private val scaledBitmap = Bitmap.createBitmap(INPUT_WIDTH, INPUT_HEIGHT, Bitmap.Config.ARGB_8888)
@@ -75,17 +75,17 @@ class TFLiteVisionClassifier @Inject constructor(
 
     private val inferenceMutex = Mutex()
 
-    // Pre-allocated output buffer for 5 classes: [drawings, hentai, neutral, porn, sexy]
-    private val outputBuffer = Array(1) { FloatArray(5) }
+    // Pre-allocated output buffer for OpenNSFW 2 classes: [0: SFW, 1: NSFW]
+    private val outputBuffer = Array(1) { FloatArray(2) }
 
     init {
         // Observe user sensitivity changes reactively
         preferencesRepository.aiSensitivityFlow
             .onEach { level ->
                 nsfwThreshold = when (level) {
-                    SensitivityLevel.STRICT -> 0.50f
-                    SensitivityLevel.BALANCED -> 0.70f
-                    SensitivityLevel.RELAXED -> 0.85f
+                    SensitivityLevel.STRICT -> 0.30f
+                    SensitivityLevel.BALANCED -> 0.45f
+                    SensitivityLevel.RELAXED -> 0.65f
                 }
                 Log.d(TAG, "TFLiteVisionClassifier sensitivity updated to $level (threshold=$nsfwThreshold)")
             }
@@ -157,17 +157,18 @@ class TFLiteVisionClassifier @Inject constructor(
                 // 2. Extract pixel color components into pre-allocated IntArray
                 scaledBitmap.getPixels(intValues, 0, INPUT_WIDTH, 0, 0, INPUT_WIDTH, INPUT_HEIGHT)
 
-                // 3. Populate direct ByteBuffer normalized in [0.0f, 1.0f] range
+                // 3. Populate direct ByteBuffer with BGR mean-subtracted floats [0..255] (OpenNSFW standard)
                 inputBuffer.rewind()
                 for (i in 0 until (INPUT_WIDTH * INPUT_HEIGHT)) {
                     val pixel = intValues[i]
-                    val r = (pixel shr 16 and 0xFF) / 255.0f
-                    val g = (pixel shr 8 and 0xFF) / 255.0f
-                    val b = (pixel and 0xFF) / 255.0f
+                    val r = (pixel shr 16 and 0xFF).toFloat() - 122.68f
+                    val g = (pixel shr 8 and 0xFF).toFloat() - 116.67f
+                    val b = (pixel and 0xFF).toFloat() - 104.01f
 
-                    inputBuffer.putFloat(r)
-                    inputBuffer.putFloat(g)
+                    // Caffe OpenNSFW model uses BGR channel ordering
                     inputBuffer.putFloat(b)
+                    inputBuffer.putFloat(g)
+                    inputBuffer.putFloat(r)
                 }
 
                 // 4. Run inference
@@ -175,31 +176,26 @@ class TFLiteVisionClassifier @Inject constructor(
 
                 val inferenceTime = SystemClock.elapsedRealtime() - startTime
 
-                // Output mapping: [0: drawings, 1: hentai, 2: neutral, 3: porn, 4: sexy]
+                // Output mapping: [0: SFW (Safe), 1: NSFW (Explicit)]
                 val scores = outputBuffer[0]
-                val hentaiScore = scores.getOrElse(1) { 0f }
-                val pornScore = scores.getOrElse(3) { 0f }
-                val sexyScore = scores.getOrElse(4) { 0f }
+                val sfwScore = scores.getOrElse(0) { 1f }
+                val nsfwScore = scores.getOrElse(1) { 0f }
 
-                val rawNsfwScore = maxOf(pornScore, hentaiScore)
-                val effectiveConfidence = maxOf(rawNsfwScore, (sexyScore * 0.90f))
+                val isNsfw = nsfwScore >= nsfwThreshold
+                val topLabel = if (isNsfw) "NSFW" else "safe"
 
-                val isNsfw = effectiveConfidence >= nsfwThreshold
-
-                val topLabel = when {
-                    pornScore >= nsfwThreshold -> "porn"
-                    hentaiScore >= nsfwThreshold -> "hentai"
-                    sexyScore >= nsfwThreshold -> "sexy"
-                    else -> "safe"
-                }
+                Log.d(
+                    TAG,
+                    "Frame classified in ${inferenceTime}ms: NSFW=$isNsfw (${(nsfwScore * 100).toInt()}%), SFW=${(sfwScore * 100).toInt()}%, threshold=$nsfwThreshold"
+                )
 
                 VisionClassificationResult(
                     isNSFW = isNsfw,
-                    confidence = effectiveConfidence,
+                    confidence = nsfwScore,
                     topLabel = topLabel,
-                    pornScore = pornScore,
-                    sexyScore = sexyScore,
-                    hentaiScore = hentaiScore,
+                    pornScore = nsfwScore,
+                    sexyScore = nsfwScore,
+                    hentaiScore = 0f,
                     inferenceTimeMs = inferenceTime
                 )
             } catch (e: Exception) {

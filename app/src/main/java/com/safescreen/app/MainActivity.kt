@@ -2,6 +2,7 @@ package com.safescreen.app
 
 import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.media.projection.MediaProjectionManager
 import android.os.Bundle
 import android.util.Log
@@ -67,9 +68,32 @@ class MainActivity : FragmentActivity() {
     @Inject
     lateinit var userPreferencesRepository: UserPreferencesRepository
 
+    @Inject
+    lateinit var aiShieldCoordinator: com.safescreen.app.services.ai.AiShieldCoordinator
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleTestIntent(intent)
+    }
+
+    private fun handleTestIntent(targetIntent: Intent?) {
+        when (targetIntent?.action) {
+            "com.safescreen.app.action.TEST_VISUAL_THREAT" -> {
+                Log.d("MainActivity", "Executing test visual threat trigger")
+                aiShieldCoordinator.testTriggerVisualThreat()
+            }
+            "com.safescreen.app.action.TEST_AUDIO_THREAT" -> {
+                Log.d("MainActivity", "Executing test audio threat trigger")
+                aiShieldCoordinator.testTriggerAudioThreat()
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        handleTestIntent(intent)
 
         // Verify Room Database & DataStore initialization in background
         lifecycleScope.launch(Dispatchers.IO) {

@@ -105,8 +105,8 @@ class MediaProjectionCaptureEngine @Inject constructor(
 
     private val _frameFlow = MutableSharedFlow<Bitmap>(
         replay = 0,
-        extraBufferCapacity = 0,
-        onBufferOverflow = BufferOverflow.SUSPEND
+        extraBufferCapacity = 2,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
     val frameFlow: SharedFlow<Bitmap> = _frameFlow.asSharedFlow()
 
