@@ -62,13 +62,8 @@ class YAMNetAudioClassifier @Inject constructor(
     private val adultMoanIndices = setOf(23, 33, 34, 39, 40)
     private val highIntensityVocalIndices = setOf(6, 11, 12)
 
-    // Music & Singing AudioSet indices for muting music tracks
-    private val musicAndSingingIndices = setOf(
-        24, 29, 30, 107, 132, 133, 135, 136, 137, 138, 139, 140, 147, 148, 149,
-        211, 212, 214, 222, 225, 228, 229, 232, 234, 235, 240, 241, 242, 243,
-        244, 247, 248, 249, 251, 253, 254, 255, 256, 257, 259, 260, 261, 262,
-        263, 264, 265, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276
-    )
+    // Music & Singing AudioSet indices for muting music tracks (AudioSet Music subtree 132..276 + Singing/Song)
+    private val musicAndSingingIndices: Set<Int> = ((132..276).toSet() + setOf(24, 29, 30, 250, 261))
 
     // Pre-allocated Zero-GC buffers
     private val inputBuffer: ByteBuffer = ByteBuffer.allocateDirect(

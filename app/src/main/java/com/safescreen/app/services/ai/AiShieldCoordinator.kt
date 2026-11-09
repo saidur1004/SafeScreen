@@ -89,9 +89,12 @@ class AiShieldCoordinator @Inject constructor(
     private var audioProcessingJob: Job? = null
 
     private var consecutiveSafeFrames = 0
+    private var consecutiveSafeAudioWindows = 0
     private var isAudioCurrentlyMuted = false
     private var preMuteVolume: Int = -1
     private var lastThreatLogTimestamp = 0L
+    private var lastVisualThreatPackage: String? = null
+    private var visualSnoozeUntil = 0L
 
     init {
         // 1. Collect user preference toggles
@@ -140,17 +143,31 @@ class AiShieldCoordinator @Inject constructor(
                     if (!isShieldActive || !isVisualShieldEnabled) {
                         if (LiveBlurOverlayManager.isShowing()) {
                             LiveBlurOverlayManager.hideOverlay(context)
+                            lastVisualThreatPackage = null
                         }
+                        return@collect
+                    }
+
+                    val now = SystemClock.elapsedRealtime()
+                    if (now < visualSnoozeUntil) {
                         return@collect
                     }
 
                     // Check active foreground application exemption (Whitelist Protection)
                     val currentPkg = foregroundAppTracker.currentPackage ?: ForegroundAppTracker.currentForegroundPackage
+
+                    // While blur overlay is actively obscuring the screen, do not classify the overlay itself!
+                    if (LiveBlurOverlayManager.isShowing()) {
+                        // If user navigated away from the offensive app (e.g. went to Home, SafeScreen, or another app), hide overlay!
+                        if (currentPkg != null && currentPkg != lastVisualThreatPackage && currentPkg != context.packageName) {
+                            LiveBlurOverlayManager.hideOverlay(context)
+                            lastVisualThreatPackage = null
+                        }
+                        return@collect
+                    }
+
                     // Unknown foreground package is deliberately fail-safe: continue visual inspection.
                     if (currentPkg != null && (exemptedPackages.contains(currentPkg) || currentPkg == context.packageName)) {
-                        if (LiveBlurOverlayManager.isShowing()) {
-                            LiveBlurOverlayManager.hideOverlay(context)
-                        }
                         return@collect
                     }
 
@@ -166,13 +183,7 @@ class AiShieldCoordinator @Inject constructor(
                     }
 
                     if (result.isNSFW) {
-                        consecutiveSafeFrames = 0
                         handleVisualThreatDetected(result.confidence, result.topLabel)
-                    } else {
-                        consecutiveSafeFrames++
-                        if (consecutiveSafeFrames >= SAFE_FRAME_HYSTERESIS && LiveBlurOverlayManager.isShowing()) {
-                            LiveBlurOverlayManager.hideOverlay(context)
-                        }
                     }
                 } catch (e: Exception) {
                     Log.e(TAG, "Error in visual frame inference pipeline", e)
@@ -192,8 +203,8 @@ class AiShieldCoordinator @Inject constructor(
 
                 // Check active foreground application exemption (Whitelist Protection)
                 val currentPkg = foregroundAppTracker.currentPackage ?: ForegroundAppTracker.currentForegroundPackage
-                // Unknown foreground package is deliberately fail-safe: continue audio inspection.
-                if (currentPkg != null && (exemptedPackages.contains(currentPkg) || currentPkg == context.packageName)) {
+                // If user is inside an explicitly whitelisted application (other than SafeScreen), allow audio
+                if (currentPkg != null && exemptedPackages.contains(currentPkg) && currentPkg != context.packageName) {
                     unmuteAudioIfMuted()
                     return@collect
                 }
@@ -211,9 +222,16 @@ class AiShieldCoordinator @Inject constructor(
                     }
 
                     if (result.isExplicit) {
+                        consecutiveSafeAudioWindows = 0
                         handleAudioThreatDetected(result.confidence, result.topCategory)
                     } else {
-                        unmuteAudioIfMuted()
+                        if (isAudioCurrentlyMuted) {
+                            consecutiveSafeAudioWindows++
+                            if (consecutiveSafeAudioWindows >= SAFE_AUDIO_HYSTERESIS_WINDOWS) {
+                                unmuteAudioIfMuted()
+                                consecutiveSafeAudioWindows = 0
+                            }
+                        }
                     }
                 } catch (e: Exception) {
                     Log.e(TAG, "Error in audio classification pipeline", e)
@@ -244,10 +262,15 @@ class AiShieldCoordinator @Inject constructor(
     }
 
     private fun handleVisualThreatDetected(confidence: Float, label: String) {
+        val currentPkg = foregroundAppTracker.currentPackage ?: ForegroundAppTracker.currentForegroundPackage
+        lastVisualThreatPackage = currentPkg
         LiveBlurOverlayManager.showOverlay(
             context = context,
             threatConfidence = confidence,
-            threatType = "NSFW Content Detected ($label)"
+            threatType = "NSFW Content Detected ($label)",
+            onDismiss = {
+                visualSnoozeUntil = SystemClock.elapsedRealtime() + VISUAL_SNOOZE_MS
+            }
         )
 
         logThreatIncident(
@@ -305,6 +328,8 @@ class AiShieldCoordinator @Inject constructor(
         if (LiveBlurOverlayManager.isShowing()) {
             LiveBlurOverlayManager.hideOverlay(context)
         }
+        lastVisualThreatPackage = null
+        consecutiveSafeAudioWindows = 0
         unmuteAudioIfMuted()
     }
 
@@ -366,6 +391,8 @@ class AiShieldCoordinator @Inject constructor(
     companion object {
         private const val TAG = "SafeScreenCoordinator"
         private const val SAFE_FRAME_HYSTERESIS = 2
+        private const val SAFE_AUDIO_HYSTERESIS_WINDOWS = 10
+        private const val VISUAL_SNOOZE_MS = 3500L
         private const val LOG_DEBOUNCE_MS = 2500L
     }
 }

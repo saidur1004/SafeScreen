@@ -45,7 +45,7 @@ enum class ReelPlatform(val displayName: String, val packageNames: Set<String>) 
     ),
     FACEBOOK(
         displayName = "Facebook Reels",
-        packageNames = setOf("com.facebook.katana")
+        packageNames = setOf("com.facebook.katana", "com.facebook.lite")
     ),
     CHROME(
         displayName = "Web Shorts",
@@ -154,6 +154,12 @@ class ReelsAccessibilityObserver @Inject constructor(
         if (event == null) return
 
         val packageName = event.packageName?.toString() ?: return
+
+        // Ignore transient system UI overlays, volume dialogs, or keyboards
+        if (packageName == "com.android.systemui" || packageName == "android" || packageName.contains("inputmethod", ignoreCase = true)) {
+            return
+        }
+
         val platform = ReelPlatform.fromPackageName(packageName)
 
         if (platform == null) {
@@ -353,7 +359,7 @@ class ReelsAccessibilityObserver @Inject constructor(
             return
         }
 
-        if (isBlockerEnabled && minutesUsedToday >= activeLimitMinutes) {
+        if (isBlockerEnabled && (activeLimitMinutes == 0 || minutesUsedToday >= activeLimitMinutes)) {
             val appTitle = _activePlatform.value?.displayName ?: "Reels / Shorts"
             Log.w(
                 TAG,
@@ -422,6 +428,7 @@ class ReelsAccessibilityObserver @Inject constructor(
         "com.instagram.android" to ManagedAppPolicy(true, limitMinutes),
         "com.google.android.youtube" to ManagedAppPolicy(true, limitMinutes),
         "com.facebook.katana" to ManagedAppPolicy(true, limitMinutes),
+        "com.facebook.lite" to ManagedAppPolicy(true, limitMinutes),
         "com.zhiliaoapp.musically" to ManagedAppPolicy(true, limitMinutes),
         "com.ss.android.ugc.trill" to ManagedAppPolicy(true, limitMinutes),
         "com.android.chrome" to ManagedAppPolicy(true, limitMinutes)
@@ -439,7 +446,7 @@ class ReelsAccessibilityObserver @Inject constructor(
                         packageName,
                         ManagedAppPolicy(
                             isEnabled = app.optBoolean("enabled", true),
-                            timeLimitMinutes = app.optInt("limit", fallbackLimit).coerceIn(5, 240)
+                            timeLimitMinutes = app.optInt("limit", fallbackLimit).coerceIn(0, 240)
                         )
                     )
                 }

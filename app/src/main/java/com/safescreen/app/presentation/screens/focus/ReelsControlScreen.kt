@@ -464,9 +464,9 @@ private fun ManagedAppCard(
             TimeLimitSlider(
                 valueMinutes = app.timeLimitMinutes,
                 onValueChange = onTimeLimitChange,
-                minMinutes = 15,
+                minMinutes = 0,
                 maxMinutes = 180,
-                stepMinutes = 15,
+                stepMinutes = 5,
                 activeColor = NeonCyan
             )
         }

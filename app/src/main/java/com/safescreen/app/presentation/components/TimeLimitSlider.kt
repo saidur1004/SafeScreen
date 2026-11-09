@@ -48,6 +48,7 @@ fun TimeLimitSlider(
  * Helper utility to format minutes into human readable "1h 30m" format.
  */
 fun formatMinutes(minutes: Int): String {
+    if (minutes <= 0) return "Instant Block (0m)"
     val hours = minutes / 60
     val remainingMins = minutes % 60
     return when {
