@@ -48,7 +48,7 @@ class GenderClassifier @Inject constructor(
         private const val TAG = "GenderClassifier"
         private const val MODEL_PATH = "models/gender.tflite"
         private const val INPUT_SIZE = 128
-        private const val FEMALE_THRESHOLD = 0.50f
+        private const val FEMALE_THRESHOLD = 0.58f // Strict threshold to prevent false positives on male figures
     }
 
     private var interpreter: Interpreter? = null
@@ -102,16 +102,18 @@ class GenderClassifier @Inject constructor(
             val startTime = SystemClock.elapsedRealtime()
 
             try {
-                // 1. Clamp bounding box safely to bitmap dimensions
-                val left = faceBox.left.coerceIn(0, fullBitmap.width - 1)
-                val top = faceBox.top.coerceIn(0, fullBitmap.height - 1)
-                val right = faceBox.right.coerceIn(left + 1, fullBitmap.width)
-                val bottom = faceBox.bottom.coerceIn(top + 1, fullBitmap.height)
+                // 1. Expand tight ML Kit box with 15% context padding matching UTKFace training format
+                val boxWidth = (faceBox.right - faceBox.left).coerceAtLeast(1)
+                val boxHeight = (faceBox.bottom - faceBox.top).coerceAtLeast(1)
+                val padX = (boxWidth * 0.15f).toInt()
+                val padY = (boxHeight * 0.15f).toInt()
 
-                val boxWidth = right - left
-                val boxHeight = bottom - top
+                val left = (faceBox.left - padX).coerceIn(0, fullBitmap.width - 1)
+                val top = (faceBox.top - padY).coerceIn(0, fullBitmap.height - 1)
+                val right = (faceBox.right + padX).coerceIn(left + 1, fullBitmap.width)
+                val bottom = (faceBox.bottom + padY).coerceIn(top + 1, fullBitmap.height)
 
-                if (boxWidth < 12 || boxHeight < 12) {
+                if ((right - left) < 12 || (bottom - top) < 12) {
                     return@withLock GenderResult()
                 }
 

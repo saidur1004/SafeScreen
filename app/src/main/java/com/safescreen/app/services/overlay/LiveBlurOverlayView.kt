@@ -34,6 +34,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -176,14 +177,12 @@ fun LiveBlurOverlayContent(
             val boxW = (right - left).coerceAtLeast(16f)
             val boxH = (bottom - top).coerceAtLeast(16f)
 
-            val leftDp = with(density) { left.toDp() }
-            val topDp = with(density) { top.toDp() }
             val widthDp = with(density) { boxW.toDp() }
             val heightDp = with(density) { boxH.toDp() }
 
             Box(
                 modifier = Modifier
-                    .offset(x = leftDp, y = topDp)
+                    .offset { IntOffset(left.toInt(), top.toInt()) }
                     .size(widthDp, heightDp)
                     .clip(RoundedCornerShape(14.dp))
                     .background(Color.Black) // 100% Solid Opaque Pitch Black Box

@@ -75,10 +75,16 @@ class MainActivity : FragmentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         handleTestIntent(intent)
+        if (intent.action == ACTION_REQUEST_SHIELD) {
+            requestScreenCaptureConsent()
+        }
     }
 
     private fun handleTestIntent(targetIntent: Intent?) {
         when (targetIntent?.action) {
+            ACTION_REQUEST_SHIELD -> {
+                requestScreenCaptureConsent()
+            }
             "com.safescreen.app.action.TEST_VISUAL_THREAT" -> {
                 Log.d("MainActivity", "Executing test visual threat trigger")
                 aiShieldCoordinator.testTriggerVisualThreat()
@@ -166,6 +172,10 @@ class MainActivity : FragmentActivity() {
     private fun launchScreenCaptureConsent() {
         val manager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
         screenCaptureLauncher.launch(manager.createScreenCaptureIntent())
+    }
+
+    companion object {
+        const val ACTION_REQUEST_SHIELD = "com.safescreen.app.action.REQUEST_SHIELD"
     }
 }
 

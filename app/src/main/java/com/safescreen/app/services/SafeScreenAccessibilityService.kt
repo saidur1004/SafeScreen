@@ -185,8 +185,8 @@ class SafeScreenAccessibilityService : AccessibilityService() {
                     performGlobalAction(GLOBAL_ACTION_HOME)
                 }
 
-                // Kick user to Home screen immediately
-                performGlobalAction(GLOBAL_ACTION_HOME)
+                // Dispatches back action to steer browser away immediately behind the solid blackout
+                performGlobalAction(GLOBAL_ACTION_BACK)
                 break
             }
         }
@@ -256,10 +256,21 @@ class SafeScreenAccessibilityService : AccessibilityService() {
 
             if (isShieldActive && !isRunning) {
                 val now = System.currentTimeMillis()
-                if (now - lastWatchdogAlertMs > 30_000L) { // Limit notifications to every 30 seconds
+                if (now - lastWatchdogAlertMs > 15_000L) { // Throttle watchdog prompts to every 15 seconds
                     lastWatchdogAlertMs = now
-                    Log.w(TAG, "Watchdog Alert: SafeScreen Shield was interrupted while user is in $currentAppPackage!")
+                    Log.w(TAG, "Watchdog Alert: SafeScreen Shield was interrupted while user is in $currentAppPackage! Prompting re-arm.")
                     showWatchdogNotification()
+
+                    // Automatically bring SafeScreen to foreground to request re-arming
+                    try {
+                        val rearmIntent = Intent(this@SafeScreenAccessibilityService, MainActivity::class.java).apply {
+                            action = MainActivity.ACTION_REQUEST_SHIELD
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                        }
+                        startActivity(rearmIntent)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Failed launching rearm intent from watchdog", e)
+                    }
                 }
             }
         }
@@ -281,6 +292,7 @@ class SafeScreenAccessibilityService : AccessibilityService() {
         }
 
         val launchIntent = Intent(this, MainActivity::class.java).apply {
+            action = MainActivity.ACTION_REQUEST_SHIELD
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
         val pendingIntent = PendingIntent.getActivity(
