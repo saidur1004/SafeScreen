@@ -147,6 +147,9 @@ dependencies {
     implementation(libs.tensorflow.lite)
     implementation(libs.tensorflow.lite.support)
 
+    // ML Kit Face Detection (Offline Bundled)
+    implementation(libs.mlkit.face.detection)
+
     // CameraX
     implementation(libs.androidx.camera.core)
     implementation(libs.androidx.camera.camera2)

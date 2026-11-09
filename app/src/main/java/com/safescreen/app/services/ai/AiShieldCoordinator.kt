@@ -180,15 +180,20 @@ class AiShieldCoordinator @Inject constructor(
 
                     _telemetry.update {
                         it.copy(
-                            isVisualThreat = result.isNSFW,
+                            isVisualThreat = result.isThreat,
                             visualConfidence = result.confidence,
                             visualLabel = result.topLabel,
                             lastEvaluationTime = SystemClock.uptimeMillis()
                         )
                     }
 
-                    if (result.isNSFW) {
-                        handleVisualThreatDetected(result.confidence, result.topLabel)
+                    if (result.isThreat) {
+                        handleVisualThreatDetected(
+                            confidence = result.confidence,
+                            label = result.topLabel,
+                            latencyMs = result.inferenceTimeMs.toInt(),
+                            normalizedBoxes = result.normalizedBoxes
+                        )
                     }
                 } catch (e: Exception) {
                     Log.e(TAG, "Error in visual frame inference pipeline", e)
@@ -266,13 +271,20 @@ class AiShieldCoordinator @Inject constructor(
         handleAudioThreatDetected(0.92f, "Music Track")
     }
 
-    private fun handleVisualThreatDetected(confidence: Float, label: String) {
+    private fun handleVisualThreatDetected(
+        confidence: Float,
+        label: String,
+        latencyMs: Int = 38,
+        normalizedBoxes: List<android.graphics.RectF> = emptyList()
+    ) {
         val currentPkg = foregroundAppTracker.currentPackage ?: ForegroundAppTracker.currentForegroundPackage
         lastVisualThreatPackage = currentPkg
         LiveBlurOverlayManager.showOverlay(
             context = context,
             threatConfidence = confidence,
-            threatType = "NSFW Content Detected ($label)",
+            threatType = label,
+            latencyMs = latencyMs,
+            normalizedBoxes = normalizedBoxes,
             onDismiss = {
                 visualSnoozeUntil = SystemClock.elapsedRealtime() + VISUAL_SNOOZE_MS
             }
@@ -282,7 +294,7 @@ class AiShieldCoordinator @Inject constructor(
             type = ThreatType.VISUAL_NSFW,
             action = ThreatAction.BLURRED,
             severity = confidence,
-            details = "NSFW $label filtered with ${(confidence * 100).toInt()}% confidence"
+            details = "$label filtered with ${(confidence * 100).toInt()}% confidence"
         )
     }
 

@@ -15,9 +15,9 @@ enum class SensitivityLevel(val displayName: String) {
  * On-device ML engine performance profiles specifying inspection frame rate.
  */
 enum class PerformanceProfile(val fps: Int, val label: String) {
-    BATTERY_SAVER(3, "Battery Saver\n(3 FPS)"),
-    BALANCED(5, "Balanced\n(5 FPS)"),
-    HIGH_PRECISION(8, "High Precision\n(8 FPS)")
+    BATTERY_SAVER(5, "Battery Saver\n(5 FPS)"),
+    BALANCED(15, "Balanced\n(15 FPS)"),
+    HIGH_PRECISION(20, "High Precision\n(20 FPS)")
 }
 
 /**

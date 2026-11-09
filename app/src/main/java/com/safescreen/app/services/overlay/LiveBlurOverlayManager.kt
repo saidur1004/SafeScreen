@@ -63,17 +63,21 @@ object LiveBlurOverlayManager {
     }
 
     /**
-     * Displays the live frosted blur WindowManager overlay.
+     * Displays the live 100% solid blackout / Non-Mahram WindowManager overlay.
      *
      * @param context Application or Activity context
-     * @param threatConfidence NSFW detection score (0.0 to 1.0)
-     * @param threatType Label of detected explicit category
+     * @param threatConfidence Threat detection confidence score (0.0 to 1.0)
+     * @param threatType Label of detected threat category
+     * @param latencyMs Latency of AI inference in milliseconds
+     * @param normalizedBoxes Normalized bounding boxes (0..1) of detected faces/threats
      * @param onDismiss Callback invoked when the user dismisses the overlay
      */
     fun showOverlay(
         context: Context,
         threatConfidence: Float = 0.98f,
         threatType: String = "Harmful Content Blocked",
+        latencyMs: Int = 38,
+        normalizedBoxes: List<android.graphics.RectF> = emptyList(),
         onDismiss: () -> Unit = {}
     ) {
         mainHandler.post {
@@ -122,11 +126,26 @@ object LiveBlurOverlayManager {
                         LiveBlurOverlayContent(
                             state = LiveBlurUiState(
                                 threatConfidence = threatConfidence,
-                                threatType = threatType
+                                threatType = threatType,
+                                latencyMs = latencyMs,
+                                normalizedBoxes = normalizedBoxes
                             ),
                             onDismiss = {
                                 hideOverlay(context)
                                 onDismiss()
+                            },
+                            onLeaveApp = {
+                                hideOverlay(context)
+                                onDismiss()
+                                try {
+                                    val homeIntent = Intent(Intent.ACTION_MAIN).apply {
+                                        addCategory(Intent.CATEGORY_HOME)
+                                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                    }
+                                    context.startActivity(homeIntent)
+                                } catch (e: Exception) {
+                                    Log.e(TAG, "Failed to navigate to Home screen", e)
+                                }
                             }
                         )
                     }
@@ -134,7 +153,7 @@ object LiveBlurOverlayManager {
 
                 overlayView = composeView
                 windowManager.addView(composeView, layoutParams)
-                Log.d(TAG, "LiveBlurOverlayView attached to WindowManager successfully")
+                Log.d(TAG, "LiveBlurOverlayView attached to WindowManager successfully with 100% Solid Blackout")
 
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to attach LiveBlurOverlayView to WindowManager", e)

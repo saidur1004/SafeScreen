@@ -1,5 +1,6 @@
 package com.safescreen.app.services.overlay
 
+import android.graphics.RectF
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
@@ -11,6 +12,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -31,6 +33,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -51,6 +54,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -73,32 +78,33 @@ data class LiveBlurUiState(
     val isVisible: Boolean = true,
     val threatConfidence: Float = 0.98f,
     val threatType: String = "Harmful Content Blocked",
-    val latencyMs: Int = 42,
+    val latencyMs: Int = 38,
     val isTemporarilyUnblurred: Boolean = false,
-    val unblurCountdown: Int = 5
+    val unblurCountdown: Int = 5,
+    val normalizedBoxes: List<RectF> = emptyList()
 )
 
 /**
- * Live Visual Blur Overlay View.
+ * Live Visual Blur / 100% Solid Blackout Overlay View.
  *
- * Implements Module 07 Prompt 1:
- * - WindowManager floating overlay over third-party apps
- * - Frosted dark glass veil obscuring explicit screen frames
+ * Implements strict Islamic Non-Mahram and Anti-Porn gaze protection:
+ * - 100% Opaque Solid Black screen cover (Zero light/photo transmission)
  * - Central Trust Badge: 3D Shield with eye-slash icon + "Protected by SafeScreen AI"
- * - Pulsing neon cyan/green radial aura breathing animation
- * - Quick "Uncover (5s)" option for false-positive handling and "Dismiss" action
+ * - Targeted Bounding Box drawing for detected Non-Mahram faces
+ * - Safe "Exit to Home" action to instantly divert gaze from offensive media
  */
 @Composable
 fun LiveBlurOverlayContent(
     state: LiveBlurUiState = LiveBlurUiState(),
     onUnblurTemporarily: () -> Unit = {},
     onDismiss: () -> Unit = {},
+    onLeaveApp: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var isUnblurred by remember { mutableStateOf(state.isTemporarilyUnblurred) }
     var countdown by remember { mutableIntStateOf(state.unblurCountdown) }
 
-    // Countdown timer when unblurred temporarily
+    // Countdown timer if temporarily peeking
     LaunchedEffect(isUnblurred) {
         if (isUnblurred) {
             countdown = 5
@@ -137,17 +143,34 @@ fun LiveBlurOverlayContent(
             .fillMaxSize()
             .background(
                 if (isUnblurred) Color.Transparent
-                else Color(0xDD040812) // Translucent dark frosted scrim
+                else Color(0xFF000000) // 100% Solid Opaque Pitch Black - Zero transparency
             )
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 enabled = !isUnblurred,
-                onClick = { /* Safely absorb background taps so underlying explicit content cannot be clicked */ }
+                onClick = { /* Absorb all touches so underlying explicit content cannot be tapped */ }
             ),
         contentAlignment = Alignment.Center
     ) {
         if (!isUnblurred) {
+            // Targeted bounding boxes for detected faces if any
+            if (state.normalizedBoxes.isNotEmpty()) {
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    for (box in state.normalizedBoxes) {
+                        val left = box.left * size.width
+                        val top = box.top * size.height
+                        val right = box.right * size.width
+                        val bottom = box.bottom * size.height
+                        drawRect(
+                            color = Color.Black,
+                            topLeft = Offset(left, top),
+                            size = Size(right - left, bottom - top)
+                        )
+                    }
+                }
+            }
+
             // Central Trust Badge with breathing aura
             AnimatedVisibility(
                 visible = true,
@@ -156,7 +179,7 @@ fun LiveBlurOverlayContent(
             ) {
                 Box(
                     contentAlignment = Alignment.Center,
-                    modifier = Modifier.padding(horizontal = 24.dp)
+                    modifier = Modifier.padding(horizontal = 20.dp)
                 ) {
                     // 1. Pulsing Ambient Neon Halo behind the card
                     Box(
@@ -178,17 +201,17 @@ fun LiveBlurOverlayContent(
                     // 2. Central Frosted Glassmorphic Trust Card
                     GlassmorphicCard(
                         modifier = Modifier
-                            .fillMaxWidth(0.92f)
+                            .fillMaxWidth(0.94f)
                             .shadow(
-                                elevation = 24.dp,
+                                elevation = 32.dp,
                                 shape = RoundedCornerShape(28.dp),
-                                ambientColor = NeonCyan.copy(alpha = 0.45f),
+                                ambientColor = NeonCyan.copy(alpha = 0.5f),
                                 spotColor = Color.Black
                             ),
                         shape = RoundedCornerShape(28.dp),
-                        borderWidth = 1.2.dp,
-                        borderColor = NeonCyan.copy(alpha = 0.5f),
-                        backgroundColor = Color(0xF2091220),
+                        borderWidth = 1.4.dp,
+                        borderColor = NeonCyan.copy(alpha = 0.6f),
+                        backgroundColor = Color(0xFF091220),
                         contentPadding = PaddingValues(24.dp)
                     ) {
                         Column(
@@ -196,7 +219,7 @@ fun LiveBlurOverlayContent(
                             verticalArrangement = Arrangement.Center,
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            // Top Dismiss 'X' Button
+                            // Top Row: Dismiss 'X' Button
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.End
@@ -257,7 +280,7 @@ fun LiveBlurOverlayContent(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.VisibilityOff,
-                                    contentDescription = "Harmful Content Blocked",
+                                    contentDescription = "Content Shielded",
                                     tint = NeonCyan,
                                     modifier = Modifier.size(38.dp)
                                 )
@@ -267,7 +290,7 @@ fun LiveBlurOverlayContent(
 
                             // Trust Headline
                             Text(
-                                text = "Protected by SafeScreen AI",
+                                text = "Protected by SafeScreen",
                                 style = MaterialTheme.typography.titleLarge.copy(
                                     fontWeight = FontWeight.ExtraBold,
                                     color = TextPrimary,
@@ -284,16 +307,16 @@ fun LiveBlurOverlayContent(
                                 text = state.threatType,
                                 style = MaterialTheme.typography.bodyMedium.copy(
                                     color = NeonGreen,
-                                    fontWeight = FontWeight.SemiBold,
-                                    fontSize = 13.sp
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp
                                 ),
                                 textAlign = TextAlign.Center
                             )
 
-                            Spacer(modifier = Modifier.height(4.dp))
+                            Spacer(modifier = Modifier.height(6.dp))
 
                             Text(
-                                text = "Explicit imagery was actively blocked on-device. Zero data leaves your phone.",
+                                text = "100% Solid blackout active. Screen is fully shielded on-device to protect your gaze.",
                                 style = MaterialTheme.typography.bodySmall.copy(
                                     color = TextMuted,
                                     fontSize = 12.sp,
@@ -311,7 +334,7 @@ fun LiveBlurOverlayContent(
                                     .clip(RoundedCornerShape(12.dp))
                                     .background(Color(0xFF0B1424))
                                     .border(1.dp, NeonCyan.copy(alpha = 0.35f), RoundedCornerShape(12.dp))
-                                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                                    .padding(horizontal = 14.dp, vertical = 6.dp),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -323,7 +346,7 @@ fun LiveBlurOverlayContent(
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Text(
-                                        text = "${(state.threatConfidence * 100).toInt()}% NSFW Confidence • ${state.latencyMs}ms Latency",
+                                        text = "${(state.threatConfidence * 100).toInt()}% Confidence • ${state.latencyMs}ms Latency",
                                         style = MaterialTheme.typography.labelSmall.copy(
                                             color = NeonCyan,
                                             fontWeight = FontWeight.Bold,
@@ -341,34 +364,31 @@ fun LiveBlurOverlayContent(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
-                                // Uncover Temporarily Button
+                                // Exit to Home (Safe Exit)
                                 Box(
                                     modifier = Modifier
                                         .weight(1f)
-                                        .height(42.dp)
+                                        .height(44.dp)
                                         .clip(RoundedCornerShape(14.dp))
-                                        .background(Color.White.copy(alpha = 0.06f))
-                                        .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(14.dp))
+                                        .background(Color.White.copy(alpha = 0.08f))
+                                        .border(1.dp, Color.White.copy(alpha = 0.18f), RoundedCornerShape(14.dp))
                                         .clickable(
                                             interactionSource = remember { MutableInteractionSource() },
                                             indication = null,
-                                            onClick = {
-                                                isUnblurred = true
-                                                onUnblurTemporarily()
-                                            }
+                                            onClick = onLeaveApp
                                         ),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Icon(
-                                            imageVector = Icons.Default.Visibility,
+                                            imageVector = Icons.Default.Home,
                                             contentDescription = null,
                                             tint = TextPrimary,
-                                            modifier = Modifier.size(15.dp)
+                                            modifier = Modifier.size(16.dp)
                                         )
                                         Spacer(modifier = Modifier.width(6.dp))
                                         Text(
-                                            text = "Uncover (5s)",
+                                            text = "Exit to Home",
                                             style = MaterialTheme.typography.labelMedium.copy(
                                                 color = TextPrimary,
                                                 fontWeight = FontWeight.SemiBold,
@@ -378,11 +398,11 @@ fun LiveBlurOverlayContent(
                                     }
                                 }
 
-                                // Keep Shielded / Dismiss Button
+                                // Keep Shielded Button
                                 Box(
                                     modifier = Modifier
                                         .weight(1f)
-                                        .height(42.dp)
+                                        .height(44.dp)
                                         .shadow(
                                             elevation = 6.dp,
                                             shape = RoundedCornerShape(14.dp),
@@ -459,7 +479,8 @@ private fun LiveBlurOverlayPreview() {
     LiveBlurOverlayContent(
         state = LiveBlurUiState(
             threatConfidence = 0.98f,
-            threatType = "Harmful Content Blocked"
+            threatType = "Non-Mahram Face Detected"
         )
     )
 }
+

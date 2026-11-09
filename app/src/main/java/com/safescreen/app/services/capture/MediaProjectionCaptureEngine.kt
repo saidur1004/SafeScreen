@@ -83,9 +83,9 @@ class MediaProjectionCaptureEngine @Inject constructor(
     @Volatile
     private var isScreenInteractive: Boolean = true
 
-    // Adaptive FPS throttling
-    private var targetFps: Int = 5
-    private var targetIntervalMillis: Long = 200L // 1000 / 5
+    // Adaptive FPS throttling (default 15 FPS = 66ms interval for zero latency)
+    private var targetFps: Int = 15
+    private var targetIntervalMillis: Long = 66L
     private var lastFrameTimeMillis: Long = 0L
 
     // Static screen delta detection (8x8 pixel sample grid)
@@ -130,7 +130,7 @@ class MediaProjectionCaptureEngine @Inject constructor(
 
     private fun updateFpsTarget(profile: PerformanceProfile) {
         targetFps = profile.fps
-        targetIntervalMillis = (1000L / targetFps).coerceAtLeast(100L)
+        targetIntervalMillis = (1000L / targetFps).coerceAtLeast(30L)
         _metrics.update { it.copy(targetFps = targetFps) }
         Log.d(TAG, "Adaptive FPS updated: targetFps=$targetFps, interval=${targetIntervalMillis}ms")
     }
@@ -358,8 +358,11 @@ class MediaProjectionCaptureEngine @Inject constructor(
 
         if (!hasChanged) {
             staticConsecutiveFrames++
-            if (staticConsecutiveFrames > 4) {
+            // Don't sleep indefinitely on static images; re-evaluate periodically every 8 frames (~400ms)
+            if (staticConsecutiveFrames in 4..8) {
                 return true
+            } else if (staticConsecutiveFrames > 8) {
+                staticConsecutiveFrames = 0
             }
         } else {
             staticConsecutiveFrames = 0
