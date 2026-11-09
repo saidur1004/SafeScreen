@@ -394,7 +394,7 @@ fun ShieldButton(
         Spacer(modifier = Modifier.height(3.dp))
 
         Text(
-            text = if (isActive) "Analyzing screen & audio locally (5 FPS)" else "Tap to activate protection",
+            text = if (isActive) "Guarding screen & audio in real-time" else "Tap to activate protection",
             style = MaterialTheme.typography.bodySmall.copy(color = TextMuted)
         )
     }

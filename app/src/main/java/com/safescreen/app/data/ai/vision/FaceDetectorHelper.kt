@@ -116,11 +116,11 @@ class FaceDetectorHelper @Inject constructor(
                 val boxW = box.width().toFloat()
                 val boxH = box.height().toFloat()
 
-                // Expand gracefully to cover hair, head, neck and upper figure/clothing of the image
-                val expLeft = (box.left - boxW * 0.45f).coerceAtLeast(0f)
-                val expTop = (box.top - boxH * 0.50f).coerceAtLeast(0f)
-                val expRight = (box.right + boxW * 0.45f).coerceAtMost(width)
-                val expBottom = (box.bottom + boxH * 1.60f).coerceAtMost(height)
+                // Expand precisely to cover hair, head, and neck without overflowing onto surrounding UI
+                val expLeft = (box.left - boxW * 0.15f).coerceAtLeast(0f)
+                val expTop = (box.top - boxH * 0.20f).coerceAtLeast(0f)
+                val expRight = (box.right + boxW * 0.15f).coerceAtMost(width)
+                val expBottom = (box.bottom + boxH * 0.35f).coerceAtMost(height)
 
                 normBoxes.add(
                     RectF(

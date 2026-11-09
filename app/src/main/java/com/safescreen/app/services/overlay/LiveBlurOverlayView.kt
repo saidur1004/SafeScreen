@@ -160,13 +160,6 @@ fun LiveBlurOverlayContent(
         val screenHeightPx = constraints.maxHeight.toFloat()
         val density = LocalDensity.current
 
-        val cyberBorder = Brush.linearGradient(
-            listOf(
-                Color(0xFF00E5FF).copy(alpha = 0.9f),
-                Color(0xFF10B981).copy(alpha = 0.7f)
-            )
-        )
-
         // Draw 100% Solid Pitch Black (#000000) Opaque Boxes strictly over target coordinates
         for (box in boxes) {
             val left = (box.rect.left * screenWidthPx).coerceAtLeast(0f)
@@ -184,42 +177,17 @@ fun LiveBlurOverlayContent(
                 modifier = Modifier
                     .offset { IntOffset(left.toInt(), top.toInt()) }
                     .size(widthDp, heightDp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(Color.Black) // 100% Solid Opaque Pitch Black Box
-                    .border(2.dp, cyberBorder, RoundedCornerShape(14.dp)),
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(Color.Black), // 100% Solid Opaque Pitch Black Box (#000000)
                 contentAlignment = Alignment.Center
             ) {
-                // Render sleek cyber badge when space permits; otherwise sleek eye-off icon
-                if (widthDp >= 115.dp && heightDp >= 42.dp) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(Color(0xFF0F172A).copy(alpha = 0.95f))
-                            .border(1.dp, Color(0xFF00E5FF).copy(alpha = 0.5f), RoundedCornerShape(8.dp))
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.VisibilityOff,
-                            contentDescription = null,
-                            tint = Color(0xFF00E5FF),
-                            modifier = Modifier.size(13.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "Non-Mahram Guarded",
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 10.sp,
-                            maxLines = 1
-                        )
-                    }
-                } else if (widthDp >= 32.dp && heightDp >= 32.dp) {
+                // Subtle, non-intrusive muted privacy icon centered in the solid blackout box
+                if (widthDp >= 24.dp && heightDp >= 24.dp) {
                     Icon(
                         imageVector = Icons.Default.VisibilityOff,
-                        contentDescription = null,
-                        tint = Color(0xFF00E5FF),
-                        modifier = Modifier.size(16.dp)
+                        contentDescription = "Shielded Non-Mahram",
+                        tint = Color.White.copy(alpha = 0.65f),
+                        modifier = Modifier.size(minOf(widthDp * 0.35f, 22.dp))
                     )
                 }
             }

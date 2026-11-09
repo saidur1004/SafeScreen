@@ -154,8 +154,8 @@ class AiShieldCoordinator @Inject constructor(
                     // Check active foreground application exemption (Whitelist Protection)
                     val currentPkg = foregroundAppTracker.currentPackage ?: ForegroundAppTracker.currentForegroundPackage
 
-                    // SafeScreen itself or user-whitelisted apps: clear shields and bypass
-                    if (currentPkg != null && (exemptedPackages.contains(currentPkg) || currentPkg == context.packageName)) {
+                    // User-whitelisted apps: clear shields and bypass
+                    if (currentPkg != null && exemptedPackages.contains(currentPkg)) {
                         LiveBlurOverlayManager.clearAllBoxes(context)
                         return@collect
                     }

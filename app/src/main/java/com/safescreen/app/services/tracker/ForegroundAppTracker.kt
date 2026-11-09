@@ -26,8 +26,10 @@ class ForegroundAppTracker @Inject constructor() {
     fun updateForegroundApp(packageName: String?) {
         if (packageName.isNullOrBlank()) return
 
-        // Ignore temporary system overlays and input method keyboards
-        if (packageName == SYSTEM_UI_PACKAGE || packageName.contains("inputmethod", ignoreCase = true)) {
+        // Ignore temporary system overlays, keyboards, and SafeScreen's own floating overlays
+        if (packageName == SYSTEM_UI_PACKAGE ||
+            packageName == "com.safescreen.app" ||
+            packageName.contains("inputmethod", ignoreCase = true)) {
             return
         }
 

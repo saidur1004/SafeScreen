@@ -42,7 +42,7 @@ import javax.inject.Singleton
  */
 data class CaptureMetrics(
     val isCapturing: Boolean = false,
-    val targetFps: Int = 5,
+    val targetFps: Int = 15,
     val actualFps: Float = 0f,
     val framesCaptured: Long = 0L,
     val framesSkipped: Long = 0L,

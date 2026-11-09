@@ -114,15 +114,9 @@ class SafeScreenAccessibilityService : AccessibilityService() {
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event == null) return
 
-        // 1. Instant Motion Pruning on Feed Scroll
-        if (event.eventType == AccessibilityEvent.TYPE_VIEW_SCROLLED) {
-            LiveBlurOverlayManager.onUserScrolled()
-            return
-        }
-
-        // 2. Extract and track active foreground application package name
+        // 1. Extract and track active foreground application package name
         val packageName = event.packageName?.toString()
-        if (!packageName.isNullOrBlank()) {
+        if (!packageName.isNullOrBlank() && packageName != applicationContext.packageName) {
             if (event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED ||
                 ForegroundAppTracker.currentForegroundPackage == null) {
                 getTracker()?.updateForegroundApp(packageName)

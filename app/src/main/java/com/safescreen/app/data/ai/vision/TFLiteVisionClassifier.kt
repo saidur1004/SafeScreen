@@ -89,9 +89,9 @@ class TFLiteVisionClassifier @Inject constructor(
         preferencesRepository.aiSensitivityFlow
             .onEach { level ->
                 nsfwThreshold = when (level) {
-                    SensitivityLevel.STRICT -> 0.12f
-                    SensitivityLevel.BALANCED -> 0.18f
-                    SensitivityLevel.RELAXED -> 0.35f
+                    SensitivityLevel.STRICT -> 0.35f
+                    SensitivityLevel.BALANCED -> 0.50f
+                    SensitivityLevel.RELAXED -> 0.65f
                 }
                 Log.d(TAG, "TFLiteVisionClassifier sensitivity updated to $level (threshold=$nsfwThreshold)")
             }
@@ -242,10 +242,10 @@ class TFLiteVisionClassifier @Inject constructor(
                         faceResult.boundingBoxes.map { box ->
                             val boxW = box.width().toFloat()
                             val boxH = box.height().toFloat()
-                            val expLeft = (box.left - boxW * 0.50f).coerceAtLeast(0f)
-                            val expTop = (box.top - boxH * 0.50f).coerceAtLeast(0f)
-                            val expRight = (box.right + boxW * 0.50f).coerceAtMost(bitmap.width.toFloat())
-                            val expBottom = (box.bottom + boxH * 3.2f).coerceAtMost(bitmap.height.toFloat())
+                            val expLeft = (box.left - boxW * 0.25f).coerceAtLeast(0f)
+                            val expTop = (box.top - boxH * 0.20f).coerceAtLeast(0f)
+                            val expRight = (box.right + boxW * 0.25f).coerceAtMost(bitmap.width.toFloat())
+                            val expBottom = (box.bottom + boxH * 2.2f).coerceAtMost(bitmap.height.toFloat())
                             RectF(
                                 expLeft / bitmap.width.toFloat(),
                                 expTop / bitmap.height.toFloat(),

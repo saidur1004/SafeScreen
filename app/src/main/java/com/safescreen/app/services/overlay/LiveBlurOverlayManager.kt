@@ -36,7 +36,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 object LiveBlurOverlayManager {
 
     private const val TAG = "LiveBlurOverlayManager"
-    private const val BOX_EXPIRATION_MS = 250L // Fast retention to eliminate ghost boxes during dynamic content changes
+    private const val BOX_EXPIRATION_MS = 600L // Stable retention to prevent flickering and maintain continuous solid blackout
 
     @Volatile
     private var overlayView: ComposeView? = null
