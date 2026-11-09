@@ -9,8 +9,7 @@ navigationCompose = "2.8.5"
 coroutines = "1.9.0"
 room = "2.6.1"
 datastore = "1.1.1"
-tflite = "2.16.1"
-tfliteSupport = "0.4.4"
+litert = "1.4.2"
 camerax = "1.4.1"
 mlkitFaceDetection = "16.1.7"
 coreKtx = "1.15.0"
@@ -59,9 +58,9 @@ androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref =
 # DataStore
 androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore" }
 
-# TensorFlow Lite
-tensorflow-lite = { module = "org.tensorflow:tensorflow-lite", version.ref = "tflite" }
-tensorflow-lite-support = { module = "org.tensorflow:tensorflow-lite-support", version.ref = "tfliteSupport" }
+# Google LiteRT (16 KB page-size aligned TFLite)
+tensorflow-lite = { module = "com.google.ai.edge.litert:litert", version.ref = "litert" }
+tensorflow-lite-support = { module = "com.google.ai.edge.litert:litert-support", version.ref = "litert" }
 
 # ML Kit Face Detection (Bundled Offline)
 mlkit-face-detection = { module = "com.google.mlkit:face-detection", version.ref = "mlkitFaceDetection" }

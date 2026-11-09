@@ -141,38 +141,22 @@ class AiShieldCoordinator @Inject constructor(
 
         Log.i(TAG, "Starting Dual-Engine AI Shield Coordinator pipelines")
 
-        // 1. Visual NSFW Frame Pipeline
+        // 1. Visual NSFW & Non-Mahram Frame Pipeline
         frameProcessingJob = coordinatorScope.launch {
             captureEngine.frameFlow.collect { bitmap ->
                 try {
                     if (!isShieldActive || !isVisualShieldEnabled) {
-                        if (LiveBlurOverlayManager.isShowing()) {
-                            LiveBlurOverlayManager.hideOverlay(context)
-                            lastVisualThreatPackage = null
-                        }
-                        return@collect
-                    }
-
-                    val now = SystemClock.elapsedRealtime()
-                    if (now < visualSnoozeUntil) {
+                        LiveBlurOverlayManager.clearAllBoxes(context)
+                        lastVisualThreatPackage = null
                         return@collect
                     }
 
                     // Check active foreground application exemption (Whitelist Protection)
                     val currentPkg = foregroundAppTracker.currentPackage ?: ForegroundAppTracker.currentForegroundPackage
 
-                    // While blur overlay is actively obscuring the screen, do not classify the overlay itself!
-                    if (LiveBlurOverlayManager.isShowing()) {
-                        // If user navigated away from the offensive app (e.g. went to Home, SafeScreen, or another app), hide overlay!
-                        if (currentPkg != null && currentPkg != lastVisualThreatPackage && currentPkg != context.packageName) {
-                            LiveBlurOverlayManager.hideOverlay(context)
-                            lastVisualThreatPackage = null
-                        }
-                        return@collect
-                    }
-
-                    // Unknown foreground package is deliberately fail-safe: continue visual inspection.
+                    // SafeScreen itself or user-whitelisted apps: clear shields and bypass
                     if (currentPkg != null && (exemptedPackages.contains(currentPkg) || currentPkg == context.packageName)) {
+                        LiveBlurOverlayManager.clearAllBoxes(context)
                         return@collect
                     }
 
@@ -187,13 +171,15 @@ class AiShieldCoordinator @Inject constructor(
                         )
                     }
 
-                    if (result.isThreat) {
+                    if (result.isThreat && result.normalizedBoxes.isNotEmpty()) {
                         handleVisualThreatDetected(
                             confidence = result.confidence,
                             label = result.topLabel,
                             latencyMs = result.inferenceTimeMs.toInt(),
                             normalizedBoxes = result.normalizedBoxes
                         )
+                    } else {
+                        LiveBlurOverlayManager.onCleanFrameReceived(context)
                     }
                 } catch (e: Exception) {
                     Log.e(TAG, "Error in visual frame inference pipeline", e)
@@ -279,22 +265,18 @@ class AiShieldCoordinator @Inject constructor(
     ) {
         val currentPkg = foregroundAppTracker.currentPackage ?: ForegroundAppTracker.currentForegroundPackage
         lastVisualThreatPackage = currentPkg
-        LiveBlurOverlayManager.showOverlay(
+        LiveBlurOverlayManager.updateTargetedBoxes(
             context = context,
-            threatConfidence = confidence,
-            threatType = label,
-            latencyMs = latencyMs,
-            normalizedBoxes = normalizedBoxes,
-            onDismiss = {
-                visualSnoozeUntil = SystemClock.elapsedRealtime() + VISUAL_SNOOZE_MS
-            }
+            newBoxes = normalizedBoxes,
+            label = label,
+            threatConfidence = confidence
         )
 
         logThreatIncident(
             type = ThreatType.VISUAL_NSFW,
             action = ThreatAction.BLURRED,
             severity = confidence,
-            details = "$label filtered with ${(confidence * 100).toInt()}% confidence"
+            details = "$label targeted blackout applied with ${(confidence * 100).toInt()}% confidence"
         )
     }
 
@@ -378,9 +360,7 @@ class AiShieldCoordinator @Inject constructor(
     }
 
     private fun dismissAllInterventions() {
-        if (LiveBlurOverlayManager.isShowing()) {
-            LiveBlurOverlayManager.hideOverlay(context)
-        }
+        LiveBlurOverlayManager.clearAllBoxes(context)
         lastVisualThreatPackage = null
         consecutiveSafeAudioWindows = 0
         unmuteAudioIfMuted()

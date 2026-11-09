@@ -31,7 +31,9 @@ data class FaceDetectionResult(
  * Runs 100% offline with zero cloud transmission and <15ms latency.
  */
 @Singleton
-class FaceDetectorHelper @Inject constructor() {
+class FaceDetectorHelper @Inject constructor(
+    private val genderClassifier: GenderClassifier
+) {
 
     private val detector: FaceDetector
 
@@ -93,22 +95,49 @@ class FaceDetectorHelper @Inject constructor() {
 
             for (face in faces) {
                 val box = face.boundingBox
+
+                // Filter out male faces: ONLY female faces (Non-Mahram) are shielded!
+                val genderResult = genderClassifier.classifyFace(bitmap, box)
+                if (!genderResult.isFemale) {
+                    Log.d(
+                        TAG,
+                        "Male face detected (Confidence: ${(genderResult.maleConfidence * 100).toInt()}%). Ignored (Safe)."
+                    )
+                    continue
+                }
+
+                Log.i(
+                    TAG,
+                    "Female Non-Mahram Face Confirmed (Confidence: ${(genderResult.femaleConfidence * 100).toInt()}%). Shielding."
+                )
+
                 boxes.add(box)
+
+                val boxW = box.width().toFloat()
+                val boxH = box.height().toFloat()
+
+                // Expand gracefully to cover hair, head, neck and upper figure/clothing of the image
+                val expLeft = (box.left - boxW * 0.45f).coerceAtLeast(0f)
+                val expTop = (box.top - boxH * 0.50f).coerceAtLeast(0f)
+                val expRight = (box.right + boxW * 0.45f).coerceAtMost(width)
+                val expBottom = (box.bottom + boxH * 1.60f).coerceAtMost(height)
+
                 normBoxes.add(
                     RectF(
-                        (box.left / width).coerceIn(0f, 1f),
-                        (box.top / height).coerceIn(0f, 1f),
-                        (box.right / width).coerceIn(0f, 1f),
-                        (box.bottom / height).coerceIn(0f, 1f)
+                        (expLeft / width).coerceIn(0f, 1f),
+                        (expTop / height).coerceIn(0f, 1f),
+                        (expRight / width).coerceIn(0f, 1f),
+                        (expBottom / height).coerceIn(0f, 1f)
                     )
                 )
             }
 
-            Log.d(TAG, "Detected ${boxes.size} face(s) in ${duration}ms")
+            val hasFemaleFaces = normBoxes.isNotEmpty()
+            Log.d(TAG, "Processed ${faces.size} face(s) in ${duration}ms: ${normBoxes.size} female face(s) flagged")
 
             FaceDetectionResult(
-                hasFaces = true,
-                faceCount = boxes.size,
+                hasFaces = hasFemaleFaces,
+                faceCount = normBoxes.size,
                 boundingBoxes = boxes,
                 normalizedBoxes = normBoxes,
                 detectionTimeMs = duration

@@ -334,9 +334,13 @@ fun AppNavHost(
 
             composable(Screen.LiveBlurOverlay.route) {
                 LiveBlurOverlayContent(
-                    onDismiss = {
-                        navController.popBackStack()
-                    }
+                    boxes = listOf(
+                        com.safescreen.app.services.overlay.ShieldBox(
+                            id = 1,
+                            rect = android.graphics.RectF(0.15f, 0.25f, 0.85f, 0.65f),
+                            label = "Non-Mahram Guarded"
+                        )
+                    )
                 )
             }
 

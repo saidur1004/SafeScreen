@@ -1,22 +1,41 @@
 package com.safescreen.app.services
 
 import android.accessibilityservice.AccessibilityService
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import android.os.Build
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
+import android.view.accessibility.AccessibilityNodeInfo
+import androidx.core.app.NotificationCompat
+import com.safescreen.app.MainActivity
+import com.safescreen.app.R
+import com.safescreen.app.data.local.datastore.UserPreferencesRepository
 import com.safescreen.app.services.accessibility.ReelsAccessibilityObserver
+import com.safescreen.app.services.overlay.LiveBlurOverlayManager
 import com.safescreen.app.services.tracker.ForegroundAppTracker
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
  * Accessibility Service for SafeScreen:
- * Performs continuous, on-device detection of short-video scrolling (Instagram Reels,
- * YouTube Shorts, TikTok, Facebook Reels) with zero-cloud exposure and zero UI lag.
- * Also tracks the real-time active foreground application package name for AI Whitelist protection.
+ * 1. 24/7 Watchdog: Ensures MediaProjection and ShieldProtectionService remain armed.
+ * 2. Adult Domain Blocker: Inspects browser URL bar and initiates solid full-page blackout.
+ * 3. Motion-Pruning Scroll Listener: Prunes ghost bounding boxes on user scrolling.
+ * 4. Short-video reel observer (Instagram, YouTube Shorts, TikTok, Facebook Reels).
+ * 5. Active foreground application package tracker.
  */
 @AndroidEntryPoint
 class SafeScreenAccessibilityService : AccessibilityService() {
@@ -27,12 +46,19 @@ class SafeScreenAccessibilityService : AccessibilityService() {
     @Inject
     lateinit var appTracker: ForegroundAppTracker
 
+    @Inject
+    lateinit var userPreferencesRepository: UserPreferencesRepository
+
     @EntryPoint
     @InstallIn(SingletonComponent::class)
     interface AccessibilityServiceEntryPoint {
         fun reelsObserver(): ReelsAccessibilityObserver
         fun appTracker(): ForegroundAppTracker
+        fun userPreferencesRepository(): UserPreferencesRepository
     }
+
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private var lastWatchdogAlertMs = 0L
 
     private fun getObserver(): ReelsAccessibilityObserver? {
         if (::reelsObserver.isInitialized) {
@@ -68,20 +94,56 @@ class SafeScreenAccessibilityService : AccessibilityService() {
         }
     }
 
+    private fun getPrefs(): UserPreferencesRepository? {
+        if (::userPreferencesRepository.isInitialized) {
+            return userPreferencesRepository
+        }
+        return try {
+            val entryPoint = EntryPointAccessors.fromApplication(
+                applicationContext,
+                AccessibilityServiceEntryPoint::class.java
+            )
+            userPreferencesRepository = entryPoint.userPreferencesRepository()
+            userPreferencesRepository
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to resolve UserPreferencesRepository via EntryPoint", e)
+            null
+        }
+    }
+
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event == null) return
 
-        // 1. Extract and track active foreground application package name
+        // 1. Instant Motion Pruning on Feed Scroll
+        if (event.eventType == AccessibilityEvent.TYPE_VIEW_SCROLLED) {
+            LiveBlurOverlayManager.onUserScrolled()
+            return
+        }
+
+        // 2. Extract and track active foreground application package name
         val packageName = event.packageName?.toString()
         if (!packageName.isNullOrBlank()) {
             if (event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED ||
                 ForegroundAppTracker.currentForegroundPackage == null) {
                 getTracker()?.updateForegroundApp(packageName)
                 ForegroundAppTracker.update(packageName)
+                checkWatchdogStatus(packageName)
             }
         }
 
-        // 2. Delegate to ReelsAccessibilityObserver for short-video inspection
+        // 3. Inspect Browser Address Bar for Extreme Adult Domains
+        if (!packageName.isNullOrBlank() && isBrowserApp(packageName)) {
+            try {
+                val rootNode = rootInActiveWindow
+                if (rootNode != null) {
+                    inspectBrowserUrl(rootNode, packageName)
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed inspecting browser URL node: ${e.message}")
+            }
+        }
+
+        // 4. Delegate to ReelsAccessibilityObserver for short-video inspection
         val observer = getObserver() ?: return
 
         try {
@@ -92,6 +154,154 @@ class SafeScreenAccessibilityService : AccessibilityService() {
         }
     }
 
+    /**
+     * Checks if the package belongs to a supported web browser.
+     */
+    private fun isBrowserApp(packageName: String): Boolean {
+        val lower = packageName.lowercase()
+        return BROWSER_PACKAGES.contains(lower) ||
+                lower.contains("chrome") ||
+                lower.contains("browser") ||
+                lower.contains("firefox")
+    }
+
+    /**
+     * Inspects browser address bar to detect and block explicit adult domains immediately.
+     */
+    private fun inspectBrowserUrl(rootNode: AccessibilityNodeInfo, packageName: String) {
+        val urlNode = findUrlBarNode(rootNode) ?: return
+        val text = urlNode.text?.toString()?.trim()?.lowercase() ?: return
+        if (text.isEmpty()) return
+
+        for (domain in ADULT_DOMAINS) {
+            if (text.contains(domain)) {
+                Log.w(TAG, "Strict Block Triggered: Adult domain '$domain' detected in $packageName ($text)")
+                val displayDomain = domain.uppercase() + ".COM"
+
+                LiveBlurOverlayManager.showFullPageBlock(
+                    context = applicationContext,
+                    domain = displayDomain
+                ) {
+                    performGlobalAction(GLOBAL_ACTION_HOME)
+                }
+
+                // Kick user to Home screen immediately
+                performGlobalAction(GLOBAL_ACTION_HOME)
+                break
+            }
+        }
+    }
+
+    /**
+     * Locates the URL bar node in supported browsers.
+     */
+    private fun findUrlBarNode(root: AccessibilityNodeInfo): AccessibilityNodeInfo? {
+        val knownIds = listOf(
+            "com.android.chrome:id/url_bar",
+            "org.chromium.chrome:id/url_bar",
+            "com.brave.browser:id/url_bar",
+            "com.microsoft.emmx:id/url_bar",
+            "org.mozilla.firefox:id/mozac_browser_toolbar_url_view",
+            "org.mozilla.firefox:id/toolbar_url_view",
+            "com.sec.android.app.sbrowser:id/location_bar_edit_text",
+            "com.opera.browser:id/url_field"
+        )
+
+        for (id in knownIds) {
+            val nodes = root.findAccessibilityNodeInfosByViewId(id)
+            if (!nodes.isNullOrEmpty()) {
+                return nodes[0]
+            }
+        }
+
+        return searchNodeByPredicate(root, maxDepth = 6) { node ->
+            val viewId = node.viewIdResourceName?.lowercase() ?: ""
+            viewId.endsWith("url_bar") || viewId.endsWith("location_bar_edit_text") || viewId.endsWith("toolbar_url_view")
+        }
+    }
+
+    private fun searchNodeByPredicate(
+        node: AccessibilityNodeInfo,
+        depth: Int = 0,
+        maxDepth: Int = 6,
+        predicate: (AccessibilityNodeInfo) -> Boolean
+    ): AccessibilityNodeInfo? {
+        if (depth > maxDepth) return null
+        if (predicate(node)) return node
+        for (i in 0 until node.childCount) {
+            val child = node.getChild(i) ?: continue
+            val result = searchNodeByPredicate(child, depth + 1, maxDepth, predicate)
+            if (result != null) return result
+        }
+        return null
+    }
+
+    /**
+     * 24/7 Watchdog: If user intended Shield to be active, but it was stopped or killed,
+     * alerts the user to re-enable protection (KafGuard/Covenant Eyes pattern).
+     */
+    private fun checkWatchdogStatus(currentAppPackage: String) {
+        // Ignore internal or safe settings navigation
+        if (currentAppPackage == packageName ||
+            currentAppPackage.contains("settings") ||
+            currentAppPackage.contains("launcher")
+        ) {
+            return
+        }
+
+        serviceScope.launch {
+            val prefs = getPrefs() ?: return@launch
+            val isShieldActive = prefs.isShieldActiveFlow.firstOrNull() ?: false
+            val isRunning = ShieldProtectionService.isServiceRunning.value
+
+            if (isShieldActive && !isRunning) {
+                val now = System.currentTimeMillis()
+                if (now - lastWatchdogAlertMs > 30_000L) { // Limit notifications to every 30 seconds
+                    lastWatchdogAlertMs = now
+                    Log.w(TAG, "Watchdog Alert: SafeScreen Shield was interrupted while user is in $currentAppPackage!")
+                    showWatchdogNotification()
+                }
+            }
+        }
+    }
+
+    private fun showWatchdogNotification() {
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val channelId = "safescreen_watchdog_channel"
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                channelId,
+                "SafeScreen Protection Watchdog",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Monitors and ensures SafeScreen AI protection stays active 24/7"
+            }
+            notificationManager.createNotificationChannel(channel)
+        }
+
+        val launchIntent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            this,
+            2002,
+            launchIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(this, channelId)
+            .setSmallIcon(R.drawable.ic_shield_notification)
+            .setContentTitle("SafeScreen Shield Interrupted")
+            .setContentText("Tap to re-enable 24/7 on-device Islamic protection.")
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+            .build()
+
+        notificationManager.notify(WATCHDOG_NOTIF_ID, notification)
+    }
+
     override fun onInterrupt() {
         Log.d(TAG, "SafeScreenAccessibilityService interrupted")
     }
@@ -99,7 +309,7 @@ class SafeScreenAccessibilityService : AccessibilityService() {
     override fun onServiceConnected() {
         super.onServiceConnected()
         isRunning = true
-        Log.i(TAG, "SafeScreenAccessibilityService connected successfully")
+        Log.i(TAG, "SafeScreenAccessibilityService connected successfully with Watchdog & URL Blocker")
     }
 
     override fun onDestroy() {
@@ -116,7 +326,29 @@ class SafeScreenAccessibilityService : AccessibilityService() {
 
     companion object {
         private const val TAG = "SafeScreenA11y"
+        private const val WATCHDOG_NOTIF_ID = 9001
         var isRunning: Boolean = false
             private set
+
+        private val BROWSER_PACKAGES = setOf(
+            "com.android.chrome",
+            "com.chrome.beta",
+            "com.chrome.dev",
+            "com.chrome.canary",
+            "com.brave.browser",
+            "com.microsoft.emmx",
+            "com.sec.android.app.sbrowser",
+            "org.mozilla.firefox",
+            "com.opera.browser",
+            "com.duckduckgo.mobile.android"
+        )
+
+        private val ADULT_DOMAINS = listOf(
+            "pornhub", "xvideos", "xnxx", "xhamster", "redtube",
+            "youporn", "chaturbate", "onlyfans", "stripchat", "bongacams",
+            "cam4", "livejasmin", "spankbang", "eporner", "beeg",
+            "tube8", "thumbzilla", "txxx", "hqporner", "motherless",
+            "brazzers", "heavy-r", "porngo"
+        )
     }
 }

@@ -236,6 +236,39 @@ class TFLiteVisionClassifier @Inject constructor(
                     "Frame classified in ${inferenceTime}ms: Threat=$isThreat (Face=${faceResult.hasFaces}, NSFW=${(finalNsfwScore * 100).toInt()}%), threshold=$nsfwThreshold, label=$topLabel"
                 )
 
+                val finalBoxes = if (faceResult.hasFaces) {
+                    if (isNsfw) {
+                        // Expand faces downwards to cover the full torso/bikini/figure when explicit body is detected
+                        faceResult.boundingBoxes.map { box ->
+                            val boxW = box.width().toFloat()
+                            val boxH = box.height().toFloat()
+                            val expLeft = (box.left - boxW * 0.50f).coerceAtLeast(0f)
+                            val expTop = (box.top - boxH * 0.50f).coerceAtLeast(0f)
+                            val expRight = (box.right + boxW * 0.50f).coerceAtMost(bitmap.width.toFloat())
+                            val expBottom = (box.bottom + boxH * 3.2f).coerceAtMost(bitmap.height.toFloat())
+                            RectF(
+                                expLeft / bitmap.width.toFloat(),
+                                expTop / bitmap.height.toFloat(),
+                                expRight / bitmap.width.toFloat(),
+                                expBottom / bitmap.height.toFloat()
+                            )
+                        }
+                    } else {
+                        faceResult.normalizedBoxes
+                    }
+                } else if (isNsfw) {
+                    listOf(
+                        RectF(
+                            0.05f,
+                            (topOffset / bitmap.height.toFloat()).coerceIn(0f, 1f),
+                            0.95f,
+                            ((topOffset + squareSize) / bitmap.height.toFloat()).coerceIn(0f, 1f)
+                        )
+                    )
+                } else {
+                    emptyList()
+                }
+
                 VisionClassificationResult(
                     isThreat = isThreat,
                     isNSFW = isThreat, // Maintain backward compatibility
@@ -247,7 +280,7 @@ class TFLiteVisionClassifier @Inject constructor(
                     hentaiScore = 0f,
                     inferenceTimeMs = inferenceTime,
                     boundingBoxes = faceResult.boundingBoxes,
-                    normalizedBoxes = faceResult.normalizedBoxes
+                    normalizedBoxes = finalBoxes
                 )
             } catch (e: Exception) {
                 Log.e(TAG, "Error executing vision inference", e)
