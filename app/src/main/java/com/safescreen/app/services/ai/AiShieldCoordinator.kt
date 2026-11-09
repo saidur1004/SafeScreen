@@ -1,9 +1,13 @@
 package com.safescreen.app.services.ai
 
 import android.content.Context
+import android.media.AudioAttributes
+import android.media.AudioFocusRequest
 import android.media.AudioManager
+import android.os.Build
 import android.os.SystemClock
 import android.util.Log
+import android.view.KeyEvent
 import com.safescreen.app.data.ai.audio.YAMNetAudioClassifier
 import com.safescreen.app.data.ai.vision.TFLiteVisionClassifier
 import com.safescreen.app.data.local.dao.ThreatLogDao
@@ -92,6 +96,7 @@ class AiShieldCoordinator @Inject constructor(
     private var consecutiveSafeAudioWindows = 0
     private var isAudioCurrentlyMuted = false
     private var preMuteVolume: Int = -1
+    private var audioFocusRequest: AudioFocusRequest? = null
     private var lastThreatLogTimestamp = 0L
     private var lastVisualThreatPackage: String? = null
     private var visualSnoozeUntil = 0L
@@ -288,8 +293,33 @@ class AiShieldCoordinator @Inject constructor(
                 if (currentVol > 0) {
                     preMuteVolume = currentVol
                 }
-                // Deterministically silence audio by setting stream volume to 0
+
+                // 1. Transient Audio Focus Hijack: Forces Android AudioFlinger to duck/silence all media players
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    val playbackAttributes = AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .build()
+                    val request = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
+                        .setAudioAttributes(playbackAttributes)
+                        .setAcceptsDelayedFocusGain(false)
+                        .setOnAudioFocusChangeListener { /* maintain silence */ }
+                        .build()
+                    audioFocusRequest = request
+                    audioManager.requestAudioFocus(request)
+                } else {
+                    @Suppress("DEPRECATION")
+                    audioManager.requestAudioFocus(null, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
+                }
+
+                // 2. Hardware stream volume zeroing + MUTE flag
+                audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_MUTE, 0)
                 audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 0, 0)
+
+                // 3. Dispatch media pause keyevent to halt external media players (YouTube, Spotify, Chrome)
+                audioManager.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PAUSE))
+                audioManager.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_MEDIA_PAUSE))
+
                 isAudioCurrentlyMuted = true
                 Log.w(
                     TAG,
@@ -311,6 +341,17 @@ class AiShieldCoordinator @Inject constructor(
     private fun unmuteAudioIfMuted() {
         if (isAudioCurrentlyMuted) {
             try {
+                // 1. Release Audio Focus
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    audioFocusRequest?.let { audioManager.abandonAudioFocusRequest(it) }
+                    audioFocusRequest = null
+                } else {
+                    @Suppress("DEPRECATION")
+                    audioManager.abandonAudioFocus(null)
+                }
+
+                // 2. Release hardware MUTE flag
+                audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_UNMUTE, 0)
                 if (preMuteVolume > 0) {
                     audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, preMuteVolume, 0)
                 }

@@ -59,7 +59,7 @@ class TFLiteVisionClassifier @Inject constructor(
     private var isInitialized = false
 
     // Sensitivity threshold dynamically loaded from DataStore
-    private var nsfwThreshold = 0.45f
+    private var nsfwThreshold = 0.18f
 
     // Zero-GC pre-allocated reusable scaling canvas & buffers
     private val scaledBitmap = Bitmap.createBitmap(INPUT_WIDTH, INPUT_HEIGHT, Bitmap.Config.ARGB_8888)
@@ -83,9 +83,9 @@ class TFLiteVisionClassifier @Inject constructor(
         preferencesRepository.aiSensitivityFlow
             .onEach { level ->
                 nsfwThreshold = when (level) {
-                    SensitivityLevel.STRICT -> 0.30f
-                    SensitivityLevel.BALANCED -> 0.45f
-                    SensitivityLevel.RELAXED -> 0.65f
+                    SensitivityLevel.STRICT -> 0.12f
+                    SensitivityLevel.BALANCED -> 0.18f
+                    SensitivityLevel.RELAXED -> 0.35f
                 }
                 Log.d(TAG, "TFLiteVisionClassifier sensitivity updated to $level (threshold=$nsfwThreshold)")
             }
@@ -150,51 +150,75 @@ class TFLiteVisionClassifier @Inject constructor(
             val startTime = SystemClock.elapsedRealtime()
 
             try {
-                // 1. Draw source frame into pre-allocated 224x224 scaled bitmap without allocations
-                val srcRect = Rect(0, 0, bitmap.width, bitmap.height)
-                canvas.drawBitmap(bitmap, srcRect, destRect, paint)
+                // 1. Primary Inspection: Center Viewport 1:1 Aspect-Preserving Crop
+                // Strips browser status/URL bar and navigation footer, preserving human proportions
+                val squareSize = minOf(bitmap.width, bitmap.height)
+                val topOffset = ((bitmap.height - squareSize) / 2).coerceAtLeast(0)
+                val centerSrcRect = Rect(0, topOffset, squareSize, topOffset + squareSize)
 
-                // 2. Extract pixel color components into pre-allocated IntArray
+                canvas.drawBitmap(bitmap, centerSrcRect, destRect, paint)
                 scaledBitmap.getPixels(intValues, 0, INPUT_WIDTH, 0, 0, INPUT_WIDTH, INPUT_HEIGHT)
 
-                // 3. Populate direct ByteBuffer with BGR mean-subtracted floats [0..255] (OpenNSFW standard)
+                // Populate direct ByteBuffer with BGR mean-subtracted floats [0..255] (OpenNSFW standard)
                 inputBuffer.rewind()
                 for (i in 0 until (INPUT_WIDTH * INPUT_HEIGHT)) {
                     val pixel = intValues[i]
                     val r = (pixel shr 16 and 0xFF).toFloat() - 122.68f
                     val g = (pixel shr 8 and 0xFF).toFloat() - 116.67f
                     val b = (pixel and 0xFF).toFloat() - 104.01f
-
-                    // Caffe OpenNSFW model uses BGR channel ordering
                     inputBuffer.putFloat(b)
                     inputBuffer.putFloat(g)
                     inputBuffer.putFloat(r)
                 }
 
-                // 4. Run inference
                 interpreter!!.run(inputBuffer, outputBuffer)
+                var centerSfw = outputBuffer[0].getOrElse(0) { 1f }
+                var centerNsfw = outputBuffer[0].getOrElse(1) { 0f }
+
+                var finalNsfwScore = centerNsfw
+                var finalSfwScore = centerSfw
+
+                // 2. Secondary Inspection: Full Screen Context (if center crop is below threshold)
+                if (finalNsfwScore < nsfwThreshold) {
+                    val fullSrcRect = Rect(0, 0, bitmap.width, bitmap.height)
+                    canvas.drawBitmap(bitmap, fullSrcRect, destRect, paint)
+                    scaledBitmap.getPixels(intValues, 0, INPUT_WIDTH, 0, 0, INPUT_WIDTH, INPUT_HEIGHT)
+
+                    inputBuffer.rewind()
+                    for (i in 0 until (INPUT_WIDTH * INPUT_HEIGHT)) {
+                        val pixel = intValues[i]
+                        val r = (pixel shr 16 and 0xFF).toFloat() - 122.68f
+                        val g = (pixel shr 8 and 0xFF).toFloat() - 116.67f
+                        val b = (pixel and 0xFF).toFloat() - 104.01f
+                        inputBuffer.putFloat(b)
+                        inputBuffer.putFloat(g)
+                        inputBuffer.putFloat(r)
+                    }
+
+                    interpreter!!.run(inputBuffer, outputBuffer)
+                    val fullNsfw = outputBuffer[0].getOrElse(1) { 0f }
+                    if (fullNsfw > finalNsfwScore) {
+                        finalNsfwScore = fullNsfw
+                        finalSfwScore = outputBuffer[0].getOrElse(0) { 1f }
+                    }
+                }
 
                 val inferenceTime = SystemClock.elapsedRealtime() - startTime
 
-                // Output mapping: [0: SFW (Safe), 1: NSFW (Explicit)]
-                val scores = outputBuffer[0]
-                val sfwScore = scores.getOrElse(0) { 1f }
-                val nsfwScore = scores.getOrElse(1) { 0f }
-
-                val isNsfw = nsfwScore >= nsfwThreshold
+                val isNsfw = finalNsfwScore >= nsfwThreshold
                 val topLabel = if (isNsfw) "NSFW" else "safe"
 
                 Log.d(
                     TAG,
-                    "Frame classified in ${inferenceTime}ms: NSFW=$isNsfw (${(nsfwScore * 100).toInt()}%), SFW=${(sfwScore * 100).toInt()}%, threshold=$nsfwThreshold"
+                    "Frame classified in ${inferenceTime}ms: NSFW=$isNsfw (${(finalNsfwScore * 100).toInt()}%), SFW=${(finalSfwScore * 100).toInt()}%, threshold=$nsfwThreshold"
                 )
 
                 VisionClassificationResult(
                     isNSFW = isNsfw,
-                    confidence = nsfwScore,
+                    confidence = finalNsfwScore,
                     topLabel = topLabel,
-                    pornScore = nsfwScore,
-                    sexyScore = nsfwScore,
+                    pornScore = finalNsfwScore,
+                    sexyScore = finalNsfwScore,
                     hentaiScore = 0f,
                     inferenceTimeMs = inferenceTime
                 )

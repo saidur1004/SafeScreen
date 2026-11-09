@@ -69,7 +69,7 @@ class UserPreferencesRepository @Inject constructor(
 
     val isReelsBlockerEnabledFlow: Flow<Boolean> = dataStore.data
         .catch { if (it is IOException) emit(emptyPreferences()) else throw it }
-        .map { it[PreferencesKeys.IS_REELS_BLOCKER_ENABLED] ?: false }
+        .map { it[PreferencesKeys.IS_REELS_BLOCKER_ENABLED] ?: true }
         .distinctUntilChanged()
 
     val aiSensitivityFlow: Flow<SensitivityLevel> = dataStore.data

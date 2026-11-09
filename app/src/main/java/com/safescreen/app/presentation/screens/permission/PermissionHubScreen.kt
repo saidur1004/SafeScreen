@@ -337,11 +337,39 @@ fun PermissionHubScreen(
                         )
                         onAllPermissionsGranted()
                     } else {
-                        Toast.makeText(
-                            context,
-                            "Action Required: Please grant all required permissions to activate protection shield.",
-                            Toast.LENGTH_LONG
-                        ).show()
+                        val firstMissing = state.permissions.firstOrNull { !it.isGranted }
+                        if (firstMissing != null) {
+                            Toast.makeText(
+                                context,
+                                "Grant Permission: ${firstMissing.title}",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            when (firstMissing.type) {
+                                PermissionType.OVERLAY -> {
+                                    val intent = Intent(
+                                        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                        Uri.parse("package:${context.packageName}")
+                                    )
+                                    overlayLauncher.launch(intent)
+                                }
+                                PermissionType.SCREEN_CAPTURE -> {
+                                    val mediaProjectionManager = context.getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+                                    screenCaptureLauncher.launch(mediaProjectionManager.createScreenCaptureIntent())
+                                }
+                                PermissionType.AUDIO_CAPTURE -> {
+                                    audioLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                                }
+                                PermissionType.ACCESSIBILITY -> {
+                                    val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                                    accessibilityLauncher.launch(intent)
+                                }
+                                PermissionType.NOTIFICATION -> {
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                        notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
                 PermissionHubUiEvent.NavigateBack -> {
@@ -710,7 +738,10 @@ private fun PermissionCard(
     onGrantClick: () -> Unit
 ) {
     GlassmorphicCard(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(18.dp))
+            .clickable(enabled = !item.isGranted) { onGrantClick() },
         shape = RoundedCornerShape(18.dp),
         contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
     ) {

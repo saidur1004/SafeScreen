@@ -54,7 +54,7 @@ class YAMNetAudioClassifier @Inject constructor(
     private var interpreter: Interpreter? = null
     private var isInitialized = false
 
-    private var explicitThreshold = 0.35f
+    private var explicitThreshold = 0.20f
     private val classLabels = mutableMapOf<Int, String>()
 
     // Explicit AudioSet sound signature class indices
@@ -80,9 +80,9 @@ class YAMNetAudioClassifier @Inject constructor(
         preferencesRepository.aiSensitivityFlow
             .onEach { level ->
                 explicitThreshold = when (level) {
-                    SensitivityLevel.STRICT -> 0.25f
-                    SensitivityLevel.BALANCED -> 0.35f
-                    SensitivityLevel.RELAXED -> 0.50f
+                    SensitivityLevel.STRICT -> 0.15f
+                    SensitivityLevel.BALANCED -> 0.20f
+                    SensitivityLevel.RELAXED -> 0.35f
                 }
                 Log.d(TAG, "YAMNetAudioClassifier sensitivity updated to $level (threshold=$explicitThreshold)")
             }
@@ -207,12 +207,16 @@ class YAMNetAudioClassifier @Inject constructor(
                     }
                 }
 
+                // AudioSet root class 132 is "Music". Combine root + subgenres for high recall on background tracks
+                val rootMusicScore = scores.getOrElse(132) { 0f }
+                val effectiveMusicScore = maxOf(rootMusicScore, maxMusicScore, (rootMusicScore * 0.6f + maxMusicScore * 0.6f).coerceAtMost(1.0f))
+
                 // Effective threat score calculation (both explicit vocal/moan and background music/song)
-                val explicitScore = maxOf(maxMoanScore, (maxVocalScore * 0.85f), maxMusicScore)
+                val explicitScore = maxOf(maxMoanScore, (maxVocalScore * 0.85f), effectiveMusicScore)
                 val isExplicit = explicitScore >= explicitThreshold
 
                 val threatCategoryName = when {
-                    maxMusicScore >= explicitThreshold -> classLabels[topCategoryIndex]?.takeIf { musicAndSingingIndices.contains(topCategoryIndex) } ?: "Music Track"
+                    effectiveMusicScore >= explicitThreshold -> classLabels[topCategoryIndex]?.takeIf { musicAndSingingIndices.contains(topCategoryIndex) } ?: "Music Track"
                     maxMoanScore >= explicitThreshold -> "Explicit Audio"
                     maxVocalScore >= explicitThreshold -> "High Intensity Vocal"
                     else -> classLabels[topCategoryIndex] ?: "Clean"

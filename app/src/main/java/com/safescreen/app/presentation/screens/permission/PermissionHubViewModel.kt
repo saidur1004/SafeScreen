@@ -27,6 +27,15 @@ class PermissionHubViewModel @Inject constructor(
     val uiState: StateFlow<PermissionHubUiState> = _uiState.asStateFlow()
 
     fun refreshPermissions(context: Context) {
+        internalRefresh(context)
+        // Secondary refresh after short delay to capture OS settings state propagation
+        viewModelScope.launch {
+            kotlinx.coroutines.delay(350)
+            internalRefresh(context)
+        }
+    }
+
+    private fun internalRefresh(context: Context) {
         val currentList = _uiState.value.permissions
         val updatedList = currentList.map { item ->
             val granted = permissionManager.isPermissionGranted(context, item.type)

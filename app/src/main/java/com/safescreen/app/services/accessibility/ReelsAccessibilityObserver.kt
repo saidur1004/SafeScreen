@@ -269,11 +269,12 @@ class ReelsAccessibilityObserver @Inject constructor(
             ReelPlatform.YOUTUBE -> {
                 viewId.contains("shorts") ||
                         viewId.contains("reel") ||
+                        viewId.contains("player_fragment") ||
                         contentDesc.contains("shorts") ||
                         contentDesc.contains("short") ||
                         contentDesc.contains("remix") ||
                         className.contains("reel") ||
-                        text == "shorts"
+                        text.contains("shorts", ignoreCase = true)
             }
             ReelPlatform.FACEBOOK -> {
                 viewId.contains("reels") ||
@@ -281,16 +282,16 @@ class ReelsAccessibilityObserver @Inject constructor(
                         viewId.contains("fb_shorts") ||
                         contentDesc.contains("reels") ||
                         contentDesc.contains("reel") ||
-                        text.contains("reels") ||
-                        text.contains("watch reels")
+                        text.contains("reels", ignoreCase = true) ||
+                        text.contains("watch reels", ignoreCase = true)
             }
             ReelPlatform.CHROME -> {
-                text.contains("youtube.com/shorts") ||
-                        text.contains("instagram.com/reels") ||
+                text.contains("shorts") ||
+                        text.contains("instagram.com/reel") ||
                         text.contains("facebook.com/reel") ||
                         text.contains("tiktok.com") ||
-                        contentDesc.contains("youtube.com/shorts") ||
-                        contentDesc.contains("instagram.com/reels") ||
+                        contentDesc.contains("shorts") ||
+                        contentDesc.contains("instagram.com/reel") ||
                         contentDesc.contains("facebook.com/reel") ||
                         contentDesc.contains("tiktok.com")
             }
