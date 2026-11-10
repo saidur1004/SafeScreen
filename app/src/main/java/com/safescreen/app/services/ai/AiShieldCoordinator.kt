@@ -176,7 +176,8 @@ class AiShieldCoordinator @Inject constructor(
                             confidence = result.confidence,
                             label = result.topLabel,
                             latencyMs = result.inferenceTimeMs.toInt(),
-                            normalizedBoxes = result.normalizedBoxes
+                            normalizedBoxes = result.normalizedBoxes,
+                            isExtremePorn = result.pornScore >= 0.70f
                         )
                     } else {
                         LiveBlurOverlayManager.onCleanFrameReceived(context)
@@ -257,14 +258,38 @@ class AiShieldCoordinator @Inject constructor(
         handleAudioThreatDetected(0.92f, "Music Track")
     }
 
+    private fun isBrowserPackage(pkg: String): Boolean {
+        val lower = pkg.lowercase()
+        return lower.contains("chrome") ||
+                lower.contains("browser") ||
+                lower.contains("firefox") ||
+                lower.contains("opera") ||
+                lower == "com.brave.browser" ||
+                lower == "com.microsoft.emmx" ||
+                lower == "com.sec.android.app.sbrowser" ||
+                lower == "com.duckduckgo.mobile.android"
+    }
+
     private fun handleVisualThreatDetected(
         confidence: Float,
         label: String,
         latencyMs: Int = 38,
-        normalizedBoxes: List<android.graphics.RectF> = emptyList()
+        normalizedBoxes: List<android.graphics.RectF> = emptyList(),
+        isExtremePorn: Boolean = false
     ) {
         val currentPkg = foregroundAppTracker.currentPackage ?: ForegroundAppTracker.currentForegroundPackage
         lastVisualThreatPackage = currentPkg
+
+        // If user is inside a web browser and an extreme adult video/page is playing, block the full page
+        if (isExtremePorn && currentPkg != null && isBrowserPackage(currentPkg)) {
+            Log.w(TAG, "Extreme adult visual content detected in browser ($currentPkg). Triggering full-page block.")
+            LiveBlurOverlayManager.showFullPageBlock(
+                context = context,
+                domain = "EXPLICIT WEBPAGE BLOCKED"
+            )
+            return
+        }
+
         LiveBlurOverlayManager.updateTargetedBoxes(
             context = context,
             newBoxes = normalizedBoxes,

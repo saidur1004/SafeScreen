@@ -122,6 +122,11 @@ class SafeScreenAccessibilityService : AccessibilityService() {
                 getTracker()?.updateForegroundApp(packageName)
                 ForegroundAppTracker.update(packageName)
                 checkWatchdogStatus(packageName)
+
+                // If user leaves the browser, dismiss full-page blocking overlay for non-browser apps
+                if (!isBrowserApp(packageName)) {
+                    LiveBlurOverlayManager.dismissFullPageBlock(applicationContext)
+                }
             }
         }
 
@@ -156,33 +161,37 @@ class SafeScreenAccessibilityService : AccessibilityService() {
         return BROWSER_PACKAGES.contains(lower) ||
                 lower.contains("chrome") ||
                 lower.contains("browser") ||
-                lower.contains("firefox")
+                lower.contains("firefox") ||
+                lower.contains("opera")
     }
 
     /**
-     * Inspects browser address bar to detect and block explicit adult domains immediately.
+     * Inspects browser address bar to detect and block explicit adult domains and search queries immediately.
      */
     private fun inspectBrowserUrl(rootNode: AccessibilityNodeInfo, packageName: String) {
         val urlNode = findUrlBarNode(rootNode) ?: return
         val text = urlNode.text?.toString()?.trim()?.lowercase() ?: return
         if (text.isEmpty()) return
 
-        for (domain in ADULT_DOMAINS) {
-            if (text.contains(domain)) {
-                Log.w(TAG, "Strict Block Triggered: Adult domain '$domain' detected in $packageName ($text)")
-                val displayDomain = domain.uppercase() + ".COM"
+        val matchedDomain = ADULT_DOMAINS.firstOrNull { text.contains(it) }
+        val matchedPattern = if (matchedDomain == null) {
+            ADULT_SEARCH_PATTERNS.firstOrNull { it.containsMatchIn(text) }?.pattern
+        } else null
 
-                LiveBlurOverlayManager.showFullPageBlock(
-                    context = applicationContext,
-                    domain = displayDomain
-                ) {
-                    performGlobalAction(GLOBAL_ACTION_HOME)
-                }
+        if (matchedDomain != null || matchedPattern != null) {
+            val detectedThreat = matchedDomain ?: "ADULT CONTENT"
+            Log.w(TAG, "Strict Block Triggered: Adult keyword/domain '$detectedThreat' detected in $packageName ($text)")
+            val displayDomain = detectedThreat.replace("\\b", "").uppercase()
 
-                // Dispatches back action to steer browser away immediately behind the solid blackout
-                performGlobalAction(GLOBAL_ACTION_BACK)
-                break
+            LiveBlurOverlayManager.showFullPageBlock(
+                context = applicationContext,
+                domain = displayDomain
+            ) {
+                performGlobalAction(GLOBAL_ACTION_HOME)
             }
+
+            // Dispatches back action to steer browser away immediately behind the solid blackout
+            performGlobalAction(GLOBAL_ACTION_BACK)
         }
     }
 
@@ -345,8 +354,16 @@ class SafeScreenAccessibilityService : AccessibilityService() {
             "com.microsoft.emmx",
             "com.sec.android.app.sbrowser",
             "org.mozilla.firefox",
+            "org.mozilla.firefox_beta",
+            "org.mozilla.fenix",
             "com.opera.browser",
-            "com.duckduckgo.mobile.android"
+            "com.opera.mini.native",
+            "com.opera.touch",
+            "com.opera.gx",
+            "com.duckduckgo.mobile.android",
+            "com.ucmobile.intl",
+            "com.kiwibrowser.browser",
+            "com.vivaldi.browser"
         )
 
         private val ADULT_DOMAINS = listOf(
@@ -354,7 +371,19 @@ class SafeScreenAccessibilityService : AccessibilityService() {
             "youporn", "chaturbate", "onlyfans", "stripchat", "bongacams",
             "cam4", "livejasmin", "spankbang", "eporner", "beeg",
             "tube8", "thumbzilla", "txxx", "hqporner", "motherless",
-            "brazzers", "heavy-r", "porngo"
+            "brazzers", "heavy-r", "porngo", "erome", "rule34",
+            "fapello", "porntrex", "daftsex", "youjizz", "tnaflix",
+            "nuvid", "javhd", "missav", "javmost", "jable",
+            "nhentai", "hanime", "luscious", "danbooru", "gelbooru",
+            "porndig", "pornone", "empflix", "czechcasting", "realitykings",
+            "bangbros", "naughtyamerica", "banglachoti", "chotikahini",
+            "desipapa", "fsiblog", "indianporn", "xcafe", "madthumbs"
         )
+
+        private val ADULT_SEARCH_PATTERNS = listOf(
+            "\\bporn\\b", "\\bporno\\b", "\\bxxx\\b", "\\bhentai\\b",
+            "\\bnsfw\\b", "\\bsex video\\b", "\\badult video\\b",
+            "\\bnude photo\\b", "\\bbangla choti\\b", "\\bchoti golpo\\b"
+        ).map { it.toRegex(RegexOption.IGNORE_CASE) }
     }
 }
